@@ -7,14 +7,15 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { PRIORITY, TASK_TYPE } from '@/lib/planner';
 import { toInputDateTime, fromInputDateTime } from '@/lib/planner';
+import { AREAS } from '@/lib/areas';
 
-export default function TaskModal({ open, onClose, onSave, task, courses = [] }) {
+export default function TaskModal({ open, onClose, onSave, task, courses = [], area = 'school' }) {
   const [title, setTitle] = useState(task?.title || '');
   const [description, setDescription] = useState(task?.description || '');
   const [dueDate, setDueDate] = useState(task?.due_date ? toInputDateTime(task.due_date) : '');
   const [priority, setPriority] = useState(task?.priority || 'medium');
   const [status, setStatus] = useState(task?.status || 'todo');
-  const [type, setType] = useState(task?.type || 'misc');
+  const [type, setType] = useState(task?.type || (area === 'school' ? 'misc' : ''));
   const [courseId, setCourseId] = useState(task?.course_id || 'none');
 
   React.useEffect(() => {
@@ -23,7 +24,7 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [] })
     setDueDate(task?.due_date ? toInputDateTime(task.due_date) : '');
     setPriority(task?.priority || 'medium');
     setStatus(task?.status || 'todo');
-    setType(task?.type || 'misc');
+    setType(task?.type || (area === 'school' ? 'misc' : ''));
     setCourseId(task?.course_id || 'none');
   }, [task, open]);
 
@@ -53,10 +54,19 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [] })
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Type</Label>
-              <Select value={type} onValueChange={setType}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{Object.entries(TASK_TYPE).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}</SelectContent>
-              </Select>
+              {area === 'school' ? (
+                <Select value={type} onValueChange={setType}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{Object.entries(TASK_TYPE).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}</SelectContent>
+                </Select>
+              ) : (
+                <>
+                  <Input value={type} onChange={(e) => setType(e.target.value)} placeholder="Name this type…" list="task-types" />
+                  <datalist id="task-types">
+                    {(AREAS[area]?.typeSuggestions || []).map((s) => <option key={s} value={s} />)}
+                  </datalist>
+                </>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label>Priority</Label>

@@ -50,9 +50,75 @@ export const QUOTES = [
   { q: 'Little by little, one travels far.', a: 'J.R.R. Tolkien' }
 ];
 
-export function quoteOfDay() {
+export const TYPE_COLORS = {
+  assignment: '#6366f1', exam: '#e11d48', quiz: '#f59e0b', study: '#14b8a6',
+  reading: '#0ea5e9', project: '#8b5cf6', misc: '#94a3b8'
+};
+
+const QUOTES_SCHOOL = [
+  { q: 'The secret of getting ahead is getting started.', a: 'Mark Twain' },
+  { q: 'Study a little each day — cramming is a trap.', a: 'Working Buddy' },
+  { q: 'Exams reward the steady, not the hurried.', a: 'Working Buddy' },
+  { q: 'Understand today what others skim tonight.', a: 'Working Buddy' },
+  { q: 'A syllabus is a map — follow it and you won’t get lost.', a: 'Working Buddy' },
+  { q: 'Small, consistent reps beat one big night.', a: 'Working Buddy' }
+];
+const QUOTES_WORK = [
+  { q: 'Done is better than perfect — ship the draft.', a: 'Sheryl Sandberg' },
+  { q: 'Focus is the new productivity.', a: 'Working Buddy' },
+  { q: 'Protect your deep-work hours like meetings.', a: 'Working Buddy' },
+  { q: 'Clarity beats speed — know the goal before the grind.', a: 'Working Buddy' },
+  { q: 'The professional prepares so the work looks easy.', a: 'Working Buddy' },
+  { q: 'Inbox zero is a feeling, not a finish line.', a: 'Working Buddy' }
+];
+const QUOTES_PERSONAL = [
+  { q: 'You don’t have to be great to start, but you have to start to be great.', a: 'Zig Ziglar' },
+  { q: 'Little by little, one travels far.', a: 'J.R.R. Tolkien' },
+  { q: 'Be kind to yourself — progress, not perfection.', a: 'Working Buddy' },
+  { q: 'Rest is part of the work, not the opposite of it.', a: 'Working Buddy' },
+  { q: 'Today, do one small thing your future self will thank you for.', a: 'Working Buddy' },
+  { q: 'You’re allowed to go slow.', a: 'Working Buddy' }
+];
+const QUOTES_SHAREABLE = [
+  { q: 'Alone we can go fast; together we can go far.', a: 'African Proverb' },
+  { q: 'Many hands make light work.', a: 'Proverb' },
+  { q: 'Shared plans become shared wins.', a: 'Working Buddy' },
+  { q: 'Teamwork divides the task and multiplies the outcome.', a: 'Working Buddy' },
+  { q: 'Small acts of coordination build big trust.', a: 'Working Buddy' },
+  { q: 'When we plan together, we show up together.', a: 'Working Buddy' }
+];
+
+export function quoteOfDay(area, courses) {
+  const pool = area === 'work' ? QUOTES_WORK
+    : area === 'shareable' ? QUOTES_SHAREABLE
+    : area === 'school' ? QUOTES_SCHOOL
+    : QUOTES_PERSONAL;
   const day = Math.floor(Date.now() / 86400000);
-  return QUOTES[day % QUOTES.length];
+  let q = pool[day % pool.length];
+  if (area === 'school' && courses && courses.length) {
+    const c = courses[day % courses.length];
+    const name = c.code || c.name;
+    const templated = [
+      { q: `Stay on top of ${name} — small steady steps win exams.`, a: 'Working Buddy' },
+      { q: `A little ${name} each day keeps the cram away.`, a: 'Working Buddy' },
+      { q: `Knock out ${name} early, then breathe.`, a: 'Working Buddy' }
+    ];
+    if (day % 3 === 0) q = templated[day % templated.length];
+  }
+  return q;
+}
+
+export function taskTypeMeta(type) {
+  const known = TASK_TYPE[type];
+  if (known) return known;
+  return { label: type || 'Misc', Icon: CircleDot, chip: 'text-slate-700 bg-slate-100' };
+}
+
+export function taskTypeColor(type) {
+  if (TYPE_COLORS[type]) return TYPE_COLORS[type];
+  let h = 0;
+  for (const ch of String(type || 'misc')) h = (h * 31 + ch.charCodeAt(0)) % 360;
+  return `hsl(${h} 55% 55%)`;
 }
 
 export function parseDate(v) {

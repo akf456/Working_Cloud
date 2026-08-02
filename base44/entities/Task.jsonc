@@ -37,15 +37,6 @@
     },
     "type": {
       "type": "string",
-      "enum": [
-        "assignment",
-        "exam",
-        "quiz",
-        "study",
-        "reading",
-        "project",
-        "misc"
-      ],
       "default": "misc",
       "title": "Type"
     },
@@ -67,7 +58,8 @@
       "enum": [
         "school",
         "work",
-        "personal"
+        "personal",
+        "shareable"
       ],
       "default": "school",
       "title": "Area"

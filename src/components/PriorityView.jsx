@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Flame, AlertTriangle, Award, CalendarClock } from 'lucide-react';
 import { isToday, isThisWeek, isThisMonth } from 'date-fns';
-import { priorityScore, daysUntil, dueLabel, TASK_TYPE, PRIORITY, parseDate } from '@/lib/planner';
+import { priorityScore, daysUntil, dueLabel, taskTypeMeta, PRIORITY, parseDate } from '@/lib/planner';
 
 const RANGES = [
   { key: 'day', label: 'Today' },
@@ -56,7 +56,7 @@ export default function PriorityView({ tasks, events, courses, onToggle }) {
       ) : (
         <ol className="space-y-2">
           {ranked.map(({ t, score }, i) => {
-            const T = TASK_TYPE[t.type] || TASK_TYPE.misc;
+            const T = taskTypeMeta(t.type);
             const P = PRIORITY[t.priority] || PRIORITY.medium;
             const c = courseMap[t.course_id];
             const n = daysUntil(t.due_date);

@@ -20,6 +20,7 @@ import TasksPage from '@/pages/TasksPage';
 import CoursesPage from '@/pages/CoursesPage';
 import ContactsPage from '@/pages/ContactsPage';
 import TrashPage from '@/pages/TrashPage';
+import ShareBoard from '@/pages/ShareBoard';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -51,6 +52,7 @@ const AuthenticatedApp = () => {
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/s/:token" element={<ShareBoard />} />
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
         <Route path="/" element={<Areas />} />
         <Route element={<Layout />}>

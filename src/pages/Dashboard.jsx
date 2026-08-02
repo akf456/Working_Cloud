@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { GraduationCap, ListTodo, CalendarClock, Award, Plus, ArrowRight, CheckCircle2 } from 'lucide-react';
-import { greeting, quoteOfDay, fmt, dueLabel, daysUntil, TASK_TYPE, EVENT_TYPE, parseDate } from '@/lib/planner';
+import { greeting, quoteOfDay, fmt, dueLabel, daysUntil, taskTypeMeta, EVENT_TYPE, parseDate } from '@/lib/planner';
 import { isToday, isThisWeek, isThisMonth, isAfter } from 'date-fns';
 import TaskModal from '@/components/TaskModal';
 import WorkloadBreakdown from '@/components/WorkloadBreakdown';
@@ -46,7 +46,7 @@ export default function Dashboard() {
   const total = tasks.length;
   const pct = total ? Math.round((done.length / total) * 100) : 0;
   const courseMap = Object.fromEntries(courses.map((c) => [c.id, c]));
-  const quote = quoteOfDay();
+  const quote = quoteOfDay(area, courses);
   const dueTodayAll = tasks.filter((t) => parseDate(t.due_date) && isToday(parseDate(t.due_date)));
   const dayDone = dueTodayAll.filter((t) => t.status === 'done').length;
   const dayTotal = dueTodayAll.length;
@@ -96,7 +96,7 @@ export default function Dashboard() {
           ) : (
             <div className="space-y-2">
               {upcoming.map((t) => {
-                const T = TASK_TYPE[t.type] || TASK_TYPE.misc;
+                const T = taskTypeMeta(t.type);
                 const c = courseMap[t.course_id];
                 const n = daysUntil(t.due_date);
                 const overdue = n < 0;
@@ -185,7 +185,7 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      <TaskModal open={taskModal} onClose={() => setTaskModal(false)} onSave={saveTask} courses={courses} />
+      <TaskModal open={taskModal} onClose={() => setTaskModal(false)} onSave={saveTask} courses={courses} area={area} />
     </div>
   );
 }
@@ -207,7 +207,7 @@ function StatCard({ icon: Icon, tint, label, value, link }) {
 }
 
 function TodayTask({ task, courses }) {
-  const T = TASK_TYPE[task.type] || TASK_TYPE.misc;
+  const T = taskTypeMeta(task.type);
   const c = courses[task.course_id];
   return (
     <li className="flex items-center gap-3 rounded-xl border border-border/60 px-3 py-2.5">

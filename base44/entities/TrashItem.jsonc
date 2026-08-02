@@ -30,7 +30,8 @@
       "enum": [
         "school",
         "work",
-        "personal"
+        "personal",
+        "shareable"
       ],
       "default": "school",
       "title": "Area"

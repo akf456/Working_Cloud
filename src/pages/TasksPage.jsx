@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Plus, Search, Pencil, Trash2, Inbox } from 'lucide-react';
-import { TASK_TYPE, PRIORITY, STATUS, dueLabel, daysUntil, parseDate } from '@/lib/planner';
+import { taskTypeMeta, PRIORITY, STATUS, dueLabel, daysUntil, parseDate } from '@/lib/planner';
 import TaskModal from '@/components/TaskModal';
 import PriorityView from '@/components/PriorityView';
 import { celebrate } from '@/lib/celebrate';
@@ -80,7 +80,7 @@ export default function TasksPage() {
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold">Tasks</h1>
-          <p className="text-sm text-muted-foreground mt-1">Assignments, exams prep, reading — keep it moving.</p>
+          <p className="text-sm text-muted-foreground mt-1">Your to-dos, sorted the way you like.</p>
         </div>
         <Button onClick={() => { setEditTask(null); setModal(true); }} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> New task</Button>
       </div>
@@ -118,7 +118,7 @@ export default function TasksPage() {
           <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All types</SelectItem>
-            {Object.entries(TASK_TYPE).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
+            {[...new Set(tasks.map((t) => t.type).filter(Boolean))].map((k) => <SelectItem key={k} value={k}>{taskTypeMeta(k).label}</SelectItem>)}
           </SelectContent>
         </Select>
       </Card>
@@ -128,7 +128,7 @@ export default function TasksPage() {
           <div className="flex flex-col items-center justify-center py-20 text-center text-muted-foreground">
             <Inbox className="w-10 h-10 mb-3 opacity-50" />
             <p className="font-medium">No tasks here.</p>
-            <p className="text-sm mt-1">Add one, or import a syllabus to auto-fill deadlines.</p>
+            <p className="text-sm mt-1">Add one to get started.</p>
           </div>
         ) : view === 'priority' ? (
           <PriorityView tasks={filtered} events={[]} courses={courses} onToggle={toggle} />
@@ -158,14 +158,14 @@ export default function TasksPage() {
           </div>
         )}
 
-      <TaskModal open={modal} onClose={() => { setModal(false); setEditTask(null); }} onSave={saveTask} task={editTask} courses={courses} />
+      <TaskModal open={modal} onClose={() => { setModal(false); setEditTask(null); }} onSave={saveTask} task={editTask} courses={courses} area={area} />
     </div>
   );
 }
 
 function TaskRow({ task, course, onToggle, onEdit, onDelete }) {
   const [open, setOpen] = useState(false);
-  const T = TASK_TYPE[task.type] || TASK_TYPE.misc;
+  const T = taskTypeMeta(task.type);
   const P = PRIORITY[task.priority] || PRIORITY.medium;
   const done = task.status === 'done';
   const n = daysUntil(task.due_date);

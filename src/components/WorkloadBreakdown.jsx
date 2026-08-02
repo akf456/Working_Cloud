@@ -1,16 +1,10 @@
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Card } from '@/components/ui/card';
-import { TASK_TYPE } from '@/lib/planner';
-
-const TYPE_COLORS = {
-  assignment: '#6366f1', exam: '#e11d48', quiz: '#f59e0b', study: '#14b8a6',
-  reading: '#0ea5e9', project: '#8b5cf6', misc: '#94a3b8'
-};
+import { taskTypeMeta, taskTypeColor } from '@/lib/planner';
 
 export default function WorkloadBreakdown({ tasks }) {
   const byType = {};
-  Object.keys(TASK_TYPE).forEach((k) => { byType[k] = { total: 0, done: 0 }; });
   tasks.forEach((t) => {
     const k = t.type || 'misc';
     if (!byType[k]) byType[k] = { total: 0, done: 0 };
@@ -19,8 +13,8 @@ export default function WorkloadBreakdown({ tasks }) {
   });
 
   const rows = Object.entries(byType).filter(([, v]) => v.total > 0).map(([k, v]) => ({
-    key: k, name: TASK_TYPE[k].label, remaining: v.total - v.done, total: v.total,
-    done: v.done, pct: v.total ? Math.round((v.done / v.total) * 100) : 0, color: TYPE_COLORS[k] || '#94a3b8'
+    key: k, name: taskTypeMeta(k).label, remaining: v.total - v.done, total: v.total,
+    done: v.done, pct: v.total ? Math.round((v.done / v.total) * 100) : 0, color: taskTypeColor(k)
   }));
   const pieData = rows.filter((r) => r.remaining > 0);
   const allDone = pieData.length === 0;
