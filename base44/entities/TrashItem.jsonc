@@ -24,6 +24,16 @@
       "type": "string",
       "format": "date-time",
       "title": "Deleted Date"
+    },
+    "area": {
+      "type": "string",
+      "enum": [
+        "school",
+        "work",
+        "personal"
+      ],
+      "default": "school",
+      "title": "Area"
     }
   },
   "required": [

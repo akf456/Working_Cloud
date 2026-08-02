@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Trash2, RotateCcw, FileText, CalendarClock, GraduationCap, Users, Trash } from 'lucide-react';
 import { restoreItem, purgeItem } from '@/lib/trash';
+import { useArea } from '@/lib/AreaContext';
 import { fmt } from '@/lib/planner';
 
 const ICONS = { Task: FileText, Event: CalendarClock, Course: GraduationCap, Contact: Users };
@@ -12,14 +13,15 @@ const TINTS = { Task: 'text-indigo-600 bg-indigo-50', Event: 'text-violet-600 bg
 export default function TrashPage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { area } = useArea();
 
   async function load() {
     setLoading(true);
-    const t = await base44.entities.TrashItem.list('-deleted_date', 200);
+    const t = await base44.entities.TrashItem.filter({ area }, '-deleted_date', 200);
     setItems(t);
     setLoading(false);
   }
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [area]);
 
   async function restore(it) { await restoreItem(it); load(); }
   async function purge(it) { await purgeItem(it); load(); }

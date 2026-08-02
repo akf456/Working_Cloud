@@ -54,6 +54,16 @@
       ],
       "default": "manual",
       "title": "Source"
+    },
+    "area": {
+      "type": "string",
+      "enum": [
+        "school",
+        "work",
+        "personal"
+      ],
+      "default": "school",
+      "title": "Area"
     }
   },
   "required": [

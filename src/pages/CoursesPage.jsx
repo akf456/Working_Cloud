@@ -9,6 +9,8 @@ import { Plus, Sparkles, Pencil, Trash2, BookOpen, ListTodo, CalendarClock, Grad
 import { fmt, dueLabel, daysUntil, parseDate } from '@/lib/planner';
 import SyllabusImporter from '@/components/SyllabusImporter';
 import { trashItem } from '@/lib/trash';
+import { useArea } from '@/lib/AreaContext';
+import { AREAS } from '@/lib/areas';
 
 export default function CoursesPage() {
   const [courses, setCourses] = useState([]);
@@ -18,38 +20,40 @@ export default function CoursesPage() {
   const [modal, setModal] = useState(false);
   const [importer, setImporter] = useState(false);
   const [edit, setEdit] = useState(null);
+  const { area } = useArea();
+  const a = AREAS[area];
 
   async function load() {
     setLoading(true);
     const [c, t, e] = await Promise.all([
-      base44.entities.Course.list(),
-      base44.entities.Task.list('-due_date', 300),
-      base44.entities.Event.list('-start_date', 200)
+      base44.entities.Course.filter({ area }),
+      base44.entities.Task.filter({ area }, '-due_date', 300),
+      base44.entities.Event.filter({ area }, '-start_date', 200)
     ]);
     setCourses(c); setTasks(t); setEvents(e);
     setLoading(false);
   }
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [area]);
 
   async function saveCourse(data) {
     if (data.id) await base44.entities.Course.update(data.id, data);
-    else await base44.entities.Course.create(data);
+    else await base44.entities.Course.create({ ...data, area });
     setEdit(null); setModal(false); load();
   }
   async function remove(c) {
-    await trashItem('Course', c); load();
+    await trashItem('Course', c, area); load();
   }
 
   return (
     <div className="p-4 md:p-8 max-w-6xl mx-auto animate-fade-in">
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold">Courses</h1>
-          <p className="text-sm text-muted-foreground mt-1">Your semester at a glance. Drop in a syllabus to auto-fill everything.</p>
+          <h1 className="text-2xl md:text-3xl font-bold">{a.groupingLabel}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{area === 'school' ? 'Your semester at a glance. Drop in a syllabus to auto-fill everything.' : 'Group and track everything in this space.'}</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setImporter(true)} className="rounded-xl"><Sparkles className="w-4 h-4 mr-1.5 text-indigo-600" /> Import syllabus</Button>
-          <Button onClick={() => { setEdit(null); setModal(true); }} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> Add course</Button>
+          {area === 'school' && <Button variant="outline" onClick={() => setImporter(true)} className="rounded-xl"><Sparkles className="w-4 h-4 mr-1.5 text-indigo-600" /> Import syllabus</Button>}
+          <Button onClick={() => { setEdit(null); setModal(true); }} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> Add {a.singular.toLowerCase()}</Button>
         </div>
       </div>
 
@@ -58,10 +62,10 @@ export default function CoursesPage() {
       ) : courses.length === 0 ? (
         <Card className="p-10 text-center">
           <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-4"><GraduationCap className="w-7 h-7 text-indigo-600" /></div>
-          <p className="font-semibold text-lg">No courses yet</p>
-          <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">Add a course manually, or import a syllabus to create one with all deadlines auto-filled.</p>
+          <p className="font-semibold text-lg">No {a.groupingLabel.toLowerCase()} yet</p>
+          <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">{area === 'school' ? 'Add a course manually, or import a syllabus to create one with all deadlines auto-filled.' : 'Add one to start grouping your tasks and events.'}</p>
           <div className="flex gap-2 justify-center mt-5">
-            <Button onClick={() => setImporter(true)}><Sparkles className="w-4 h-4 mr-1.5" /> Import syllabus</Button>
+            {area === 'school' && <Button onClick={() => setImporter(true)}><Sparkles className="w-4 h-4 mr-1.5" /> Import syllabus</Button>}
             <Button variant="outline" onClick={() => { setEdit(null); setModal(true); }}>Add manually</Button>
           </div>
         </Card>
@@ -108,13 +112,13 @@ export default function CoursesPage() {
         </div>
       )}
 
-      <CourseModal open={modal} onClose={() => { setModal(false); setEdit(null); }} onSave={saveCourse} course={edit} index={courses.length} />
+      <CourseModal open={modal} onClose={() => { setModal(false); setEdit(null); }} onSave={saveCourse} course={edit} index={courses.length} areaLabel={a.singular} />
       <SyllabusImporter open={importer} onClose={() => setImporter(false)} courses={courses} onDone={load} />
     </div>
   );
 }
 
-function CourseModal({ open, onClose, onSave, course, index }) {
+function CourseModal({ open, onClose, onSave, course, index, areaLabel = 'Course' }) {
   const COLORS = ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b', '#8b5cf6', '#ef4444', '#0ea5e9', '#84cc16'];
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
@@ -139,9 +143,9 @@ function CourseModal({ open, onClose, onSave, course, index }) {
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader><DialogTitle>{course ? 'Edit course' : 'New course'}</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{course ? `Edit ${areaLabel}` : `New ${areaLabel}`}</DialogTitle></DialogHeader>
         <div className="space-y-4 py-2">
-          <div className="space-y-1.5"><Label>Course name</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Linear Algebra" autoFocus /></div>
+          <div className="space-y-1.5"><Label>{areaLabel} name</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Linear Algebra" autoFocus /></div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5"><Label>Code</Label><Input value={code} onChange={(e) => setCode(e.target.value)} placeholder="MATH 211" /></div>
             <div className="space-y-1.5"><Label>Semester</Label><Input value={semester} onChange={(e) => setSemester(e.target.value)} placeholder="Fall 2026" /></div>
@@ -155,7 +159,7 @@ function CourseModal({ open, onClose, onSave, course, index }) {
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button onClick={submit} disabled={!name.trim()}>{course ? 'Save changes' : 'Add course'}</Button>
+          <Button onClick={submit} disabled={!name.trim()}>{course ? 'Save changes' : `Add ${areaLabel.toLowerCase()}`}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Plus, Pencil, Trash2, Mail, Phone, MapPin, Clock, BookOpen, Users } from 'lucide-react';
 import ContactModal, { CONTACT_ROLE } from '@/components/ContactModal';
 import { trashItem } from '@/lib/trash';
+import { useArea } from '@/lib/AreaContext';
 
 export default function ContactsPage() {
   const [contacts, setContacts] = useState([]);
@@ -12,33 +13,34 @@ export default function ContactsPage() {
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
   const [edit, setEdit] = useState(null);
+  const { area } = useArea();
 
   async function load() {
     setLoading(true);
     const [c, cr] = await Promise.all([
-      base44.entities.Contact.list('-created_date', 200),
-      base44.entities.Course.list()
+      base44.entities.Contact.filter({ area }, '-created_date', 200),
+      base44.entities.Course.filter({ area })
     ]);
     setContacts(c); setCourses(cr);
     setLoading(false);
   }
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [area]);
 
   const courseMap = Object.fromEntries(courses.map((c) => [c.id, c]));
 
   async function save(data) {
     if (data.id) await base44.entities.Contact.update(data.id, data);
-    else await base44.entities.Contact.create(data);
+    else await base44.entities.Contact.create({ ...data, area });
     setEdit(null); load();
   }
-  async function remove(c) { await trashItem('Contact', c); load(); }
+  async function remove(c) { await trashItem('Contact', c, area); load(); }
 
   return (
     <div className="p-4 md:p-8 max-w-6xl mx-auto animate-fade-in">
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold">Contacts</h1>
-          <p className="text-sm text-muted-foreground mt-1">Professors, TAs, advisors — office hours, class times & details in one place.</p>
+          <p className="text-sm text-muted-foreground mt-1">Keep everyone's details handy — hours, notes & contact info in one place.</p>
         </div>
         <Button onClick={() => { setEdit(null); setModal(true); }} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> New contact</Button>
       </div>
@@ -49,7 +51,7 @@ export default function ContactsPage() {
         <div className="flex flex-col items-center justify-center py-20 text-center text-muted-foreground">
           <Users className="w-10 h-10 mb-3 opacity-50" />
           <p className="font-medium">No contacts yet.</p>
-          <p className="text-sm mt-1">Add professors and TAs to keep their office hours handy.</p>
+          <p className="text-sm mt-1">Add people to keep their details and hours handy.</p>
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">

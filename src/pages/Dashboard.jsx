@@ -10,6 +10,8 @@ import { isToday, isThisWeek, isThisMonth, isAfter } from 'date-fns';
 import TaskModal from '@/components/TaskModal';
 import WorkloadBreakdown from '@/components/WorkloadBreakdown';
 import OverdueBanner from '@/components/OverdueBanner';
+import { useArea } from '@/lib/AreaContext';
+import { AREAS } from '@/lib/areas';
 
 export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
@@ -17,26 +19,27 @@ export default function Dashboard() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [taskModal, setTaskModal] = useState(false);
+  const { area } = useArea();
 
   async function load() {
     setLoading(true);
     const [t, e, c] = await Promise.all([
-      base44.entities.Task.list('-due_date', 200),
-      base44.entities.Event.list('-start_date', 200),
-      base44.entities.Course.list()
+      base44.entities.Task.filter({ area }, '-due_date', 200),
+      base44.entities.Event.filter({ area }, '-start_date', 200),
+      base44.entities.Course.filter({ area })
     ]);
     setTasks(t); setEvents(e); setCourses(c);
     setLoading(false);
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [area]);
 
   const open = tasks.filter((t) => t.status !== 'done');
   const done = tasks.filter((t) => t.status === 'done');
   const dueThisWeek = open.filter((t) => {
     const d = parseDate(t.due_date); return d && (isThisWeek(d, { weekStartsOn: 1 }) || daysUntil(t.due_date) <= 7);
   });
-  const exams = events.filter((e) => e.type === 'exam' && parseDate(e.start_date) && isAfter(parseDate(e.start_date), new Date()));
+  const upcomingEvents = events.filter((e) => parseDate(e.start_date) && isAfter(parseDate(e.start_date), new Date()));
   const todayTasks = open.filter((t) => parseDate(t.due_date) && isToday(parseDate(t.due_date)));
   const todayEvents = events.filter((e) => parseDate(e.start_date) && isToday(parseDate(e.start_date)));
   const upcoming = [...open].filter((t) => parseDate(t.due_date)).sort((a, b) => new Date(a.due_date) - new Date(b.due_date)).slice(0, 6);
@@ -53,7 +56,7 @@ export default function Dashboard() {
 
   async function saveTask(data) {
     if (data.id) await base44.entities.Task.update(data.id, data);
-    else await base44.entities.Task.create(data);
+    else await base44.entities.Task.create({ ...data, area });
     load();
   }
 
@@ -75,10 +78,10 @@ export default function Dashboard() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-8">
-        <StatCard icon={GraduationCap} tint="indigo" label="Courses" value={courses.length} link="/courses" />
+        <StatCard icon={GraduationCap} tint="indigo" label={AREAS[area]?.groupingLabel || 'Courses'} value={courses.length} link="/courses" />
         <StatCard icon={ListTodo} tint="violet" label="Open tasks" value={open.length} link="/tasks" />
         <StatCard icon={CalendarClock} tint="amber" label="Due this week" value={dueThisWeek.length} link="/tasks" />
-        <StatCard icon={Award} tint="rose" label="Upcoming exams" value={exams.length} link="/calendar" />
+        <StatCard icon={Award} tint="rose" label="Upcoming events" value={upcomingEvents.length} link="/calendar" />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">

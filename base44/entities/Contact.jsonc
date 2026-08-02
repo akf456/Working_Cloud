@@ -46,6 +46,16 @@
     "notes": {
       "type": "string",
       "title": "Notes"
+    },
+    "area": {
+      "type": "string",
+      "enum": [
+        "school",
+        "work",
+        "personal"
+      ],
+      "default": "school",
+      "title": "Area"
     }
   },
   "required": [

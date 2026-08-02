@@ -10,6 +10,7 @@ import {
 import { EVENT_TYPE, parseDate, fmtTime, fmt } from '@/lib/planner';
 import EventModal from '@/components/EventModal';
 import { trashItem } from '@/lib/trash';
+import { useArea } from '@/lib/AreaContext';
 
 export default function CalendarPage() {
   const [cursor, setCursor] = useState(new Date());
@@ -20,18 +21,19 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(false);
   const [editEvent, setEditEvent] = useState(null);
+  const { area } = useArea();
 
   async function load() {
     setLoading(true);
     const [e, t, c] = await Promise.all([
-      base44.entities.Event.list('-start_date', 300),
-      base44.entities.Task.list('-due_date', 300),
-      base44.entities.Course.list()
+      base44.entities.Event.filter({ area }, '-start_date', 300),
+      base44.entities.Task.filter({ area }, '-due_date', 300),
+      base44.entities.Course.filter({ area })
     ]);
     setEvents(e); setTasks(t); setCourses(c);
     setLoading(false);
   }
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [area]);
 
   const days = useMemo(() => {
     const start = startOfWeek(startOfMonth(cursor), { weekStartsOn: 0 });
@@ -52,12 +54,12 @@ export default function CalendarPage() {
 
   async function saveEvent(data) {
     if (data.id) await base44.entities.Event.update(data.id, data);
-    else await base44.entities.Event.create(data);
+    else await base44.entities.Event.create({ ...data, area });
     setEditEvent(null); load();
   }
 
   async function deleteEvent(e) {
-    await trashItem('Event', e); load();
+    await trashItem('Event', e, area); load();
   }
 
   return (

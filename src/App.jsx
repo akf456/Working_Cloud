@@ -12,6 +12,8 @@ import Register from '@/pages/Register';
 import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
 import Layout from '@/components/Layout';
+import Areas from '@/pages/Areas';
+import { AreaProvider } from '@/lib/AreaContext';
 import Dashboard from '@/pages/Dashboard';
 import CalendarPage from '@/pages/CalendarPage';
 import TasksPage from '@/pages/TasksPage';
@@ -50,8 +52,9 @@ const AuthenticatedApp = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
+        <Route path="/" element={<Areas />} />
         <Route element={<Layout />}>
-          <Route path="/" element={<Dashboard />} />
+              <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/tasks" element={<TasksPage />} />
           <Route path="/courses" element={<CoursesPage />} />
@@ -69,6 +72,7 @@ function App() {
 
   return (
     <AuthProvider>
+      <AreaProvider>
       <QueryClientProvider client={queryClientInstance}>
         <Router>
           <ScrollToTop />
@@ -76,6 +80,7 @@ function App() {
         </Router>
         <Toaster />
       </QueryClientProvider>
+      </AreaProvider>
     </AuthProvider>
   )
 }

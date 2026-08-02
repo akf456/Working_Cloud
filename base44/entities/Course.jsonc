@@ -26,6 +26,16 @@
     "syllabus_url": {
       "type": "string",
       "title": "Syllabus URL"
+    },
+    "area": {
+      "type": "string",
+      "enum": [
+        "school",
+        "work",
+        "personal"
+      ],
+      "default": "school",
+      "title": "Area"
     }
   },
   "required": [

@@ -54,7 +54,8 @@ export default function SyllabusImporter({ open, onClose, courses = [], onDone }
           code: courseCode.trim() || data?.course_code || '',
           color,
           instructor: data?.instructor || '',
-          semester: data?.semester || ''
+          semester: data?.semester || '',
+          area: 'school'
         });
         cid = created.id;
       }
@@ -68,7 +69,8 @@ export default function SyllabusImporter({ open, onClose, courses = [], onDone }
         status: 'todo',
         priority: 'medium',
         course_id: cid,
-        source: 'syllabus'
+        source: 'syllabus',
+        area: 'school'
       })));
       if (events.length) await base44.entities.Event.bulkCreate(events.map((e) => ({
         title: e.title,
@@ -79,7 +81,8 @@ export default function SyllabusImporter({ open, onClose, courses = [], onDone }
         type: EVENT_TYPE[e.type] ? e.type : 'event',
         location: e.location || '',
         course_id: cid,
-        source: 'syllabus'
+        source: 'syllabus',
+        area: 'school'
       })));
       setDone(true);
       onDone?.();

@@ -15,6 +15,7 @@ import { trashItem } from '@/lib/trash';
 import OverdueBanner from '@/components/OverdueBanner';
 import SubtaskList from '@/components/SubtaskList';
 import { ChevronDown } from 'lucide-react';
+import { useArea } from '@/lib/AreaContext';
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState([]);
@@ -27,17 +28,18 @@ export default function TasksPage() {
   const [modal, setModal] = useState(false);
   const [editTask, setEditTask] = useState(null);
   const [view, setView] = useState('status');
+  const { area } = useArea();
 
   async function load() {
     setLoading(true);
     const [t, c] = await Promise.all([
-      base44.entities.Task.list('-due_date', 300),
-      base44.entities.Course.list()
+      base44.entities.Task.filter({ area }, '-due_date', 300),
+      base44.entities.Course.filter({ area })
     ]);
     setTasks(t); setCourses(c);
     setLoading(false);
   }
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [area]);
 
   const courseMap = Object.fromEntries(courses.map((c) => [c.id, c]));
 
@@ -66,10 +68,10 @@ export default function TasksPage() {
     }
     load();
   }
-  async function remove(t) { await trashItem('Task', t); load(); }
+  async function remove(t) { await trashItem('Task', t, area); load(); }
   async function saveTask(data) {
     if (data.id) await base44.entities.Task.update(data.id, data);
-    else await base44.entities.Task.create(data);
+    else await base44.entities.Task.create({ ...data, area });
     setEditTask(null); load();
   }
 
