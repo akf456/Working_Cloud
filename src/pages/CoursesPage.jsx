@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Plus, Sparkles, Pencil, Trash2, BookOpen, ListTodo, CalendarClock, GraduationCap } from 'lucide-react';
 import { fmt, dueLabel, daysUntil, parseDate } from '@/lib/planner';
 import SyllabusImporter from '@/components/SyllabusImporter';
+import { trashItem } from '@/lib/trash';
 
 export default function CoursesPage() {
   const [courses, setCourses] = useState([]);
@@ -35,8 +36,8 @@ export default function CoursesPage() {
     else await base44.entities.Course.create(data);
     setEdit(null); setModal(false); load();
   }
-  async function remove(id) {
-    await base44.entities.Course.delete(id); load();
+  async function remove(c) {
+    await trashItem('Course', c); load();
   }
 
   return (
@@ -85,7 +86,7 @@ export default function CoursesPage() {
                   </div>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition">
                     <button onClick={() => { setEdit(c); setModal(true); }} className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-indigo-600"><Pencil className="w-3.5 h-3.5" /></button>
-                    <button onClick={() => remove(c.id)} className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-rose-600"><Trash2 className="w-3.5 h-3.5" /></button>
+                    <button onClick={() => remove(c)} className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-rose-600"><Trash2 className="w-3.5 h-3.5" /></button>
                   </div>
                 </div>
                 <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">

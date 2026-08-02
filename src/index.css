@@ -1,55 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 40 20% 99%;
-    --foreground: 240 10% 12%;
+    --background: 48 45% 99%;
+    --foreground: 265 32% 26%;
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 12%;
+    --card-foreground: 265 32% 26%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 12%;
-    --primary: 243 75% 59%;
+    --popover-foreground: 265 32% 26%;
+    --primary: 265 64% 74%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 5% 96%;
-    --secondary-foreground: 240 10% 12%;
-    --muted: 240 5% 95%;
-    --muted-foreground: 240 4% 46%;
-    --accent: 243 75% 96%;
-    --accent-foreground: 243 75% 40%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 6% 90%;
-    --input: 240 6% 90%;
-    --ring: 243 75% 59%;
-    --radius: 0.75rem;
-    --font-heading: 'Sora', ui-sans-serif, system-ui, sans-serif;
-    --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
-    --font-display: 'Sora', ui-sans-serif, system-ui, sans-serif;
+    --secondary: 330 62% 95%;
+    --secondary-foreground: 265 32% 32%;
+    --muted: 40 44% 96%;
+    --muted-foreground: 265 18% 48%;
+    --accent: 330 75% 93%;
+    --accent-foreground: 330 62% 48%;
+    --destructive: 0 76% 68%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 30% 90%;
+    --input: 220 30% 90%;
+    --ring: 265 64% 74%;
+    --radius: 1rem;
+    --font-heading: 'Fredoka', ui-sans-serif, system-ui, sans-serif;
+    --font-body: 'Nunito', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Fredoka', ui-sans-serif, system-ui, sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   }
 
   .dark {
-    --background: 240 10% 6%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 8%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 8%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 243 75% 66%;
-    --primary-foreground: 240 10% 8%;
-    --secondary: 240 4% 14%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 4% 14%;
-    --muted-foreground: 240 5% 65%;
-    --accent: 243 30% 18%;
-    --accent-foreground: 243 75% 80%;
-    --destructive: 0 62% 45%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 4% 18%;
-    --input: 240 4% 18%;
-    --ring: 243 75% 66%;
+    --background: 265 38% 13%;
+    --foreground: 40 44% 96%;
+    --card: 265 32% 16%;
+    --card-foreground: 40 44% 96%;
+    --popover: 265 32% 16%;
+    --popover-foreground: 40 44% 96%;
+    --primary: 265 62% 78%;
+    --primary-foreground: 265 35% 14%;
+    --secondary: 265 26% 22%;
+    --secondary-foreground: 40 44% 96%;
+    --muted: 265 26% 22%;
+    --muted-foreground: 265 20% 70%;
+    --accent: 330 42% 26%;
+    --accent-foreground: 330 72% 88%;
+    --destructive: 0 62% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 265 26% 24%;
+    --input: 265 26% 24%;
+    --ring: 265 62% 78%;
   }
 }
 
@@ -67,7 +69,7 @@
 
 @layer components {
   .gradient-text {
-    @apply bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-500 bg-clip-text text-transparent;
+    @apply bg-gradient-to-br from-[#a78bfa] via-[#f9a8d4] to-[#fcd34b] bg-clip-text text-transparent;
   }
   .surface {
     @apply bg-card border border-border/70 rounded-2xl shadow-sm;
@@ -94,7 +96,3 @@
   100% { transform: scale(1); opacity: 1; }
 }
 .animate-pop { animation: pop 0.25s ease-out both; }
-
-/* Quill tweaks */
-.ql-toolbar { border: none !important; padding: 0 0 0.5rem 0 !important; }
-.ql-container { border: none !important; font-family: inherit !important; font-size: 0.9rem !important; }

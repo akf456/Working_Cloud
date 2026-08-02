@@ -9,6 +9,7 @@ import {
 } from 'date-fns';
 import { EVENT_TYPE, parseDate, fmtTime, fmt } from '@/lib/planner';
 import EventModal from '@/components/EventModal';
+import { trashItem } from '@/lib/trash';
 
 export default function CalendarPage() {
   const [cursor, setCursor] = useState(new Date());
@@ -55,8 +56,8 @@ export default function CalendarPage() {
     setEditEvent(null); load();
   }
 
-  async function deleteEvent(id) {
-    await base44.entities.Event.delete(id); load();
+  async function deleteEvent(e) {
+    await trashItem('Event', e); load();
   }
 
   return (
@@ -138,7 +139,7 @@ export default function CalendarPage() {
                   </div>
                   <div className="flex gap-2 mt-2 opacity-0 group-hover:opacity-100 transition">
                     <button className="text-xs text-indigo-600 hover:underline" onClick={() => { setEditEvent(e); setModal(true); }}>Edit</button>
-                    <button className="text-xs text-rose-600 hover:underline" onClick={() => deleteEvent(e.id)}>Delete</button>
+                    <button className="text-xs text-rose-600 hover:underline" onClick={() => deleteEvent(e)}>Delete</button>
                   </div>
                 </div>
               );

@@ -98,6 +98,18 @@ export function fromInputDateTime(v) {
   return new Date(v).toISOString();
 }
 
+export function toInputDate(v) {
+  const d = parseDate(v);
+  if (!d) return '';
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+export function fromInputDate(v) {
+  if (!v) return null;
+  return new Date(v + 'T12:00:00').toISOString();
+}
+
 export function greeting() {
   const h = new Date().getHours();
   if (h < 12) return 'Good morning';

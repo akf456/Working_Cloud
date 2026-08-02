@@ -9,6 +9,7 @@ import { greeting, quoteOfDay, fmt, dueLabel, daysUntil, TASK_TYPE, EVENT_TYPE, 
 import { isToday, isThisWeek, isThisMonth, isAfter } from 'date-fns';
 import TaskModal from '@/components/TaskModal';
 import WorkloadBreakdown from '@/components/WorkloadBreakdown';
+import OverdueBanner from '@/components/OverdueBanner';
 
 export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
@@ -69,6 +70,8 @@ export default function Dashboard() {
           <Plus className="w-4 h-4 mr-1.5" /> Quick add task
         </Button>
       </div>
+
+      <OverdueBanner tasks={tasks} courses={courses} />
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-8">

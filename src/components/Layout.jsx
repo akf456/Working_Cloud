@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
-import { LayoutDashboard, CalendarDays, ListTodo, GraduationCap, NotebookPen, Sparkles, Users } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, ListTodo, GraduationCap, Sparkles, Users, Trash2 } from 'lucide-react';
 
 const NAV = [
   { to: '/', label: 'Dashboard', Icon: LayoutDashboard },
@@ -8,7 +8,7 @@ const NAV = [
   { to: '/tasks', label: 'Tasks', Icon: ListTodo },
   { to: '/courses', label: 'Courses', Icon: GraduationCap },
   { to: '/contacts', label: 'Contacts', Icon: Users },
-  { to: '/notes', label: 'Notes', Icon: NotebookPen }
+  { to: '/trash', label: 'Trash', Icon: Trash2 }
 ];
 
 export default function Layout() {
@@ -18,11 +18,11 @@ export default function Layout() {
       {/* Desktop sidebar */}
       <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-border/60 bg-card/50 backdrop-blur px-4 py-6">
         <div className="flex items-center gap-2.5 px-2 mb-8">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center shadow-md shadow-indigo-500/20">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#a78bfa] to-[#f9a8d4] flex items-center justify-center shadow-md shadow-indigo-500/20">
             <GraduationCap className="w-5 h-5 text-white" />
           </div>
           <div>
-            <p className="font-heading font-bold text-lg leading-none">Scholarly</p>
+            <p className="font-heading font-bold text-lg leading-none">Working Buddy</p>
             <p className="text-[11px] text-muted-foreground mt-0.5">Stay ahead, calmly.</p>
           </div>
         </div>
@@ -48,10 +48,10 @@ export default function Layout() {
       {/* Mobile top bar */}
       <header className="md:hidden fixed top-0 inset-x-0 z-30 h-14 flex items-center justify-between px-4 bg-card/80 backdrop-blur border-b border-border/60">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center">
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#a78bfa] to-[#f9a8d4] flex items-center justify-center">
             <GraduationCap className="w-4 h-4 text-white" />
           </div>
-          <span className="font-heading font-bold">Scholarly</span>
+          <span className="font-heading font-bold">Working Buddy</span>
         </div>
       </header>
 

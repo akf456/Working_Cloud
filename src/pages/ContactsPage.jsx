@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Plus, Pencil, Trash2, Mail, Phone, MapPin, Clock, BookOpen, Users } from 'lucide-react';
 import ContactModal, { CONTACT_ROLE } from '@/components/ContactModal';
+import { trashItem } from '@/lib/trash';
 
 export default function ContactsPage() {
   const [contacts, setContacts] = useState([]);
@@ -30,7 +31,7 @@ export default function ContactsPage() {
     else await base44.entities.Contact.create(data);
     setEdit(null); load();
   }
-  async function remove(id) { await base44.entities.Contact.delete(id); load(); }
+  async function remove(c) { await trashItem('Contact', c); load(); }
 
   return (
     <div className="p-4 md:p-8 max-w-6xl mx-auto animate-fade-in">
@@ -67,7 +68,7 @@ export default function ContactsPage() {
                   </div>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition">
                     <button onClick={() => { setEdit(c); setModal(true); }} className="p-1.5 rounded-lg hover:bg-background text-muted-foreground hover:text-indigo-600"><Pencil className="w-3.5 h-3.5" /></button>
-                    <button onClick={() => remove(c.id)} className="p-1.5 rounded-lg hover:bg-background text-muted-foreground hover:text-rose-600"><Trash2 className="w-3.5 h-3.5" /></button>
+                    <button onClick={() => remove(c)} className="p-1.5 rounded-lg hover:bg-background text-muted-foreground hover:text-rose-600"><Trash2 className="w-3.5 h-3.5" /></button>
                   </div>
                 </div>
                 <div className="mt-3 space-y-1.5 text-sm">

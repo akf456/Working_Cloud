@@ -1,0 +1,32 @@
+{
+  "name": "Subtask",
+  "type": "object",
+  "properties": {
+    "parent_task_id": {
+      "type": "string",
+      "title": "Parent Task ID"
+    },
+    "title": {
+      "type": "string",
+      "title": "Title"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Due Date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "todo",
+        "done"
+      ],
+      "default": "todo",
+      "title": "Status"
+    }
+  },
+  "required": [
+    "parent_task_id",
+    "title"
+  ]
+}

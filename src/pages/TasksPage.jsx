@@ -9,6 +9,12 @@ import { Plus, Search, Pencil, Trash2, Inbox } from 'lucide-react';
 import { TASK_TYPE, PRIORITY, STATUS, dueLabel, daysUntil, parseDate } from '@/lib/planner';
 import TaskModal from '@/components/TaskModal';
 import PriorityView from '@/components/PriorityView';
+import { celebrate } from '@/lib/celebrate';
+import { useToast } from '@/components/ui/use-toast';
+import { trashItem } from '@/lib/trash';
+import OverdueBanner from '@/components/OverdueBanner';
+import SubtaskList from '@/components/SubtaskList';
+import { ChevronDown } from 'lucide-react';
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState([]);
@@ -51,12 +57,16 @@ export default function TasksPage() {
     { key: 'done', label: 'Done' }
   ];
 
+  const { toast } = useToast();
   async function toggle(t) {
     const next = t.status === 'done' ? 'todo' : 'done';
     await base44.entities.Task.update(t.id, { status: next });
+    if (next === 'done') {
+      toast({ title: 'Task completed! 🎉', description: celebrate() });
+    }
     load();
   }
-  async function remove(id) { await base44.entities.Task.delete(id); load(); }
+  async function remove(t) { await trashItem('Task', t); load(); }
   async function saveTask(data) {
     if (data.id) await base44.entities.Task.update(data.id, data);
     else await base44.entities.Task.create(data);
@@ -72,6 +82,8 @@ export default function TasksPage() {
         </div>
         <Button onClick={() => { setEditTask(null); setModal(true); }} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> New task</Button>
       </div>
+
+      <OverdueBanner tasks={tasks} courses={courses} />
 
       <div className="inline-flex rounded-xl bg-muted p-1 mb-5 self-start">
         <button onClick={() => setView('status')} className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition ${view === 'status' ? 'bg-background shadow-sm text-indigo-600' : 'text-muted-foreground hover:text-foreground'}`}>By status</button>
@@ -136,7 +148,7 @@ export default function TasksPage() {
                     <div className="flex-1 h-px bg-border/60" />
                   </div>
                   <div className="space-y-2">
-                    {items.map((t) => <TaskRow key={t.id} task={t} course={courseMap[t.course_id]} onToggle={() => toggle(t)} onEdit={() => { setEditTask(t); setModal(true); }} onDelete={() => remove(t.id)} />)}
+                    {items.map((t) => <TaskRow key={t.id} task={t} course={courseMap[t.course_id]} onToggle={() => toggle(t)} onEdit={() => { setEditTask(t); setModal(true); }} onDelete={() => remove(t)} />)}
                   </div>
                 </div>
               );
@@ -150,17 +162,19 @@ export default function TasksPage() {
 }
 
 function TaskRow({ task, course, onToggle, onEdit, onDelete }) {
+  const [open, setOpen] = useState(false);
   const T = TASK_TYPE[task.type] || TASK_TYPE.misc;
   const P = PRIORITY[task.priority] || PRIORITY.medium;
   const done = task.status === 'done';
   const n = daysUntil(task.due_date);
   const overdue = n !== null && n < 0 && !done;
   return (
-    <div className={`group flex items-center gap-3 rounded-xl border border-border/60 px-3 py-3 hover:bg-accent/30 transition ${done ? 'opacity-60' : ''}`}>
+    <div>
+    <div className={`group flex items-center gap-3 rounded-xl border px-3 py-3 hover:bg-accent/30 transition ${overdue ? 'border-rose-300 bg-rose-50' : 'border-border/60'} ${done ? 'opacity-60' : ''}`}>
       <Checkbox checked={done} onCheckedChange={onToggle} className="shrink-0" />
       <span className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${T.chip}`}><T.Icon className="w-4 h-4" /></span>
       <div className="min-w-0 flex-1">
-        <p className={`font-medium text-sm truncate ${done ? 'line-through' : ''}`}>{task.title}</p>
+        <p className={`font-medium text-sm truncate ${done ? 'line-through' : ''} ${overdue ? 'text-rose-700 font-bold' : ''}`}>{task.title}</p>
         <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground mt-0.5">
           <span className={`inline-flex items-center gap-1`}><span className={`w-1.5 h-1.5 rounded-full ${P.dot}`} />{P.label}</span>
           <span>· {T.label}</span>
@@ -169,10 +183,15 @@ function TaskRow({ task, course, onToggle, onEdit, onDelete }) {
         </div>
       </div>
       {task.due_date && <span className={`text-xs font-semibold shrink-0 ${overdue ? 'text-rose-600' : 'text-muted-foreground'}`}>{dueLabel(task.due_date)}</span>}
+      <button onClick={() => setOpen((o) => !o)} className="p-1.5 rounded-lg hover:bg-background text-muted-foreground hover:text-primary transition shrink-0" title="Subtasks">
+        <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition shrink-0">
         <button onClick={onEdit} className="p-1.5 rounded-lg hover:bg-background text-muted-foreground hover:text-indigo-600"><Pencil className="w-3.5 h-3.5" /></button>
         <button onClick={onDelete} className="p-1.5 rounded-lg hover:bg-background text-muted-foreground hover:text-rose-600"><Trash2 className="w-3.5 h-3.5" /></button>
       </div>
+    </div>
+      {open && <SubtaskList parent={task} />}
     </div>
   );
 }
