@@ -8,6 +8,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { Plus, Search, Pencil, Trash2, Inbox } from 'lucide-react';
 import { TASK_TYPE, PRIORITY, STATUS, dueLabel, daysUntil, parseDate } from '@/lib/planner';
 import TaskModal from '@/components/TaskModal';
+import PriorityView from '@/components/PriorityView';
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState([]);
@@ -19,6 +20,7 @@ export default function TasksPage() {
   const [type, setType] = useState('all');
   const [modal, setModal] = useState(false);
   const [editTask, setEditTask] = useState(null);
+  const [view, setView] = useState('status');
 
   async function load() {
     setLoading(true);
@@ -71,6 +73,11 @@ export default function TasksPage() {
         <Button onClick={() => { setEditTask(null); setModal(true); }} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> New task</Button>
       </div>
 
+      <div className="inline-flex rounded-xl bg-muted p-1 mb-5 self-start">
+        <button onClick={() => setView('status')} className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition ${view === 'status' ? 'bg-background shadow-sm text-indigo-600' : 'text-muted-foreground hover:text-foreground'}`}>By status</button>
+        <button onClick={() => setView('priority')} className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition ${view === 'priority' ? 'bg-background shadow-sm text-indigo-600' : 'text-muted-foreground hover:text-foreground'}`}>Priority</button>
+      </div>
+
       {/* Filters */}
       <Card className="p-3 mb-5 grid grid-cols-2 md:grid-cols-4 gap-2">
         <div className="relative col-span-2 md:col-span-1">
@@ -109,6 +116,8 @@ export default function TasksPage() {
             <p className="font-medium">No tasks here.</p>
             <p className="text-sm mt-1">Add one, or import a syllabus to auto-fill deadlines.</p>
           </div>
+        ) : view === 'priority' ? (
+          <PriorityView tasks={filtered} events={[]} courses={courses} onToggle={toggle} />
         ) : (
           <div className="space-y-6">
             {groups.map(({ key, label }) => {

@@ -17,6 +17,7 @@ import CalendarPage from '@/pages/CalendarPage';
 import TasksPage from '@/pages/TasksPage';
 import CoursesPage from '@/pages/CoursesPage';
 import NotesPage from '@/pages/NotesPage';
+import ContactsPage from '@/pages/ContactsPage';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -55,6 +56,7 @@ const AuthenticatedApp = () => {
           <Route path="/tasks" element={<TasksPage />} />
           <Route path="/courses" element={<CoursesPage />} />
           <Route path="/notes" element={<NotesPage />} />
+          <Route path="/contacts" element={<ContactsPage />} />
         </Route>
       </Route>
       <Route path="*" element={<PageNotFound />} />

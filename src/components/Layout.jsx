@@ -1,12 +1,13 @@
 import React from 'react';
 import { Link, useLocation, Outlet } from 'react-router-dom';
-import { LayoutDashboard, CalendarDays, ListTodo, GraduationCap, NotebookPen, Sparkles } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, ListTodo, GraduationCap, NotebookPen, Sparkles, Users } from 'lucide-react';
 
 const NAV = [
   { to: '/', label: 'Dashboard', Icon: LayoutDashboard },
   { to: '/calendar', label: 'Calendar', Icon: CalendarDays },
   { to: '/tasks', label: 'Tasks', Icon: ListTodo },
   { to: '/courses', label: 'Courses', Icon: GraduationCap },
+  { to: '/contacts', label: 'Contacts', Icon: Users },
   { to: '/notes', label: 'Notes', Icon: NotebookPen }
 ];
 
@@ -59,7 +60,7 @@ export default function Layout() {
       </main>
 
       {/* Mobile bottom nav */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 grid grid-cols-5 bg-card/90 backdrop-blur border-t border-border/60">
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 grid grid-cols-6 bg-card/90 backdrop-blur border-t border-border/60">
         {NAV.map(({ to, label, Icon }) => {
           const active = to === '/' ? pathname === '/' : pathname.startsWith(to);
           return (

@@ -106,3 +106,19 @@ export function greeting() {
 }
 
 export const DUE_ICONS = { overdue: CalendarClock, soon: Flag, done: PartyPopper, break: Coffee };
+
+// Exam-aware priority score. Higher = more urgent. Overdue floats to the top;
+// exams get a boost scaled by nearness so a due-tomorrow assignment still beats
+// a far-off exam.
+export function priorityScore(task) {
+  const days = daysUntil(task.due_date);
+  const d = days === null ? 30 : days;
+  const overdue = d < 0;
+  const ad = Math.max(d, 0);
+  const urgency = 1 / (ad + 1);
+  const pw = { high: 1.5, medium: 1, low: 0.75 }[task.priority] || 1;
+  let s = urgency * pw;
+  if (overdue) s += 2.5;
+  if (task.type === 'exam') s += urgency * 0.6 + 0.15;
+  return s;
+}

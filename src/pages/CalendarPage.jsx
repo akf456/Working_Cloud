@@ -45,6 +45,8 @@ export default function CalendarPage() {
   }
 
   const courseMap = Object.fromEntries(courses.map((c) => [c.id, c]));
+  const evColor = (e) => (courseMap[e.course_id]?.color) || (EVENT_TYPE[e.type] || EVENT_TYPE.event).dot;
+  const tkColor = (t) => courseMap[t.course_id]?.color || '#f59e0b';
   const selectedItems = itemsForDay(selected);
 
   async function saveEvent(data) {
@@ -77,6 +79,15 @@ export default function CalendarPage() {
               <Button variant="ghost" size="icon" onClick={() => setCursor(addMonths(cursor, 1))}><ChevronRight className="w-4 h-4" /></Button>
             </div>
           </div>
+          <div className="flex flex-wrap gap-x-3 gap-y-1 mb-3">
+            {courses.length > 0 && <span className="text-[11px] font-semibold text-muted-foreground mr-1">Key:</span>}
+            {courses.map((c) => (
+              <span key={c.id} className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: c.color || '#6366f1' }} />
+                {c.code || c.name}
+              </span>
+            ))}
+          </div>
           <div className="grid grid-cols-7 text-center text-xs font-medium text-muted-foreground mb-1">
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => <div key={d} className="py-1">{d}</div>)}
           </div>
@@ -94,10 +105,10 @@ export default function CalendarPage() {
                   <span className={`text-xs font-semibold w-6 h-6 flex items-center justify-center rounded-full ${today ? 'bg-indigo-600 text-white' : ''}`}>{format(day, 'd')}</span>
                   <div className="mt-1 space-y-0.5 overflow-hidden">
                     {evs.slice(0, 2).map((e) => {
-                      const E = EVENT_TYPE[e.type] || EVENT_TYPE.event;
-                      return <div key={e.id} className="text-[10px] truncate rounded px-1 py-0.5" style={{ backgroundColor: E.dot + '22', color: E.dot }}>{e.title}</div>;
+                      const col = evColor(e);
+                      return <div key={e.id} className="text-[10px] truncate rounded px-1 py-0.5" style={{ backgroundColor: col + '22', color: col }}>{e.title}</div>;
                     })}
-                    {tks.slice(0, 2).map((t) => <div key={t.id} className="text-[10px] truncate rounded px-1 py-0.5 bg-amber-100 text-amber-700">⚑ {t.title}</div>)}
+                    {tks.slice(0, 2).map((t) => { const col = tkColor(t); return <div key={t.id} className="text-[10px] truncate rounded px-1 py-0.5" style={{ backgroundColor: col + '22', color: col }}>⚑ {t.title}</div>; })}
                     {(evs.length + tks.length) > 4 && <div className="text-[10px] text-muted-foreground px-1">+{evs.length + tks.length - 4} more</div>}
                   </div>
                 </button>
@@ -117,7 +128,7 @@ export default function CalendarPage() {
               return (
                 <div key={e.id} className="group rounded-xl border border-border/60 p-3 hover:bg-accent/30 transition">
                   <div className="flex items-start gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: E.dot }} />
+                    <span className="w-2.5 h-2.5 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: courseMap[e.course_id]?.color || E.dot }} />
                     <div className="min-w-0 flex-1">
                       <p className="font-medium text-sm">{e.title}</p>
                       <p className="text-xs text-muted-foreground">{E.label}{c ? ` · ${c.code || c.name}` : ''}</p>

@@ -6,8 +6,9 @@ import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { GraduationCap, ListTodo, CalendarClock, Award, Plus, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { greeting, quoteOfDay, fmt, dueLabel, daysUntil, TASK_TYPE, EVENT_TYPE, parseDate } from '@/lib/planner';
-import { isToday, isThisWeek, isAfter } from 'date-fns';
+import { isToday, isThisWeek, isThisMonth, isAfter } from 'date-fns';
 import TaskModal from '@/components/TaskModal';
+import WorkloadBreakdown from '@/components/WorkloadBreakdown';
 
 export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
@@ -42,6 +43,12 @@ export default function Dashboard() {
   const pct = total ? Math.round((done.length / total) * 100) : 0;
   const courseMap = Object.fromEntries(courses.map((c) => [c.id, c]));
   const quote = quoteOfDay();
+  const dueTodayAll = tasks.filter((t) => parseDate(t.due_date) && isToday(parseDate(t.due_date)));
+  const dayDone = dueTodayAll.filter((t) => t.status === 'done').length;
+  const dayTotal = dueTodayAll.length;
+  const dueMonthAll = tasks.filter((t) => parseDate(t.due_date) && isThisMonth(parseDate(t.due_date)));
+  const monthDone = dueMonthAll.filter((t) => t.status === 'done').length;
+  const monthTotal = dueMonthAll.length;
 
   async function saveTask(data) {
     if (data.id) await base44.entities.Task.update(data.id, data);
@@ -131,6 +138,18 @@ export default function Dashboard() {
         </Card>
       </div>
 
+      {/* Workload & range progress */}
+      <div className="grid lg:grid-cols-3 gap-6 mt-6">
+        <div className="lg:col-span-2"><WorkloadBreakdown tasks={tasks} /></div>
+        <Card className="p-5">
+          <h2 className="font-semibold text-lg mb-4">Daily & monthly</h2>
+          <div className="grid grid-cols-2 gap-4">
+            <MiniRing label="Today" done={dayDone} total={dayTotal} color="#6366f1" />
+            <MiniRing label="This month" done={monthDone} total={monthTotal} color="#d946ef" />
+          </div>
+        </Card>
+      </div>
+
       {/* Today */}
       <div className="grid md:grid-cols-2 gap-6 mt-6">
         <Card className="p-5">
@@ -198,4 +217,26 @@ function SkeletonRows() {
 
 function Empty({ icon: Icon, text }) {
   return <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground"><Icon className="w-8 h-8 mb-2 opacity-60" /><p className="text-sm max-w-[200px]">{text}</p></div>;
+}
+
+function MiniRing({ label, done, total, color }) {
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  const r = 34;
+  const c = 2 * Math.PI * r;
+  return (
+    <div className="flex flex-col items-center">
+      <div className="relative w-20 h-20">
+        <svg className="w-full h-full -rotate-90" viewBox="0 0 80 80">
+          <circle cx="40" cy="40" r={r} fill="none" stroke="hsl(var(--muted))" strokeWidth="8" />
+          <circle cx="40" cy="40" r={r} fill="none" stroke={color} strokeWidth="8" strokeLinecap="round"
+            strokeDasharray={c} strokeDashoffset={c * (1 - pct / 100)} className="transition-all duration-700" />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-base font-bold">{pct}%</span>
+          <span className="text-[10px] text-muted-foreground -mt-0.5">{done}/{total}</span>
+        </div>
+      </div>
+      <span className="text-xs text-muted-foreground mt-2">{label}</span>
+    </div>
+  );
 }

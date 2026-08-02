@@ -1,0 +1,54 @@
+{
+  "name": "Contact",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Name"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "professor",
+        "ta",
+        "advisor",
+        "tutor",
+        "classmate",
+        "other"
+      ],
+      "default": "professor",
+      "title": "Role"
+    },
+    "email": {
+      "type": "string",
+      "title": "Email"
+    },
+    "phone": {
+      "type": "string",
+      "title": "Phone"
+    },
+    "office_location": {
+      "type": "string",
+      "title": "Office / Location"
+    },
+    "course_id": {
+      "type": "string",
+      "title": "Course ID"
+    },
+    "office_hours": {
+      "type": "string",
+      "title": "Office Hours"
+    },
+    "class_times": {
+      "type": "string",
+      "title": "Class Times"
+    },
+    "notes": {
+      "type": "string",
+      "title": "Notes"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}
