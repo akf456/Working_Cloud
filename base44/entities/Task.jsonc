@@ -1,0 +1,69 @@
+{
+  "name": "Task",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "title": "Title"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description"
+    },
+    "due_date": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Due Date"
+    },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "default": "medium",
+      "title": "Priority"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "todo",
+        "in_progress",
+        "done"
+      ],
+      "default": "todo",
+      "title": "Status"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "assignment",
+        "exam",
+        "quiz",
+        "study",
+        "reading",
+        "project",
+        "misc"
+      ],
+      "default": "misc",
+      "title": "Type"
+    },
+    "course_id": {
+      "type": "string",
+      "title": "Course ID"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "syllabus"
+      ],
+      "default": "manual",
+      "title": "Source"
+    }
+  },
+  "required": [
+    "title"
+  ]
+}

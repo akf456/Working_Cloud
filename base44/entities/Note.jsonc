@@ -1,0 +1,33 @@
+{
+  "name": "Note",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "title": "Title"
+    },
+    "content": {
+      "type": "string",
+      "title": "Content"
+    },
+    "course_id": {
+      "type": "string",
+      "title": "Course ID"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "title": "Tags"
+    },
+    "color": {
+      "type": "string",
+      "default": "#fef9c3",
+      "title": "Color"
+    }
+  },
+  "required": [
+    "title"
+  ]
+}

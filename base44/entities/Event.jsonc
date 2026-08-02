@@ -1,0 +1,63 @@
+{
+  "name": "Event",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "title": "Title"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Start"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date-time",
+      "title": "End"
+    },
+    "all_day": {
+      "type": "boolean",
+      "default": false,
+      "title": "All Day"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "exam",
+        "deadline",
+        "class",
+        "study",
+        "event",
+        "holiday"
+      ],
+      "default": "event",
+      "title": "Type"
+    },
+    "course_id": {
+      "type": "string",
+      "title": "Course ID"
+    },
+    "location": {
+      "type": "string",
+      "title": "Location"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "manual",
+        "syllabus"
+      ],
+      "default": "manual",
+      "title": "Source"
+    }
+  },
+  "required": [
+    "title",
+    "start_date"
+  ]
+}
