@@ -6,7 +6,7 @@ import { GraduationCap, Briefcase, Heart, Share2, Sparkles, CalendarDays, ListTo
 import WorkingCloudLogo from '@/components/WorkingCloudLogo';
 import { AREA_LIST } from '@/lib/areas';
 
-export default function Landing() {
+export default function Home() {
   const { isAuthenticated } = useAuth();
   if (isAuthenticated) return <Navigate to="/areas" replace />;
 
