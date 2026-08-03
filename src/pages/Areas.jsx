@@ -24,7 +24,7 @@ export default function Areas() {
               onClick={() => { enter(a.key); nav('/dashboard'); }}
               className="group text-left rounded-3xl border border-border/70 bg-card p-6 hover:shadow-lg hover:-translate-y-1 transition-all animate-fade-in"
             >
-              <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${a.gradient} flex items-center justify-center text-white shadow-sm mb-4`}>
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-sm mb-4" style={{ backgroundColor: a.monoBg }}>
                 <a.Icon className="w-7 h-7" />
               </div>
               <h2 className="text-xl font-bold mb-1">{a.label}</h2>

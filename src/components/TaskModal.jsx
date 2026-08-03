@@ -17,6 +17,7 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
   const [status, setStatus] = useState(task?.status || 'todo');
   const [type, setType] = useState(task?.type || (area === 'school' ? 'misc' : ''));
   const [courseId, setCourseId] = useState(task?.course_id || 'none');
+  const [repeat, setRepeat] = useState(task?.repeat || 'none');
 
   React.useEffect(() => {
     setTitle(task?.title || '');
@@ -26,6 +27,7 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
     setStatus(task?.status || 'todo');
     setType(task?.type || (area === 'school' ? 'misc' : ''));
     setCourseId(task?.course_id || 'none');
+    setRepeat(task?.repeat || 'none');
   }, [task, open]);
 
   function submit() {
@@ -34,7 +36,7 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
       title: title.trim(),
       description: description.trim(),
       due_date: dueDate ? fromInputDateTime(dueDate) : null,
-      priority, status, type,
+      priority, status, type, repeat,
       course_id: courseId === 'none' ? null : courseId
     });
     onClose();
@@ -93,6 +95,18 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
                 </SelectContent>
               </Select>
             </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Repeat</Label>
+            <Select value={repeat} onValueChange={setRepeat}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Does not repeat</SelectItem>
+                <SelectItem value="daily">Daily</SelectItem>
+                <SelectItem value="weekly">Weekly</SelectItem>
+                <SelectItem value="monthly">Monthly</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           {area === 'school' && (
             <div className="space-y-1.5">

@@ -10,6 +10,7 @@ export const AREAS = {
     accent: '#a78bfa',
     tagline: 'Assignments, exams & syllabi',
     gradient: 'from-[#a78bfa] to-[#818cf8]',
+    monoBg: '#D4AF37',
     soft: 'bg-violet-50 text-violet-600',
     theme: {},
     typeSuggestions: ['Assignment', 'Exam', 'Quiz', 'Study', 'Reading', 'Project'],
@@ -26,6 +27,7 @@ export const AREAS = {
     accent: '#334155',
     tagline: 'Meetings, deadlines & projects',
     gradient: 'from-[#475569] to-[#94a3b8]',
+    monoBg: '#2B2D31',
     soft: 'bg-slate-100 text-slate-700',
     theme: {
       '--primary': '220 13% 18%',
@@ -56,6 +58,7 @@ export const AREAS = {
     accent: '#0d9488',
     tagline: 'Events, errands & memories',
     gradient: 'from-[#5eead4] to-[#86efac]',
+    monoBg: '#003153',
     soft: 'bg-teal-50 text-teal-600',
     theme: {
       '--primary': '168 58% 42%',
@@ -81,6 +84,7 @@ export const AREAS = {
     accent: '#f97316',
     tagline: 'Groups, family & shared plans',
     gradient: 'from-[#fb923c] to-[#fcd34b]',
+    monoBg: '#004225',
     soft: 'bg-orange-50 text-orange-600',
     theme: {
       '--primary': '14 80% 60%',

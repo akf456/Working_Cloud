@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { Plus, Search, Pencil, Trash2, Inbox, Download } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, Inbox, Download, CheckSquare } from 'lucide-react';
+import { toggleTaskStatus } from '@/lib/tasks';
 import { taskTypeMeta, PRIORITY, STATUS, dueLabel, daysUntil, parseDate, fmt } from '@/lib/planner';
 import TaskModal from '@/components/TaskModal';
 import PriorityView from '@/components/PriorityView';
@@ -29,6 +30,10 @@ export default function TasksPage() {
   const [modal, setModal] = useState(false);
   const [editTask, setEditTask] = useState(null);
   const [view, setView] = useState('status');
+  const [priority, setPriority] = useState('all');
+  const [due, setDue] = useState('all');
+  const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected] = useState(new Set());
   const { area } = useArea();
 
   async function load() {
@@ -50,9 +55,18 @@ export default function TasksPage() {
       if (course !== 'all' && t.course_id !== course) return false;
       if (status !== 'all' && t.status !== status) return false;
       if (type !== 'all' && t.type !== type) return false;
+      if (priority !== 'all' && t.priority !== priority) return false;
+      if (due !== 'all') {
+        const days = daysUntil(t.due_date);
+        if (days === null) return false;
+        if (due === 'overdue' && !(days < 0 && t.status !== 'done')) return false;
+        if (due === 'today' && days !== 0) return false;
+        if (due === 'week' && !(days >= 0 && days <= 7)) return false;
+        if (due === 'month' && !(days >= 0 && days <= 30)) return false;
+      }
       return true;
     });
-  }, [tasks, q, course, status, type]);
+  }, [tasks, q, course, status, type, priority, due]);
 
   const groups = [
     { key: 'todo', label: 'To Do' },
@@ -62,14 +76,25 @@ export default function TasksPage() {
 
   const { toast } = useToast();
   async function toggle(t) {
-    const next = t.status === 'done' ? 'todo' : 'done';
-    await base44.entities.Task.update(t.id, { status: next });
-    if (next === 'done') {
-      toast({ title: 'Task completed! 🎉', description: celebrate() });
-    }
+    const completing = t.status !== 'done';
+    await toggleTaskStatus(t);
+    if (completing) toast({ title: 'Task completed! 🎉', description: celebrate() });
     load();
   }
   async function remove(t) { await trashItem('Task', t, area); load(); }
+  function toggleSelect(id) { setSelected((p) => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; }); }
+  function selectAll() { setSelected(new Set(filtered.map((t) => t.id))); }
+  function clearSel() { setSelected(new Set()); }
+  async function bulkTrash() {
+    const items = tasks.filter((t) => selected.has(t.id));
+    for (const t of items) await trashItem('Task', t, area);
+    setSelected(new Set()); setSelectMode(false); load();
+  }
+  async function bulkStatus(s) {
+    if (!selected.size) return;
+    await base44.entities.Task.bulkUpdate([...selected].map((id) => ({ id, status: s })));
+    setSelected(new Set()); load();
+  }
   function exportTasks() {
     const rows = filtered.map((t) => ({ Title: t.title || '', Type: taskTypeMeta(t.type).label, Priority: t.priority || '', Status: t.status || '', Due: t.due_date ? fmt(t.due_date) : '', Group: courseMap[t.course_id]?.name || '' }));
     downloadCSV(`tasks-${area}.csv`, rows);
@@ -88,6 +113,7 @@ export default function TasksPage() {
           <p className="text-sm text-muted-foreground mt-1">Your to-dos, sorted the way you like.</p>
         </div>
         <div className="flex gap-2">
+          <Button variant={selectMode ? 'default' : 'outline'} onClick={() => { setSelectMode((m) => !m); setSelected(new Set()); }} className="rounded-xl"><CheckSquare className="w-4 h-4 mr-1.5" /> {selectMode ? 'Done' : 'Select'}</Button>
           <Button variant="outline" onClick={exportTasks} className="rounded-xl"><Download className="w-4 h-4 mr-1.5" /> Export</Button>
           <Button onClick={() => { setEditTask(null); setModal(true); }} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> New task</Button>
         </div>
@@ -101,37 +127,79 @@ export default function TasksPage() {
       </div>
 
       {/* Filters */}
-      <Card className="p-3 mb-5 grid grid-cols-2 md:grid-cols-4 gap-2">
-        <div className="relative col-span-2 md:col-span-1">
+      <Card className="p-3 mb-5 flex flex-wrap gap-2">
+        <div className="relative w-full md:flex-1 min-w-[180px]">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search…" className="pl-9" />
         </div>
         {area === 'school' && (
-          <Select value={course} onValueChange={setCourse}>
-            <SelectTrigger><SelectValue placeholder="Course" /></SelectTrigger>
+          <div className="w-full md:w-36">
+            <Select value={course} onValueChange={setCourse}>
+              <SelectTrigger><SelectValue placeholder="Course" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All courses</SelectItem>
+                {courses.map((c) => <SelectItem key={c.id} value={c.id}>{c.code || c.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+        <div className="w-full md:w-36">
+          <Select value={priority} onValueChange={setPriority}>
+            <SelectTrigger><SelectValue placeholder="Priority" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All courses</SelectItem>
-              {courses.map((c) => <SelectItem key={c.id} value={c.id}>{c.code || c.name}</SelectItem>)}
+              <SelectItem value="all">All priorities</SelectItem>
+              <SelectItem value="high">High</SelectItem>
+              <SelectItem value="medium">Medium</SelectItem>
+              <SelectItem value="low">Low</SelectItem>
             </SelectContent>
           </Select>
-        )}
-        <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All status</SelectItem>
-            <SelectItem value="todo">To Do</SelectItem>
-            <SelectItem value="in_progress">In Progress</SelectItem>
-            <SelectItem value="done">Done</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={type} onValueChange={setType}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All types</SelectItem>
-            {[...new Set(tasks.map((t) => t.type).filter(Boolean))].map((k) => <SelectItem key={k} value={k}>{taskTypeMeta(k).label}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        </div>
+        <div className="w-full md:w-36">
+          <Select value={due} onValueChange={setDue}>
+            <SelectTrigger><SelectValue placeholder="Due" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Any due date</SelectItem>
+              <SelectItem value="overdue">Overdue</SelectItem>
+              <SelectItem value="today">Due today</SelectItem>
+              <SelectItem value="week">Due this week</SelectItem>
+              <SelectItem value="month">Due this month</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="w-full md:w-36">
+          <Select value={status} onValueChange={setStatus}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All status</SelectItem>
+              <SelectItem value="todo">To Do</SelectItem>
+              <SelectItem value="in_progress">In Progress</SelectItem>
+              <SelectItem value="done">Done</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="w-full md:w-36">
+          <Select value={type} onValueChange={setType}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All types</SelectItem>
+              {[...new Set(tasks.map((t) => t.type).filter(Boolean))].map((k) => <SelectItem key={k} value={k}>{taskTypeMeta(k).label}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        </div>
       </Card>
+
+      {selectMode && (
+        <div className="flex items-center gap-2 mb-5 flex-wrap rounded-xl border border-border bg-muted/40 px-3 py-2 animate-fade-in">
+          <span className="text-sm font-medium">{selected.size} selected</span>
+          <Button size="sm" variant="ghost" onClick={selectAll}>Select all</Button>
+          <div className="flex-1" />
+          <Button size="sm" variant="outline" onClick={() => bulkStatus('todo')} disabled={!selected.size}>To Do</Button>
+          <Button size="sm" variant="outline" onClick={() => bulkStatus('in_progress')} disabled={!selected.size}>In Progress</Button>
+          <Button size="sm" variant="outline" onClick={() => bulkStatus('done')} disabled={!selected.size}>Done</Button>
+          <Button size="sm" variant="destructive" onClick={bulkTrash} disabled={!selected.size}><Trash2 className="w-3.5 h-3.5 mr-1" /> Trash</Button>
+          <Button size="sm" variant="ghost" onClick={clearSel}>Clear</Button>
+        </div>
+      )}
 
       {loading ? <div className="space-y-2">{[...Array(5)].map((_, i) => <div key={i} className="h-16 rounded-xl bg-muted/60 animate-pulse" />)}</div>
         : filtered.length === 0 ? (
@@ -160,7 +228,7 @@ export default function TasksPage() {
                     <div className="flex-1 h-px bg-border/60" />
                   </div>
                   <div className="space-y-2">
-                    {items.map((t) => <TaskRow key={t.id} task={t} course={courseMap[t.course_id]} onToggle={() => toggle(t)} onEdit={() => { setEditTask(t); setModal(true); }} onDelete={() => remove(t)} />)}
+                    {items.map((t) => <TaskRow key={t.id} task={t} course={courseMap[t.course_id]} selectMode={selectMode} selected={selected.has(t.id)} onSelect={() => toggleSelect(t.id)} onToggle={() => toggle(t)} onEdit={() => { setEditTask(t); setModal(true); }} onDelete={() => remove(t)} />)}
                   </div>
                 </div>
               );
@@ -173,7 +241,7 @@ export default function TasksPage() {
   );
 }
 
-function TaskRow({ task, course, onToggle, onEdit, onDelete }) {
+function TaskRow({ task, course, onToggle, onEdit, onDelete, selectMode, selected, onSelect }) {
   const [open, setOpen] = useState(false);
   const T = taskTypeMeta(task.type);
   const P = PRIORITY[task.priority] || PRIORITY.medium;
@@ -182,7 +250,8 @@ function TaskRow({ task, course, onToggle, onEdit, onDelete }) {
   const overdue = n !== null && n < 0 && !done;
   return (
     <div>
-    <div className={`group flex items-center gap-3 rounded-xl border px-3 py-3 hover:bg-accent/30 transition ${task.flag ? 'border-rose-400 bg-rose-50' : overdue ? 'border-rose-300 bg-rose-50' : 'border-border/60'} ${done ? 'opacity-60' : ''}`}>
+    <div className={`group flex items-center gap-3 rounded-xl border px-3 py-3 hover:bg-accent/30 transition ${task.flag ? 'border-rose-400 bg-rose-50' : overdue ? 'border-rose-300 bg-rose-50' : 'border-border/60'} ${done ? 'opacity-60' : ''} ${selected ? 'border-primary ring-2 ring-primary/40' : ''}`}>
+      {selectMode && <Checkbox checked={selected} onCheckedChange={onSelect} className="shrink-0" />}
       <Checkbox checked={done} onCheckedChange={onToggle} className="shrink-0" />
       <span className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${T.chip}`}><T.Icon className="w-4 h-4" /></span>
       <div className="min-w-0 flex-1">

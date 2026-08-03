@@ -57,6 +57,17 @@
       "type": "string",
       "title": "Flag"
     },
+    "repeat": {
+      "type": "string",
+      "enum": [
+        "none",
+        "daily",
+        "weekly",
+        "monthly"
+      ],
+      "default": "none",
+      "title": "Repeat"
+    },
     "area": {
       "type": "string",
       "enum": [

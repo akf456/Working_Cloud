@@ -9,6 +9,7 @@ import { greeting, quoteOfDay, fmt, dueLabel, daysUntil, taskTypeMeta, EVENT_TYP
 import { isToday, isThisWeek, isThisMonth, isAfter } from 'date-fns';
 import TaskModal from '@/components/TaskModal';
 import WorkloadBreakdown from '@/components/WorkloadBreakdown';
+import AreaDistribution from '@/components/AreaDistribution';
 import OverdueBanner from '@/components/OverdueBanner';
 import { useArea } from '@/lib/AreaContext';
 import { AREAS } from '@/lib/areas';
@@ -19,16 +20,18 @@ export default function Dashboard() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [taskModal, setTaskModal] = useState(false);
+  const [allTasks, setAllTasks] = useState([]);
   const { area } = useArea();
 
   async function load() {
     setLoading(true);
-    const [t, e, c] = await Promise.all([
+    const [t, e, c, all] = await Promise.all([
       base44.entities.Task.filter({ area }, '-due_date', 200),
       base44.entities.Event.filter({ area }, '-start_date', 200),
-      base44.entities.Course.filter({ area })
+      base44.entities.Course.filter({ area }),
+      base44.entities.Task.filter({}, '-due_date', 500)
     ]);
-    setTasks(t); setEvents(e); setCourses(c);
+    setTasks(t); setEvents(e); setCourses(c); setAllTasks(all);
     setLoading(false);
   }
 
@@ -83,6 +86,8 @@ export default function Dashboard() {
         <StatCard icon={CalendarClock} tint="amber" label="Due this week" value={dueThisWeek.length} link="/tasks" />
         <StatCard icon={Award} tint="rose" label="Upcoming events" value={upcomingEvents.length} link="/calendar" />
       </div>
+
+      <div className="mb-6"><AreaDistribution tasks={allTasks} currentArea={area} /></div>
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Upcoming deadlines */}
