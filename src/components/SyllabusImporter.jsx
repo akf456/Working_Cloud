@@ -71,6 +71,10 @@ export default function SyllabusImporter({ open, onClose, courses = [], area = '
       const taskFields = (t, cid) => ({
         title: t.title, description: t.description || '', due_date: t.due_date || null,
         type: t.type || 'misc', status: 'todo', priority: 'medium',
+        repeat: t.repeat || 'none',
+        repeat_days: Array.isArray(t.repeat_days) ? t.repeat_days.map(Number) : [],
+        repeat_start_date: t.repeat_start_date || null,
+        repeat_end_date: t.repeat_end_date || null,
         course_id: cid || null, source: 'syllabus', area
       });
       const eventFields = (e, cid) => ({

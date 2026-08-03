@@ -43,9 +43,10 @@ export default function CalendarPage() {
 
   const today = useMemo(() => startOfDay(new Date()), []);
 
-  // Build a map of day -> items, expanding recurring tasks into occurrences and
-  // floating overdue (past-due, incomplete) tasks onto today's cell flagged red.
-  const { dayMap, overdueTasks } = useMemo(() => {
+  // Each task appears ONLY on its due date / occurrence dates (expanded for
+  // recurring tasks). Past-due incomplete tasks stay on their due-date cell
+  // flagged red — they never float to today or appear on days before they're due.
+  const dayMap = useMemo(() => {
     const map = new Map();
     const key = (d) => format(d, 'yyyy-MM-dd');
     const cell = (d) => {
@@ -54,37 +55,21 @@ export default function CalendarPage() {
       return map.get(k);
     };
     events.forEach((e) => { const d = parseDate(e.start_date); if (d) cell(startOfDay(d)).evs.push(e); });
-
+    const gridStart = days[0];
     const gridEnd = days[days.length - 1];
-    const genEnd = gridEnd.getTime() > today.getTime() ? gridEnd : today;
-    const overdue = [];
     tasks.filter((t) => t.status !== 'done').forEach((t) => {
-      const occs = expandTaskOccurrences(t, genEnd);
-      let missed = null;
+      const occs = expandTaskOccurrences(t, gridEnd);
       occs.forEach((o) => {
-        if (o.getTime() >= today.getTime()) {
-          if (o.getTime() <= gridEnd.getTime()) cell(o).tks.push(t);
-        } else if (!missed || o.getTime() > missed.getTime()) {
-          missed = o;
+        if (o.getTime() >= gridStart.getTime() && o.getTime() <= gridEnd.getTime()) {
+          cell(o).tks.push({ ...t, _overdue: o.getTime() < today.getTime() });
         }
       });
-      if (missed) overdue.push({ task: t, due: missed });
     });
-    return { dayMap: map, overdueTasks: overdue };
+    return map;
   }, [events, tasks, days, today]);
 
   function itemsForDay(day) {
-    const entry = dayMap.get(format(day, 'yyyy-MM-dd')) || { evs: [], tks: [] };
-    const tks = entry.tks.map((t) => ({ ...t }));
-    if (isSameDay(day, today)) {
-      const byId = new Map(tks.map((t) => [t.id, t]));
-      overdueTasks.forEach((o) => {
-        const existing = byId.get(o.task.id);
-        if (existing) { existing._overdue = true; existing._overdueDue = o.due; }
-        else { const copy = { ...o.task, _overdue: true, _overdueDue: o.due }; tks.push(copy); byId.set(o.task.id, copy); }
-      });
-    }
-    return { evs: entry.evs, tks };
+    return dayMap.get(format(day, 'yyyy-MM-dd')) || { evs: [], tks: [] };
   }
 
   const courseMap = Object.fromEntries(courses.map((c) => [c.id, c]));
@@ -201,8 +186,8 @@ export default function CalendarPage() {
               const overdue = !!t._overdue;
               return (
                 <div key={t.id + (overdue ? '-o' : '') + i} className={`rounded-xl border p-3 ${overdue ? 'border-rose-300 bg-rose-50/60' : 'border-amber-200 bg-amber-50/40'}`}>
-                  <p className="font-medium text-sm text-rose-700">{overdue ? '⚠ ' : '⚑ '}{t.title}</p>
-                  <p className="text-xs text-muted-foreground">{overdue ? `Overdue · was due ${fmt(t._overdueDue)}` : 'Task deadline'}{c ? ` · ${c.code || c.name}` : ''}</p>
+                  <p className={`font-medium text-sm ${overdue ? 'text-rose-700' : ''}`}>{overdue ? '⚠ ' : '⚑ '}{t.title}</p>
+                  <p className="text-xs text-muted-foreground">{overdue ? 'Overdue' : 'Task deadline'}{c ? ` · ${c.code || c.name}` : ''}</p>
                 </div>
               );
             })}
