@@ -23,10 +23,11 @@ function hexToHsl(hex) {
   return `${Math.round(hue * 360)} ${Math.round(sat * 100)}% ${Math.round(l * 100)}%`;
 }
 
+// prefs = this user's saved theme object for the given area (any area is customizable).
 export function areaThemeVars(area, prefs) {
   const base = AREAS[area]?.theme || {};
   const vars = { ...base };
-  if (area === 'personal' && prefs) {
+  if (prefs) {
     const primary = hexToHsl(prefs.primary);
     const accent = hexToHsl(prefs.accent);
     const text = hexToHsl(prefs.text);
@@ -40,5 +41,5 @@ export function areaThemeVars(area, prefs) {
 }
 
 export function areaImage(area, prefs) {
-  return area === 'personal' ? prefs?.image : null;
+  return prefs?.image || null;
 }

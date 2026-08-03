@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { Plus, Search, Pencil, Trash2, Inbox, Download, CheckSquare } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, Inbox, Download, CheckSquare, ChevronDown } from 'lucide-react';
 import { toggleTaskStatus } from '@/lib/tasks';
 import { taskTypeMeta, PRIORITY, STATUS, dueLabel, daysUntil, parseDate, fmt } from '@/lib/planner';
 import TaskModal from '@/components/TaskModal';
@@ -16,7 +16,6 @@ import { trashItem } from '@/lib/trash';
 import { downloadCSV } from '@/lib/exportCsv';
 import OverdueBanner from '@/components/OverdueBanner';
 import SubtaskList from '@/components/SubtaskList';
-import { ChevronDown } from 'lucide-react';
 import { useArea } from '@/lib/AreaContext';
 
 export default function TasksPage() {
@@ -53,7 +52,10 @@ export default function TasksPage() {
     return tasks.filter((t) => {
       if (q && !t.title.toLowerCase().includes(q.toLowerCase())) return false;
       if (course !== 'all' && t.course_id !== course) return false;
-      if (status !== 'all' && t.status !== status) return false;
+      if (status === 'overdue') {
+        const days = daysUntil(t.due_date);
+        if (days === null || days >= 0 || t.status === 'done') return false;
+      } else if (status !== 'all' && t.status !== status) return false;
       if (type !== 'all' && t.type !== type) return false;
       if (priority !== 'all' && t.priority !== priority) return false;
       if (due !== 'all') {
@@ -107,6 +109,8 @@ export default function TasksPage() {
     else await base44.entities.Task.create({ ...data, area });
     setEditTask(null); load();
   }
+
+  const row = (t) => <TaskRow key={t.id} task={t} course={courseMap[t.course_id]} selectMode={selectMode} selected={selected.has(t.id)} onSelect={() => toggleSelect(t.id)} onToggle={() => toggle(t)} onEdit={() => { setEditTask(t); setModal(true); }} onDelete={() => remove(t)} />;
 
   return (
     <div className="p-4 md:p-8 max-w-5xl mx-auto animate-fade-in">
@@ -174,6 +178,7 @@ export default function TasksPage() {
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All status</SelectItem>
+              <SelectItem value="overdue">Overdue</SelectItem>
               <SelectItem value="todo">To Do</SelectItem>
               <SelectItem value="in_progress">In Progress</SelectItem>
               <SelectItem value="done">Done</SelectItem>
@@ -216,16 +221,11 @@ export default function TasksPage() {
         ) : (
           <div className="space-y-6">
             {overdueItems.length > 0 && (
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full text-rose-700 bg-rose-50 ring-1 ring-rose-200">Overdue</span>
-                  <span className="text-xs text-muted-foreground">{overdueItems.length}</span>
-                  <div className="flex-1 h-px bg-border/60" />
-                </div>
-                <div className="space-y-2">
-                  {overdueItems.map((t) => <TaskRow key={t.id} task={t} course={courseMap[t.course_id]} selectMode={selectMode} selected={selected.has(t.id)} onSelect={() => toggleSelect(t.id)} onToggle={() => toggle(t)} onEdit={() => { setEditTask(t); setModal(true); }} onDelete={() => remove(t)} />)}
-                </div>
-              </div>
+              <CollapsibleGroup area={area} groupKey="overdue"
+                badge={<span className="text-xs font-semibold px-2 py-0.5 rounded-full text-rose-700 bg-rose-50 ring-1 ring-rose-200">Overdue</span>}
+                count={overdueItems.length}>
+                {overdueItems.map(row)}
+              </CollapsibleGroup>
             )}
             {groups.map(({ key, label }) => {
               const items = filtered.filter((t) => t.status === key && !overdueIds.has(t.id)).sort((a, b) => {
@@ -236,22 +236,38 @@ export default function TasksPage() {
               });
               if (items.length === 0) return null;
               return (
-                <div key={key}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS[key].chip}`}>{label}</span>
-                    <span className="text-xs text-muted-foreground">{items.length}</span>
-                    <div className="flex-1 h-px bg-border/60" />
-                  </div>
-                  <div className="space-y-2">
-                    {items.map((t) => <TaskRow key={t.id} task={t} course={courseMap[t.course_id]} selectMode={selectMode} selected={selected.has(t.id)} onSelect={() => toggleSelect(t.id)} onToggle={() => toggle(t)} onEdit={() => { setEditTask(t); setModal(true); }} onDelete={() => remove(t)} />)}
-                  </div>
-                </div>
+                <CollapsibleGroup key={key} area={area} groupKey={key}
+                  badge={<span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS[key].chip}`}>{label}</span>}
+                  count={items.length}>
+                  {items.map(row)}
+                </CollapsibleGroup>
               );
             })}
           </div>
         )}
 
       <TaskModal open={modal} onClose={() => { setModal(false); setEditTask(null); }} onSave={saveTask} task={editTask} courses={courses} area={area} />
+    </div>
+  );
+}
+
+function CollapsibleGroup({ area, groupKey, badge, count, children }) {
+  const [open, setOpen] = useState(() => {
+    try { return localStorage.getItem(`wb_tc_${area}_${groupKey}`) !== '0'; } catch { return true; }
+  });
+  function toggle() {
+    const o = !open; setOpen(o);
+    try { localStorage.setItem(`wb_tc_${area}_${groupKey}`, o ? '1' : '0'); } catch { /* ignore */ }
+  }
+  return (
+    <div>
+      <button onClick={toggle} className="flex items-center gap-2 mb-2 w-full text-left">
+        {badge}
+        <span className="text-xs text-muted-foreground">{count}</span>
+        <div className="flex-1 h-px bg-border/60" />
+        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${open ? '' : '-rotate-90'}`} />
+      </button>
+      {open && <div className="space-y-2">{children}</div>}
     </div>
   );
 }

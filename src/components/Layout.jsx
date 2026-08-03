@@ -21,8 +21,9 @@ export default function Layout() {
   const [shareOpen, setShareOpen] = useState(false);
   if (!area) return <Navigate to="/" replace />;
   const a = AREAS[area];
-  const theme = areaThemeVars(area, user?.personal_theme);
-  const image = areaImage(area, user?.personal_theme);
+  const areaPrefs = user?.area_themes?.[area] || (area === 'personal' ? user?.personal_theme : null);
+  const theme = areaThemeVars(area, areaPrefs);
+  const image = areaImage(area, areaPrefs);
 
   const NAV = [
     { to: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
@@ -63,7 +64,14 @@ export default function Layout() {
             </Link>
           ))}
         </nav>
-        <div className="mt-auto">
+        <div className="mt-auto space-y-3">
+          <button onClick={() => setPersonalize(true)} className="w-full text-left rounded-2xl bg-accent/50 border border-border p-3 hover:shadow-sm transition flex items-center gap-2">
+            <Palette className="w-4 h-4 text-primary shrink-0" />
+            <div className="min-w-0">
+              <p className="text-sm font-semibold">Customize {a.label}</p>
+              <p className="text-[11px] text-muted-foreground">Colors & cover photo</p>
+            </div>
+          </button>
           {area === 'school' && (
             <div className="rounded-2xl bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100 p-4">
               <Sparkles className="w-5 h-5 text-indigo-600 mb-2" />
@@ -71,13 +79,6 @@ export default function Layout() {
               <p className="text-xs text-indigo-700/80 mt-1">Let AI pull every deadline & exam date for you.</p>
               <Link to="/courses" className="mt-3 inline-block text-xs font-semibold text-indigo-600 hover:text-indigo-800">Go to {a.groupingLabel} →</Link>
             </div>
-          )}
-          {area === 'personal' && (
-            <button onClick={() => setPersonalize(true)} className="w-full text-left rounded-2xl bg-gradient-to-br from-teal-50 to-emerald-50 border border-teal-100 p-4 hover:shadow-sm transition">
-              <Palette className="w-5 h-5 text-teal-600 mb-2" />
-              <p className="text-sm font-semibold text-teal-900">Personalize your space</p>
-              <p className="text-xs text-teal-700/80 mt-1">Pick your colors, titles & a cover photo.</p>
-            </button>
           )}
           {area === 'shareable' && (
             <div className="rounded-2xl bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-100 p-4">
@@ -89,12 +90,6 @@ export default function Layout() {
               </button>
             </div>
           )}
-          {area === 'work' && (
-            <div className="rounded-2xl bg-slate-50 border border-slate-200 p-4">
-              <p className="text-sm font-semibold text-slate-900">Focus mode</p>
-              <p className="text-xs text-slate-600 mt-1">Clean, professional & clutter-free.</p>
-            </div>
-          )}
         </div>
       </aside>
 
@@ -102,7 +97,7 @@ export default function Layout() {
       <header className="md:hidden fixed top-0 inset-x-0 z-30 h-14 flex items-center justify-between px-4 bg-card/80 backdrop-blur border-b border-border/60">
         <WorkingCloudLogo className="text-base" />
         <div className="flex items-center gap-3">
-          {area === 'personal' && <button onClick={() => setPersonalize(true)} className="text-muted-foreground hover:text-primary"><Palette className="w-5 h-5" /></button>}
+          <button onClick={() => setPersonalize(true)} className="text-muted-foreground hover:text-primary" title="Customize"><Palette className="w-5 h-5" /></button>
           <button onClick={openShare} className="text-muted-foreground hover:text-primary"><Share2 className="w-5 h-5" /></button>
           <Link to="/settings" className="text-muted-foreground hover:text-primary"><SettingsIcon className="w-5 h-5" /></Link>
           <button onClick={switchArea} className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-primary">
@@ -124,7 +119,7 @@ export default function Layout() {
         ))}
       </nav>
 
-      {personalize && <PersonalizeModal open onClose={() => setPersonalize(false)} />}
+      {personalize && <PersonalizeModal open area={area} onClose={() => setPersonalize(false)} />}
       <ShareModal open={shareOpen} area={area} onClose={() => setShareOpen(false)} />
     </div>
   );
