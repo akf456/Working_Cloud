@@ -74,7 +74,7 @@ export default function CalendarPage() {
 
   const courseMap = Object.fromEntries(courses.map((c) => [c.id, c]));
   const evColor = (e) => (courseMap[e.course_id]?.color) || (EVENT_TYPE[e.type] || EVENT_TYPE.event).dot;
-  const tkColor = (t) => courseMap[t.course_id]?.color || '#f59e0b';
+  const tkColor = (t) => t.color || courseMap[t.course_id]?.color || '#f59e0b';
   const selectedItems = itemsForDay(selected);
 
   async function saveEvent(data) {
@@ -144,8 +144,10 @@ export default function CalendarPage() {
                     })}
                     {tks.slice(0, 2).map((t, i) => {
                       const overdue = !!t._overdue;
+                      const flagged = t.flag === 'manual';
                       const col = overdue ? '#dc2626' : tkColor(t);
-                      return <div key={t.id + (overdue ? '-o' : '') + i} className="text-[10px] truncate rounded px-1 py-0.5 font-medium" style={{ backgroundColor: col + '22', color: col }}>{overdue ? '⚠ ' : '⚑ '}{t.title}</div>;
+                      const sym = overdue ? '⚠ ' : flagged ? '⚑ ' : '';
+                      return <div key={t.id + (overdue ? '-o' : '') + i} className="text-[10px] truncate rounded px-1 py-0.5 font-medium" style={{ backgroundColor: col + '22', color: col }}>{sym}{t.title}</div>;
                     })}
                     {(evs.length + tks.length) > 4 && <div className="text-[10px] text-muted-foreground px-1">+{evs.length + tks.length - 4} more</div>}
                   </div>
@@ -184,10 +186,13 @@ export default function CalendarPage() {
             {selectedItems.tks.map((t, i) => {
               const c = courseMap[t.course_id];
               const overdue = !!t._overdue;
+              const flagged = t.flag === 'manual';
+              const col = overdue ? '#dc2626' : tkColor(t);
+              const sym = overdue ? '⚠ ' : flagged ? '⚑ ' : '';
               return (
-                <div key={t.id + (overdue ? '-o' : '') + i} className={`rounded-xl border p-3 ${overdue ? 'border-rose-300 bg-rose-50/60' : 'border-amber-200 bg-amber-50/40'}`}>
-                  <p className={`font-medium text-sm ${overdue ? 'text-rose-700' : ''}`}>{overdue ? '⚠ ' : '⚑ '}{t.title}</p>
-                  <p className="text-xs text-muted-foreground">{overdue ? 'Overdue' : 'Task deadline'}{c ? ` · ${c.code || c.name}` : ''}</p>
+                <div key={t.id + (overdue ? '-o' : '') + i} className="rounded-xl border p-3" style={{ borderColor: col + '55', backgroundColor: col + '14' }}>
+                  <p className="font-medium text-sm" style={{ color: overdue ? '#be123c' : col }}>{sym}{t.title}</p>
+                  <p className="text-xs text-muted-foreground">{overdue ? 'Overdue' : flagged ? 'Flagged' : 'Task deadline'}{c ? ` · ${c.code || c.name}` : ''}</p>
                 </div>
               );
             })}

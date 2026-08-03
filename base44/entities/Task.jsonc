@@ -53,6 +53,10 @@
       "default": "manual",
       "title": "Source"
     },
+    "color": {
+      "type": "string",
+      "title": "Color"
+    },
     "flag": {
       "type": "string",
       "title": "Flag"

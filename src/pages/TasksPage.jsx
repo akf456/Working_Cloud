@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { Plus, Search, Pencil, Trash2, Inbox, Download, CheckSquare, ChevronDown } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, Inbox, Download, CheckSquare, ChevronDown, Copy } from 'lucide-react';
 import { toggleTaskStatus } from '@/lib/tasks';
 import { taskTypeMeta, PRIORITY, STATUS, dueLabel, daysUntil, parseDate, fmt } from '@/lib/planner';
 import TaskModal from '@/components/TaskModal';
@@ -87,6 +87,11 @@ export default function TasksPage() {
     load();
   }
   async function remove(t) { await trashItem('Task', t, area); load(); }
+  async function duplicate(t) {
+    const { id, created_date, updated_date, created_by_id, ...rest } = t;
+    await base44.entities.Task.create({ ...rest, title: `${t.title} (copy)` });
+    load();
+  }
   function toggleSelect(id) { setSelected((p) => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; }); }
   function selectAll() { setSelected(new Set(filtered.map((t) => t.id))); }
   function clearSel() { setSelected(new Set()); }
@@ -110,7 +115,7 @@ export default function TasksPage() {
     setEditTask(null); load();
   }
 
-  const row = (t) => <TaskRow key={t.id} task={t} course={courseMap[t.course_id]} selectMode={selectMode} selected={selected.has(t.id)} onSelect={() => toggleSelect(t.id)} onToggle={() => toggle(t)} onEdit={() => { setEditTask(t); setModal(true); }} onDelete={() => remove(t)} />;
+  const row = (t) => <TaskRow key={t.id} task={t} course={courseMap[t.course_id]} selectMode={selectMode} selected={selected.has(t.id)} onSelect={() => toggleSelect(t.id)} onToggle={() => toggle(t)} onEdit={() => { setEditTask(t); setModal(true); }} onDelete={() => remove(t)} onDuplicate={() => duplicate(t)} />;
 
   return (
     <div className="p-4 md:p-8 max-w-5xl mx-auto animate-fade-in">
@@ -272,7 +277,7 @@ function CollapsibleGroup({ area, groupKey, badge, count, children }) {
   );
 }
 
-function TaskRow({ task, course, onToggle, onEdit, onDelete, selectMode, selected, onSelect }) {
+function TaskRow({ task, course, onToggle, onEdit, onDelete, onDuplicate, selectMode, selected, onSelect }) {
   const [open, setOpen] = useState(false);
   const T = taskTypeMeta(task.type);
   const P = PRIORITY[task.priority] || PRIORITY.medium;
@@ -282,6 +287,7 @@ function TaskRow({ task, course, onToggle, onEdit, onDelete, selectMode, selecte
   return (
     <div>
     <div className={`group flex items-center gap-3 rounded-xl border px-3 py-3 hover:bg-accent/30 transition ${task.flag ? 'border-rose-400 bg-rose-50' : overdue ? 'border-rose-300 bg-rose-50' : 'border-border/60'} ${done ? 'opacity-60' : ''} ${selected ? 'border-primary ring-2 ring-primary/40' : ''}`}>
+      {task.color && <span className="w-1.5 self-stretch rounded-full shrink-0" style={{ backgroundColor: task.color }} />}
       {selectMode && <Checkbox checked={selected} onCheckedChange={onSelect} className="shrink-0" />}
       <Checkbox checked={done} onCheckedChange={onToggle} className="shrink-0" />
       <span className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${T.chip}`}><T.Icon className="w-4 h-4" /></span>
@@ -292,7 +298,7 @@ function TaskRow({ task, course, onToggle, onEdit, onDelete, selectMode, selecte
           <span>· {T.label}</span>
           {course && <><span>·</span><span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: course.color }} />{course.code || course.name}</span></>}
           {task.source === 'syllabus' && <span className="text-indigo-500">· from syllabus</span>}
-          {task.flag && <span className="text-rose-600 font-semibold">· {task.flag}</span>}
+          {task.flag && <span className="text-rose-600 font-semibold">· {task.flag === 'manual' ? 'Flagged' : task.flag}</span>}
         </div>
       </div>
       {task.due_date && <span className={`text-xs font-semibold shrink-0 ${overdue ? 'text-rose-600' : 'text-muted-foreground'}`}>{dueLabel(task.due_date)}</span>}
@@ -300,8 +306,9 @@ function TaskRow({ task, course, onToggle, onEdit, onDelete, selectMode, selecte
         <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition shrink-0">
-        <button onClick={onEdit} className="p-1.5 rounded-lg hover:bg-background text-muted-foreground hover:text-indigo-600"><Pencil className="w-3.5 h-3.5" /></button>
-        <button onClick={onDelete} className="p-1.5 rounded-lg hover:bg-background text-muted-foreground hover:text-rose-600"><Trash2 className="w-3.5 h-3.5" /></button>
+        <button onClick={onEdit} className="p-1.5 rounded-lg hover:bg-background text-muted-foreground hover:text-indigo-600" title="Edit"><Pencil className="w-3.5 h-3.5" /></button>
+        <button onClick={onDuplicate} className="p-1.5 rounded-lg hover:bg-background text-muted-foreground hover:text-emerald-600" title="Duplicate"><Copy className="w-3.5 h-3.5" /></button>
+        <button onClick={onDelete} className="p-1.5 rounded-lg hover:bg-background text-muted-foreground hover:text-rose-600" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
       </div>
     </div>
       {open && <SubtaskList parent={task} />}
