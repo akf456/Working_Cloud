@@ -34,7 +34,7 @@ export default function Layout() {
     { to: '/trash', label: 'Trash', Icon: Trash2 }
   ];
   const isActive = (to) => pathname === to || pathname.startsWith(to + '/');
-  function switchArea() { exit(); nav('/'); }
+  function switchArea() { exit(); nav('/areas'); }
 
   function openShare() { setShareOpen(true); }
 

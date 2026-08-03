@@ -13,6 +13,7 @@ import ForgotPassword from '@/pages/ForgotPassword';
 import ResetPassword from '@/pages/ResetPassword';
 import Layout from '@/components/Layout';
 import Areas from '@/pages/Areas';
+import Landing from '@/pages/Landing';
 import { AreaProvider } from '@/lib/AreaContext';
 import Dashboard from '@/pages/Dashboard';
 import CalendarPage from '@/pages/CalendarPage';
@@ -54,8 +55,9 @@ const AuthenticatedApp = () => {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/s/:token" element={<ShareBoard />} />
+      <Route path="/" element={<Landing />} />
       <Route element={<ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />}>
-        <Route path="/" element={<Areas />} />
+        <Route path="/areas" element={<Areas />} />
         <Route element={<Layout />}>
               <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/calendar" element={<CalendarPage />} />
