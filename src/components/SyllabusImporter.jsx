@@ -18,11 +18,12 @@ export default function SyllabusImporter({ open, onClose, courses = [], onDone }
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
+  const [summary, setSummary] = useState(null);
 
   React.useEffect(() => {
     if (open) {
       setFile(null); setCourseId('new'); setCourseName(''); setCourseCode('');
-      setLoading(false); setData(null); setError(''); setSaving(false); setDone(false);
+      setLoading(false); setData(null); setError(''); setSaving(false); setDone(false); setSummary(null);
     }
   }, [open]);
 
@@ -46,8 +47,13 @@ export default function SyllabusImporter({ open, onClose, courses = [], onDone }
   async function handleConfirm() {
     setSaving(true); setError('');
     try {
+      const incomingTasks = (data?.tasks || []).filter((t) => t.title);
+      const incomingEvents = (data?.events || []).filter((e) => e.title && e.start_date);
+      const norm = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
       let cid = courseId;
-      if (courseId === 'new') {
+      const isNew = courseId === 'new';
+
+      if (isNew) {
         const color = COURSE_COLORS[courses.length % COURSE_COLORS.length];
         const created = await base44.entities.Course.create({
           name: courseName.trim() || data?.course_name || 'Untitled Course',
@@ -59,31 +65,57 @@ export default function SyllabusImporter({ open, onClose, courses = [], onDone }
         });
         cid = created.id;
       }
-      const tasks = (data?.tasks || []).filter((t) => t.title);
-      const events = (data?.events || []).filter((e) => e.title && e.start_date);
-      if (tasks.length) await base44.entities.Task.bulkCreate(tasks.map((t) => ({
-        title: t.title,
-        description: t.description || '',
-        due_date: t.due_date || null,
-        type: TASK_TYPE[t.type] ? t.type : 'misc',
-        status: 'todo',
-        priority: 'medium',
-        course_id: cid,
-        source: 'syllabus',
-        area: 'school'
-      })));
-      if (events.length) await base44.entities.Event.bulkCreate(events.map((e) => ({
-        title: e.title,
-        description: e.description || '',
-        start_date: e.start_date,
-        end_date: e.end_date || e.start_date,
-        all_day: e.all_day ?? true,
-        type: EVENT_TYPE[e.type] ? e.type : 'event',
-        location: e.location || '',
-        course_id: cid,
-        source: 'syllabus',
-        area: 'school'
-      })));
+
+      const taskFields = (t) => ({
+        title: t.title, description: t.description || '', due_date: t.due_date || null,
+        type: TASK_TYPE[t.type] ? t.type : 'misc', status: 'todo', priority: 'medium',
+        course_id: cid, source: 'syllabus', area: 'school'
+      });
+      const eventFields = (e) => ({
+        title: e.title, description: e.description || '', start_date: e.start_date,
+        end_date: e.end_date || e.start_date, all_day: e.all_day ?? true,
+        type: EVENT_TYPE[e.type] ? e.type : 'event', location: e.location || '',
+        course_id: cid, source: 'syllabus', area: 'school'
+      });
+
+      let added = 0, flagged = 0;
+
+      if (isNew) {
+        if (incomingTasks.length) { await base44.entities.Task.bulkCreate(incomingTasks.map(taskFields)); added += incomingTasks.length; }
+        if (incomingEvents.length) { await base44.entities.Event.bulkCreate(incomingEvents.map(eventFields)); added += incomingEvents.length; }
+        setSummary({ diff: false, added });
+      } else {
+        const [existTasks, existEvents] = await Promise.all([
+          base44.entities.Task.filter({ course_id: cid, source: 'syllabus' }),
+          base44.entities.Event.filter({ course_id: cid, source: 'syllabus' })
+        ]);
+        const toAddTasks = [];
+        const matchedTaskIds = new Set();
+        const taskUpdates = [];
+        for (const t of incomingTasks) {
+          const m = existTasks.find((e) => norm(e.title) === norm(t.title));
+          if (m) { matchedTaskIds.add(m.id); if (t.due_date && t.due_date !== m.due_date) taskUpdates.push({ id: m.id, due_date: t.due_date }); }
+          else toAddTasks.push(t);
+        }
+        const toFlagTasks = existTasks.filter((e) => !matchedTaskIds.has(e.id) && e.flag !== 'Previous syllabus');
+
+        const toAddEvents = [];
+        const matchedEventIds = new Set();
+        for (const e of incomingEvents) {
+          const m = existEvents.find((x) => norm(x.title) === norm(e.title));
+          if (m) matchedEventIds.add(m.id);
+          else toAddEvents.push(e);
+        }
+        const toFlagEvents = existEvents.filter((e) => !matchedEventIds.has(e.id) && e.flag !== 'Previous syllabus');
+
+        if (toAddTasks.length) { await base44.entities.Task.bulkCreate(toAddTasks.map(taskFields)); added += toAddTasks.length; }
+        if (toAddEvents.length) { await base44.entities.Event.bulkCreate(toAddEvents.map(eventFields)); added += toAddEvents.length; }
+        if (taskUpdates.length) await base44.entities.Task.bulkUpdate(taskUpdates);
+        if (toFlagTasks.length) { await base44.entities.Task.bulkUpdate(toFlagTasks.map((t) => ({ id: t.id, flag: 'Previous syllabus' }))); flagged += toFlagTasks.length; }
+        if (toFlagEvents.length) { await base44.entities.Event.bulkUpdate(toFlagEvents.map((e) => ({ id: e.id, flag: 'Previous syllabus' }))); flagged += toFlagEvents.length; }
+        setSummary({ diff: true, added, flagged });
+      }
+
       setDone(true);
       onDone?.();
     } catch (e) {
@@ -98,14 +130,14 @@ export default function SyllabusImporter({ open, onClose, courses = [], onDone }
       <DialogContent className="sm:max-w-2xl max-h-[88vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><Sparkles className="w-5 h-5 text-indigo-600" /> Syllabus importer</DialogTitle>
-          <DialogDescription>Upload a syllabus — AI pulls out deadlines, exam dates, and topics for you to review.</DialogDescription>
+          <DialogDescription>{courseId !== 'new' ? 'AI compares this to the existing course — new items are added, and items no longer in the syllabus are flagged, never deleted.' : 'Upload a syllabus — AI pulls out deadlines, exam dates, and topics for you to review.'}</DialogDescription>
         </DialogHeader>
 
         {done ? (
           <div className="py-10 text-center">
             <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-3" />
-            <p className="font-semibold text-lg">All set!</p>
-            <p className="text-sm text-muted-foreground mt-1">Tasks & events were added to your planner. Adjust anything anytime.</p>
+            <p className="font-semibold text-lg">{summary?.diff ? 'Updated!' : 'All set!'}</p>
+            <p className="text-sm text-muted-foreground mt-1">{summary?.diff ? `Added ${summary.added} new · flagged ${summary.flagged} from the previous syllabus (never deleted).` : 'Tasks & events were added to your planner. Adjust anything anytime.'}</p>
             <Button className="mt-5" onClick={onClose}>Done</Button>
           </div>
         ) : (
@@ -182,7 +214,7 @@ export default function SyllabusImporter({ open, onClose, courses = [], onDone }
                 </Button>
               ) : (
                 <Button onClick={handleConfirm} disabled={saving}>
-                  {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving…</> : 'Add to planner'}
+                  {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving…</> : (courseId !== 'new' ? 'Update planner' : 'Add to planner')}
                 </Button>
               )}
             </DialogFooter>

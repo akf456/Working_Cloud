@@ -62,7 +62,7 @@ export default function ContactModal({ open, onClose, onSave, contact, courses, 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Email</Label>
-              <Input type="email" value={form.email || ''} onChange={(e) => set('email', e.target.value)} placeholder="name@school.edu" />
+              <Input type="email" value={form.email || ''} onChange={(e) => set('email', e.target.value)} />
             </div>
             <div className="space-y-1.5">
               <Label>Phone</Label>

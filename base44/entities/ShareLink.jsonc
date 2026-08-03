@@ -20,6 +20,22 @@
       ],
       "default": "shareable",
       "title": "Area"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "view",
+        "edit"
+      ],
+      "default": "view",
+      "title": "Mode"
+    },
+    "editors": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "title": "Editors"
     }
   },
   "required": [

@@ -49,7 +49,8 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
             <Label htmlFor="t-title">Title</Label>
-            <Input id="t-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Problem set 4" autoFocus />
+            <Input id="t-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={AREAS[area]?.titlePlaceholder || 'Task title'} list="task-titles" autoFocus />
+            <datalist id="task-titles">{(AREAS[area]?.taskTitleSuggestions || []).map((s) => <option key={s} value={s} />)}</datalist>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">

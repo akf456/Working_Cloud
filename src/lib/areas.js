@@ -13,7 +13,9 @@ export const AREAS = {
     soft: 'bg-violet-50 text-violet-600',
     theme: {},
     typeSuggestions: ['Assignment', 'Exam', 'Quiz', 'Study', 'Reading', 'Project'],
-    groupingSuggestions: ['Calculus II', 'Intro to CS', 'English 101', 'Biology Lab', 'World History']
+    groupingSuggestions: ['Calculus II', 'Intro to CS', 'English 101', 'Biology Lab', 'World History'],
+    titlePlaceholder: 'e.g. Problem set 4',
+    taskTitleSuggestions: ['Problem set 4', 'Midterm prep', 'Lab report', 'Reading notes', 'Group project']
   },
   work: {
     key: 'work',
@@ -41,7 +43,9 @@ export const AREAS = {
       '--border': '220 13% 91%'
     },
     typeSuggestions: ['Project', 'Meeting', 'Deadline', 'Report', 'Review', 'Follow-up', 'Email', 'Prep'],
-    groupingSuggestions: ['Project', 'Q3 Launch', 'Client Onboarding', 'Marketing', 'Research', 'Operations']
+    groupingSuggestions: ['Project', 'Q3 Launch', 'Client Onboarding', 'Marketing', 'Research', 'Operations'],
+    titlePlaceholder: 'e.g. Draft Q3 report',
+    taskTitleSuggestions: ['Draft Q3 report', 'Prep client deck', 'Review pull requests', 'Team check-in', 'Send invoice']
   },
   personal: {
     key: 'personal',
@@ -64,7 +68,9 @@ export const AREAS = {
     },
     customizable: true,
     typeSuggestions: ['Groceries', 'Errands', 'Health', 'Home', 'Family', 'Fitness', 'Finances', 'Hobby'],
-    groupingSuggestions: ['Health', 'Home', 'Finances', 'Family', 'Fitness', 'Travel', 'Hobby']
+    groupingSuggestions: ['Health', 'Home', 'Finances', 'Family', 'Fitness', 'Travel', 'Hobby'],
+    titlePlaceholder: 'e.g. Grocery run',
+    taskTitleSuggestions: ['Grocery run', 'Morning workout', 'Pay bills', 'Call family', 'Plan weekend trip']
   },
   shareable: {
     key: 'shareable',
@@ -92,7 +98,9 @@ export const AREAS = {
       '--border': '30 30% 90%'
     },
     typeSuggestions: ['Chore', 'Group task', 'Planning', 'Event', 'Supply run', 'Coordination', 'Reminder'],
-    groupingSuggestions: ['Family', 'Roommates', 'Group Trip', 'Event Committee', 'Chores', 'Shared Expenses']
+    groupingSuggestions: ['Family', 'Roommates', 'Group Trip', 'Event Committee', 'Chores', 'Shared Expenses'],
+    titlePlaceholder: 'e.g. Plan house chores',
+    taskTitleSuggestions: ['Plan house chores', 'Group grocery run', 'Schedule cleanup', 'Split expenses', 'Organize trip']
   }
 };
 

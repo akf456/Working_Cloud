@@ -106,13 +106,15 @@ export default function TasksPage() {
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search…" className="pl-9" />
         </div>
-        <Select value={course} onValueChange={setCourse}>
-          <SelectTrigger><SelectValue placeholder="Course" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All courses</SelectItem>
-            {courses.map((c) => <SelectItem key={c.id} value={c.id}>{c.code || c.name}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        {area === 'school' && (
+          <Select value={course} onValueChange={setCourse}>
+            <SelectTrigger><SelectValue placeholder="Course" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All courses</SelectItem>
+              {courses.map((c) => <SelectItem key={c.id} value={c.id}>{c.code || c.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+        )}
         <Select value={status} onValueChange={setStatus}>
           <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -180,7 +182,7 @@ function TaskRow({ task, course, onToggle, onEdit, onDelete }) {
   const overdue = n !== null && n < 0 && !done;
   return (
     <div>
-    <div className={`group flex items-center gap-3 rounded-xl border px-3 py-3 hover:bg-accent/30 transition ${overdue ? 'border-rose-300 bg-rose-50' : 'border-border/60'} ${done ? 'opacity-60' : ''}`}>
+    <div className={`group flex items-center gap-3 rounded-xl border px-3 py-3 hover:bg-accent/30 transition ${task.flag ? 'border-rose-400 bg-rose-50' : overdue ? 'border-rose-300 bg-rose-50' : 'border-border/60'} ${done ? 'opacity-60' : ''}`}>
       <Checkbox checked={done} onCheckedChange={onToggle} className="shrink-0" />
       <span className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${T.chip}`}><T.Icon className="w-4 h-4" /></span>
       <div className="min-w-0 flex-1">
@@ -190,6 +192,7 @@ function TaskRow({ task, course, onToggle, onEdit, onDelete }) {
           <span>· {T.label}</span>
           {course && <><span>·</span><span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: course.color }} />{course.code || course.name}</span></>}
           {task.source === 'syllabus' && <span className="text-indigo-500">· from syllabus</span>}
+          {task.flag && <span className="text-rose-600 font-semibold">· {task.flag}</span>}
         </div>
       </div>
       {task.due_date && <span className={`text-xs font-semibold shrink-0 ${overdue ? 'text-rose-600' : 'text-muted-foreground'}`}>{dueLabel(task.due_date)}</span>}

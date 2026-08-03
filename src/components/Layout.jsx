@@ -9,6 +9,7 @@ import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
 import PersonalizeModal from '@/components/PersonalizeModal';
 import WorkingCloudLogo from '@/components/WorkingCloudLogo';
+import ShareModal from '@/components/ShareModal';
 
 export default function Layout() {
   const { pathname } = useLocation();
@@ -17,6 +18,7 @@ export default function Layout() {
   const { user, checkUserAuth } = useAuth();
   const { toast } = useToast();
   const [personalize, setPersonalize] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   if (!area) return <Navigate to="/" replace />;
   const a = AREAS[area];
   const theme = areaThemeVars(area, user?.personal_theme);
@@ -33,23 +35,7 @@ export default function Layout() {
   const isActive = (to) => pathname === to || pathname.startsWith(to + '/');
   function switchArea() { exit(); nav('/'); }
 
-  async function copyShare() {
-    try {
-      const tokens = user?.share_tokens || {};
-      let token = tokens[area];
-      if (!token) {
-        token = (crypto.randomUUID?.() || Math.random().toString(36).slice(2));
-        await base44.entities.ShareLink.create({ token, owner_id: user.id, area });
-        await base44.auth.updateMe({ share_tokens: { ...tokens, [area]: token } });
-        await checkUserAuth();
-      }
-      const link = `${window.location.origin}/s/${token}`;
-      try { await navigator.clipboard.writeText(link); } catch { /* ignore */ }
-      toast({ title: 'Share link copied!', description: `Anyone with the link can view your ${a.label} area.` });
-    } catch (e) {
-      toast({ title: 'Could not create link', description: e.message, variant: 'destructive' });
-    }
-  }
+  function openShare() { setShareOpen(true); }
 
   return (
     <div className="min-h-screen flex relative" style={theme}>
@@ -62,7 +48,7 @@ export default function Layout() {
             <WorkingCloudLogo className="text-lg" />
             <div className="flex items-center gap-1">
               <Link to="/settings" className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-accent" title="Settings"><SettingsIcon className="w-4 h-4" /></Link>
-              <button onClick={copyShare} className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-accent" title="Share this area"><Share2 className="w-4 h-4" /></button>
+              <button onClick={openShare} className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-accent" title="Share this area"><Share2 className="w-4 h-4" /></button>
             </div>
           </div>
           <p className="text-[11px] text-muted-foreground mt-1">{a.label}</p>
@@ -98,8 +84,8 @@ export default function Layout() {
               <Share2 className="w-5 h-5 text-orange-600 mb-2" />
               <p className="text-sm font-semibold text-orange-900">Share this organizer</p>
               <p className="text-xs text-orange-700/80 mt-1">A read-only link anyone can open. Only this area is shared.</p>
-              <button onClick={copyShare} className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-orange-600 hover:text-orange-800">
-                {user?.share_tokens?.[area] ? <><Check className="w-3.5 h-3.5" /> Copy link</> : <><Share2 className="w-3.5 h-3.5" /> Create link</>}
+              <button onClick={openShare} className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-orange-600 hover:text-orange-800">
+                <Share2 className="w-3.5 h-3.5" /> {user?.share_tokens?.[area] ? 'Manage sharing' : 'Create link'}
               </button>
             </div>
           )}
@@ -117,7 +103,7 @@ export default function Layout() {
         <WorkingCloudLogo className="text-base" />
         <div className="flex items-center gap-3">
           {area === 'personal' && <button onClick={() => setPersonalize(true)} className="text-muted-foreground hover:text-primary"><Palette className="w-5 h-5" /></button>}
-          <button onClick={copyShare} className="text-muted-foreground hover:text-primary"><Share2 className="w-5 h-5" /></button>
+          <button onClick={openShare} className="text-muted-foreground hover:text-primary"><Share2 className="w-5 h-5" /></button>
           <Link to="/settings" className="text-muted-foreground hover:text-primary"><SettingsIcon className="w-5 h-5" /></Link>
           <button onClick={switchArea} className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-primary">
             <LayoutGrid className="w-4 h-4" /> Areas
@@ -139,6 +125,7 @@ export default function Layout() {
       </nav>
 
       {personalize && <PersonalizeModal open onClose={() => setPersonalize(false)} />}
+      <ShareModal open={shareOpen} area={area} onClose={() => setShareOpen(false)} />
     </div>
   );
 }

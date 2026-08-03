@@ -55,6 +55,10 @@
       "default": "manual",
       "title": "Source"
     },
+    "flag": {
+      "type": "string",
+      "title": "Flag"
+    },
     "area": {
       "type": "string",
       "enum": [
