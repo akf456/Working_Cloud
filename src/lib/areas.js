@@ -12,7 +12,8 @@ export const AREAS = {
     gradient: 'from-[#a78bfa] to-[#818cf8]',
     soft: 'bg-violet-50 text-violet-600',
     theme: {},
-    typeSuggestions: ['Assignment', 'Exam', 'Quiz', 'Study', 'Reading', 'Project']
+    typeSuggestions: ['Assignment', 'Exam', 'Quiz', 'Study', 'Reading', 'Project'],
+    groupingSuggestions: ['Calculus II', 'Intro to CS', 'English 101', 'Biology Lab', 'World History']
   },
   work: {
     key: 'work',
@@ -39,7 +40,8 @@ export const AREAS = {
       '--muted-foreground': '220 9% 46%',
       '--border': '220 13% 91%'
     },
-    typeSuggestions: ['Project', 'Meeting', 'Deadline', 'Report', 'Review', 'Follow-up', 'Email', 'Prep']
+    typeSuggestions: ['Project', 'Meeting', 'Deadline', 'Report', 'Review', 'Follow-up', 'Email', 'Prep'],
+    groupingSuggestions: ['Project', 'Q3 Launch', 'Client Onboarding', 'Marketing', 'Research', 'Operations']
   },
   personal: {
     key: 'personal',
@@ -61,7 +63,8 @@ export const AREAS = {
       '--ring': '168 58% 42%'
     },
     customizable: true,
-    typeSuggestions: ['Groceries', 'Errands', 'Health', 'Home', 'Family', 'Fitness', 'Finances', 'Hobby']
+    typeSuggestions: ['Groceries', 'Errands', 'Health', 'Home', 'Family', 'Fitness', 'Finances', 'Hobby'],
+    groupingSuggestions: ['Health', 'Home', 'Finances', 'Family', 'Fitness', 'Travel', 'Hobby']
   },
   shareable: {
     key: 'shareable',
@@ -88,7 +91,8 @@ export const AREAS = {
       '--muted-foreground': '20 12% 48%',
       '--border': '30 30% 90%'
     },
-    typeSuggestions: ['Chore', 'Group task', 'Planning', 'Event', 'Supply run', 'Coordination', 'Reminder']
+    typeSuggestions: ['Chore', 'Group task', 'Planning', 'Event', 'Supply run', 'Coordination', 'Reminder'],
+    groupingSuggestions: ['Family', 'Roommates', 'Group Trip', 'Event Committee', 'Chores', 'Shared Expenses']
   }
 };
 

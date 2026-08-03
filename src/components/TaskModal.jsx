@@ -93,16 +93,18 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
               </Select>
             </div>
           </div>
-          <div className="space-y-1.5">
-            <Label>Course</Label>
-            <Select value={courseId} onValueChange={setCourseId}>
-              <SelectTrigger><SelectValue placeholder="No course" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No course</SelectItem>
-                {courses.map((c) => <SelectItem key={c.id} value={c.id}>{c.code ? `${c.code} — ` : ''}{c.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
+          {area === 'school' && (
+            <div className="space-y-1.5">
+              <Label>Course</Label>
+              <Select value={courseId} onValueChange={setCourseId}>
+                <SelectTrigger><SelectValue placeholder="No course" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No course</SelectItem>
+                  {courses.map((c) => <SelectItem key={c.id} value={c.id}>{c.code ? `${c.code} — ` : ''}{c.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="space-y-1.5">
             <Label htmlFor="t-desc">Notes</Label>
             <Textarea id="t-desc" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="Details, links, requirements…" />

@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Plus, Pencil, Trash2, Mail, Phone, MapPin, Clock, BookOpen, Users } from 'lucide-react';
+import { Plus, Pencil, Trash2, Mail, Phone, MapPin, Clock, BookOpen, Users, Download } from 'lucide-react';
 import ContactModal, { CONTACT_ROLE } from '@/components/ContactModal';
 import { trashItem } from '@/lib/trash';
+import { downloadCSV } from '@/lib/exportCsv';
 import { useArea } from '@/lib/AreaContext';
 
 export default function ContactsPage() {
@@ -34,6 +35,10 @@ export default function ContactsPage() {
     setEdit(null); load();
   }
   async function remove(c) { await trashItem('Contact', c, area); load(); }
+  function exportContacts() {
+    const rows = contacts.map((c) => ({ Name: c.name || '', Email: c.email || '', Phone: c.phone || '', Location: c.office_location || '', Notes: c.notes || '' }));
+    downloadCSV(`contacts-${area}.csv`, rows);
+  }
 
   return (
     <div className="p-4 md:p-8 max-w-6xl mx-auto animate-fade-in">
@@ -42,7 +47,10 @@ export default function ContactsPage() {
           <h1 className="text-2xl md:text-3xl font-bold">Contacts</h1>
           <p className="text-sm text-muted-foreground mt-1">Keep everyone's details handy — hours, notes & contact info in one place.</p>
         </div>
-        <Button onClick={() => { setEdit(null); setModal(true); }} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> New contact</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={exportContacts} className="rounded-xl"><Download className="w-4 h-4 mr-1.5" /> Export</Button>
+          <Button onClick={() => { setEdit(null); setModal(true); }} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> New contact</Button>
+        </div>
       </div>
 
       {loading ? (
@@ -66,7 +74,7 @@ export default function ContactsPage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold truncate">{c.name}</p>
-                    <p className="text-xs text-muted-foreground">{role.label}{course ? ` · ${course.code || course.name}` : ''}</p>
+                    <p className="text-xs text-muted-foreground truncate">{area === 'school' ? `${role.label}${course ? ` · ${course.code || course.name}` : ''}` : (c.office_location || c.notes || '')}</p>
                   </div>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition">
                     <button onClick={() => { setEdit(c); setModal(true); }} className="p-1.5 rounded-lg hover:bg-background text-muted-foreground hover:text-indigo-600"><Pencil className="w-3.5 h-3.5" /></button>
@@ -87,7 +95,7 @@ export default function ContactsPage() {
         </div>
       )}
 
-      <ContactModal open={modal} onClose={() => { setModal(false); setEdit(null); }} onSave={save} contact={edit} courses={courses} />
+      <ContactModal open={modal} onClose={() => { setModal(false); setEdit(null); }} onSave={save} contact={edit} courses={courses} area={area} />
     </div>
   );
 }

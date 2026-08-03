@@ -9,6 +9,17 @@
     "owner_id": {
       "type": "string",
       "title": "Owner ID"
+    },
+    "area": {
+      "type": "string",
+      "enum": [
+        "school",
+        "work",
+        "personal",
+        "shareable"
+      ],
+      "default": "shareable",
+      "title": "Area"
     }
   },
   "required": [

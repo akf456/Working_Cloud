@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate, Navigate, Outlet } from 'react-router-dom';
-import { LayoutDashboard, CalendarDays, ListTodo, GraduationCap, Sparkles, Users, Trash2, LayoutGrid, Palette, Share2, Check } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, ListTodo, GraduationCap, Sparkles, Users, Trash2, LayoutGrid, Palette, Share2, Check, Settings as SettingsIcon } from 'lucide-react';
 import { useArea } from '@/lib/AreaContext';
 import { AREAS } from '@/lib/areas';
 import { areaThemeVars, areaImage } from '@/lib/areaTheme';
@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
 import PersonalizeModal from '@/components/PersonalizeModal';
+import WorkingCloudLogo from '@/components/WorkingCloudLogo';
 
 export default function Layout() {
   const { pathname } = useLocation();
@@ -34,16 +35,17 @@ export default function Layout() {
 
   async function copyShare() {
     try {
-      let token = user?.share_token;
+      const tokens = user?.share_tokens || {};
+      let token = tokens[area];
       if (!token) {
         token = (crypto.randomUUID?.() || Math.random().toString(36).slice(2));
-        await base44.entities.ShareLink.create({ token, owner_id: user.id });
-        await base44.auth.updateMe({ share_token: token });
+        await base44.entities.ShareLink.create({ token, owner_id: user.id, area });
+        await base44.auth.updateMe({ share_tokens: { ...tokens, [area]: token } });
         await checkUserAuth();
       }
       const link = `${window.location.origin}/s/${token}`;
       try { await navigator.clipboard.writeText(link); } catch { /* ignore */ }
-      toast({ title: 'Share link copied!', description: 'Anyone with the link can view this shared organizer.' });
+      toast({ title: 'Share link copied!', description: `Anyone with the link can view your ${a.label} area.` });
     } catch (e) {
       toast({ title: 'Could not create link', description: e.message, variant: 'destructive' });
     }
@@ -55,14 +57,15 @@ export default function Layout() {
 
       {/* Desktop sidebar */}
       <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-border/60 bg-card/60 backdrop-blur px-4 py-6 relative z-10">
-        <div className="flex items-center gap-2.5 px-2 mb-5">
-          <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${a.gradient} flex items-center justify-center shadow-md`}>
-            <a.Icon className="w-5 h-5 text-white" />
+        <div className="px-2 mb-5">
+          <div className="flex items-center justify-between">
+            <WorkingCloudLogo className="text-lg" />
+            <div className="flex items-center gap-1">
+              <Link to="/settings" className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-accent" title="Settings"><SettingsIcon className="w-4 h-4" /></Link>
+              <button onClick={copyShare} className="p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-accent" title="Share this area"><Share2 className="w-4 h-4" /></button>
+            </div>
           </div>
-          <div>
-            <p className="font-heading font-bold text-lg leading-none">Working Buddy</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">{a.label}</p>
-          </div>
+          <p className="text-[11px] text-muted-foreground mt-1">{a.label}</p>
         </div>
         <button onClick={switchArea} className="nav-link mb-3 text-muted-foreground hover:text-primary">
           <LayoutGrid className="w-[18px] h-[18px]" /> All areas
@@ -96,7 +99,7 @@ export default function Layout() {
               <p className="text-sm font-semibold text-orange-900">Share this organizer</p>
               <p className="text-xs text-orange-700/80 mt-1">A read-only link anyone can open. Only this area is shared.</p>
               <button onClick={copyShare} className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-orange-600 hover:text-orange-800">
-                {user?.share_token ? <><Check className="w-3.5 h-3.5" /> Copy link</> : <><Share2 className="w-3.5 h-3.5" /> Create link</>}
+                {user?.share_tokens?.[area] ? <><Check className="w-3.5 h-3.5" /> Copy link</> : <><Share2 className="w-3.5 h-3.5" /> Create link</>}
               </button>
             </div>
           )}
@@ -111,15 +114,11 @@ export default function Layout() {
 
       {/* Mobile top bar */}
       <header className="md:hidden fixed top-0 inset-x-0 z-30 h-14 flex items-center justify-between px-4 bg-card/80 backdrop-blur border-b border-border/60">
-        <div className="flex items-center gap-2">
-          <div className={`w-7 h-7 rounded-lg bg-gradient-to-br ${a.gradient} flex items-center justify-center`}>
-            <a.Icon className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-heading font-bold">Working Buddy</span>
-        </div>
+        <WorkingCloudLogo className="text-base" />
         <div className="flex items-center gap-3">
           {area === 'personal' && <button onClick={() => setPersonalize(true)} className="text-muted-foreground hover:text-primary"><Palette className="w-5 h-5" /></button>}
-          {area === 'shareable' && <button onClick={copyShare} className="text-muted-foreground hover:text-primary"><Share2 className="w-5 h-5" /></button>}
+          <button onClick={copyShare} className="text-muted-foreground hover:text-primary"><Share2 className="w-5 h-5" /></button>
+          <Link to="/settings" className="text-muted-foreground hover:text-primary"><SettingsIcon className="w-5 h-5" /></Link>
           <button onClick={switchArea} className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-primary">
             <LayoutGrid className="w-4 h-4" /> Areas
           </button>

@@ -13,14 +13,14 @@ export default async function(req) {
     const link = links && links[0];
     if (!link) return Response.json({ error: 'Not found' }, { status: 404 });
     const owner = link.owner_id;
+    const area = link.area || 'shareable';
 
     const [tasks, events, courses] = await Promise.all([
-      base44.asServiceRole.entities.Task.filter({ area: 'shareable', created_by_id: owner }, '-due_date', 300),
-      base44.asServiceRole.entities.Event.filter({ area: 'shareable', created_by_id: owner }, '-start_date', 300),
-      base44.asServiceRole.entities.Course.filter({ area: 'shareable', created_by_id: owner })
+      base44.asServiceRole.entities.Task.filter({ area, created_by_id: owner }, '-due_date', 300),
+      base44.asServiceRole.entities.Event.filter({ area, created_by_id: owner }, '-start_date', 300),
+      base44.asServiceRole.entities.Course.filter({ area, created_by_id: owner })
     ]);
 
-    // Only expose the minimal, safe fields a read-only viewer needs.
     const slim = (items, fields) => items.map((i) => {
       const out = {};
       fields.forEach((f) => { if (i[f] !== undefined) out[f] = i[f]; });
@@ -28,6 +28,7 @@ export default async function(req) {
     });
 
     return Response.json({
+      area,
       tasks: slim(tasks, ['title', 'description', 'due_date', 'priority', 'status', 'type', 'course_id']),
       events: slim(events, ['title', 'description', 'start_date', 'end_date', 'all_day', 'type', 'location']),
       courses: slim(courses, ['name', 'code', 'color'])

@@ -21,6 +21,7 @@ import CoursesPage from '@/pages/CoursesPage';
 import ContactsPage from '@/pages/ContactsPage';
 import TrashPage from '@/pages/TrashPage';
 import ShareBoard from '@/pages/ShareBoard';
+import Settings from '@/pages/Settings';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -62,6 +63,7 @@ const AuthenticatedApp = () => {
           <Route path="/courses" element={<CoursesPage />} />
           <Route path="/contacts" element={<ContactsPage />} />
           <Route path="/trash" element={<TrashPage />} />
+          <Route path="/settings" element={<Settings />} />
         </Route>
       </Route>
       <Route path="*" element={<PageNotFound />} />

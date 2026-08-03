@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ChevronLeft, ChevronRight, Plus, CalendarDays } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, CalendarDays, Printer } from 'lucide-react';
 import {
   startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval,
   addMonths, subMonths, isSameMonth, isSameDay, parseISO, isValid, format
@@ -69,7 +69,10 @@ export default function CalendarPage() {
           <h1 className="text-2xl md:text-3xl font-bold">Calendar</h1>
           <p className="text-sm text-muted-foreground mt-1">Exams, deadlines, classes & events in one view.</p>
         </div>
-        <Button onClick={() => { setEditEvent(null); setModal(true); }} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> Add event</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => window.print()} className="rounded-xl"><Printer className="w-4 h-4 mr-1.5" /> Print</Button>
+          <Button onClick={() => { setEditEvent(null); setModal(true); }} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> Add event</Button>
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">

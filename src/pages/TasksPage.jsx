@@ -5,13 +5,14 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { Plus, Search, Pencil, Trash2, Inbox } from 'lucide-react';
-import { taskTypeMeta, PRIORITY, STATUS, dueLabel, daysUntil, parseDate } from '@/lib/planner';
+import { Plus, Search, Pencil, Trash2, Inbox, Download } from 'lucide-react';
+import { taskTypeMeta, PRIORITY, STATUS, dueLabel, daysUntil, parseDate, fmt } from '@/lib/planner';
 import TaskModal from '@/components/TaskModal';
 import PriorityView from '@/components/PriorityView';
 import { celebrate } from '@/lib/celebrate';
 import { useToast } from '@/components/ui/use-toast';
 import { trashItem } from '@/lib/trash';
+import { downloadCSV } from '@/lib/exportCsv';
 import OverdueBanner from '@/components/OverdueBanner';
 import SubtaskList from '@/components/SubtaskList';
 import { ChevronDown } from 'lucide-react';
@@ -69,6 +70,10 @@ export default function TasksPage() {
     load();
   }
   async function remove(t) { await trashItem('Task', t, area); load(); }
+  function exportTasks() {
+    const rows = filtered.map((t) => ({ Title: t.title || '', Type: taskTypeMeta(t.type).label, Priority: t.priority || '', Status: t.status || '', Due: t.due_date ? fmt(t.due_date) : '', Group: courseMap[t.course_id]?.name || '' }));
+    downloadCSV(`tasks-${area}.csv`, rows);
+  }
   async function saveTask(data) {
     if (data.id) await base44.entities.Task.update(data.id, data);
     else await base44.entities.Task.create({ ...data, area });
@@ -82,7 +87,10 @@ export default function TasksPage() {
           <h1 className="text-2xl md:text-3xl font-bold">Tasks</h1>
           <p className="text-sm text-muted-foreground mt-1">Your to-dos, sorted the way you like.</p>
         </div>
-        <Button onClick={() => { setEditTask(null); setModal(true); }} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> New task</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={exportTasks} className="rounded-xl"><Download className="w-4 h-4 mr-1.5" /> Export</Button>
+          <Button onClick={() => { setEditTask(null); setModal(true); }} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> New task</Button>
+        </div>
       </div>
 
       <OverdueBanner tasks={tasks} courses={courses} />

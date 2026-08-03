@@ -27,6 +27,10 @@
       "type": "string",
       "title": "Syllabus URL"
     },
+    "notes": {
+      "type": "string",
+      "title": "Notes"
+    },
     "area": {
       "type": "string",
       "enum": [

@@ -4,6 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { Card } from '@/components/ui/card';
 import { taskTypeMeta, fmt, dueLabel } from '@/lib/planner';
 import { CheckCircle2, CalendarDays, Link2, Loader2 } from 'lucide-react';
+import { AREAS } from '@/lib/areas';
 
 export default function ShareBoard() {
   const { token } = useParams();
@@ -40,7 +41,7 @@ export default function ShareBoard() {
       <div className="max-w-3xl mx-auto p-4 md:p-8">
         <div className="flex items-center gap-2 mb-1">
           <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-orange-400 to-amber-300 flex items-center justify-center"><CalendarDays className="w-4 h-4 text-white" /></span>
-          <h1 className="text-xl font-bold">Shared organizer</h1>
+          <h1 className="text-xl font-bold">Shared {AREAS[data.area]?.label || 'organizer'}</h1>
         </div>
         <p className="text-sm text-muted-foreground mb-6">A read-only view of the tasks & events shared with you.</p>
 

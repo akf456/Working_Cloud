@@ -3,6 +3,7 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Plus, Sparkles, Pencil, Trash2, BookOpen, ListTodo, CalendarClock, GraduationCap } from 'lucide-react';
@@ -85,7 +86,7 @@ export default function CoursesPage() {
                     <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold shrink-0" style={{ backgroundColor: c.color }}>{(c.code || c.name || '?').slice(0, 2).toUpperCase()}</div>
                     <div className="min-w-0">
                       <p className="font-semibold truncate">{c.name}</p>
-                      <p className="text-xs text-muted-foreground">{c.code}{c.instructor ? ` · ${c.instructor}` : ''}</p>
+                      <p className="text-xs text-muted-foreground truncate">{area === 'school' ? `${c.code || ''}${c.instructor ? ` · ${c.instructor}` : ''}` : (c.notes || '')}</p>
                     </div>
                   </div>
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition">
@@ -95,7 +96,7 @@ export default function CoursesPage() {
                 </div>
                 <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
                   <span className="inline-flex items-center gap-1"><ListTodo className="w-3.5 h-3.5" />{open.length} open</span>
-                  <span className="inline-flex items-center gap-1"><CalendarClock className="w-3.5 h-3.5" />{exams.length} exams</span>
+                  <span className="inline-flex items-center gap-1"><CalendarClock className="w-3.5 h-3.5" />{area === 'school' ? `${exams.length} exams` : `${cevents.length} events`}</span>
                 </div>
                 {next ? (
                   <div className="rounded-lg bg-amber-50/60 border border-amber-100 px-3 py-2">
@@ -112,18 +113,19 @@ export default function CoursesPage() {
         </div>
       )}
 
-      <CourseModal open={modal} onClose={() => { setModal(false); setEdit(null); }} onSave={saveCourse} course={edit} index={courses.length} areaLabel={a.singular} />
+      <CourseModal open={modal} onClose={() => { setModal(false); setEdit(null); }} onSave={saveCourse} course={edit} index={courses.length} areaLabel={a.singular} area={area} />
       <SyllabusImporter open={importer} onClose={() => setImporter(false)} courses={courses} onDone={load} />
     </div>
   );
 }
 
-function CourseModal({ open, onClose, onSave, course, index, areaLabel = 'Course' }) {
+function CourseModal({ open, onClose, onSave, course, index, areaLabel = 'Course', area = 'school' }) {
   const COLORS = ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b', '#8b5cf6', '#ef4444', '#0ea5e9', '#84cc16'];
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [instructor, setInstructor] = useState('');
   const [semester, setSemester] = useState('');
+  const [notes, setNotes] = useState('');
   const [color, setColor] = useState(COLORS[0]);
 
   React.useEffect(() => {
@@ -131,12 +133,16 @@ function CourseModal({ open, onClose, onSave, course, index, areaLabel = 'Course
     setCode(course?.code || '');
     setInstructor(course?.instructor || '');
     setSemester(course?.semester || '');
+    setNotes(course?.notes || '');
     setColor(course?.color || COLORS[index % COLORS.length]);
   }, [course, open, index]);
 
   function submit() {
     if (!name.trim()) return;
-    onSave({ ...(course?.id ? { id: course.id } : {}), name: name.trim(), code: code.trim(), instructor: instructor.trim(), semester: semester.trim(), color });
+    const payload = { ...(course?.id ? { id: course.id } : {}), name: name.trim(), color };
+    if (area === 'school') { payload.code = code.trim(); payload.instructor = instructor.trim(); payload.semester = semester.trim(); }
+    else { payload.notes = notes.trim(); }
+    onSave(payload);
     onClose();
   }
 
@@ -145,12 +151,20 @@ function CourseModal({ open, onClose, onSave, course, index, areaLabel = 'Course
       <DialogContent className="sm:max-w-md">
         <DialogHeader><DialogTitle>{course ? `Edit ${areaLabel}` : `New ${areaLabel}`}</DialogTitle></DialogHeader>
         <div className="space-y-4 py-2">
-          <div className="space-y-1.5"><Label>{areaLabel} name</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Linear Algebra" autoFocus /></div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5"><Label>Code</Label><Input value={code} onChange={(e) => setCode(e.target.value)} placeholder="MATH 211" /></div>
-            <div className="space-y-1.5"><Label>Semester</Label><Input value={semester} onChange={(e) => setSemester(e.target.value)} placeholder="Fall 2026" /></div>
+          <div className="space-y-1.5"><Label>{areaLabel} name</Label><Input value={name} onChange={(e) => setName(e.target.value)} placeholder={area === 'school' ? 'Linear Algebra' : areaLabel} list="cat-names" autoFocus />
+            <datalist id="cat-names">{(AREAS[area]?.groupingSuggestions || []).map((s) => <option key={s} value={s} />)}</datalist>
           </div>
-          <div className="space-y-1.5"><Label>Instructor</Label><Input value={instructor} onChange={(e) => setInstructor(e.target.value)} placeholder="Dr. Smith" /></div>
+          {area === 'school' ? (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5"><Label>Code</Label><Input value={code} onChange={(e) => setCode(e.target.value)} placeholder="MATH 211" /></div>
+                <div className="space-y-1.5"><Label>Semester</Label><Input value={semester} onChange={(e) => setSemester(e.target.value)} placeholder="Fall 2026" /></div>
+              </div>
+              <div className="space-y-1.5"><Label>Instructor</Label><Input value={instructor} onChange={(e) => setInstructor(e.target.value)} placeholder="Dr. Smith" /></div>
+            </>
+          ) : (
+            <div className="space-y-1.5"><Label>Notes</Label><Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder={`Anything important about this ${areaLabel.toLowerCase()}…`} className="resize-y" /></div>
+          )}
           <div className="space-y-1.5"><Label>Color</Label>
             <div className="flex gap-2 flex-wrap">
               {COLORS.map((c) => <button key={c} type="button" onClick={() => setColor(c)} className={`w-8 h-8 rounded-full border-2 transition ${color === c ? 'border-slate-800 scale-110' : 'border-transparent'}`} style={{ backgroundColor: c }} />)}

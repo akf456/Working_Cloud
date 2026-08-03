@@ -3,6 +3,7 @@ import { useNavigate, Navigate } from 'react-router-dom';
 import { useArea } from '@/lib/AreaContext';
 import { AREA_LIST } from '@/lib/areas';
 import { ArrowRight } from 'lucide-react';
+import WorkingCloudLogo from '@/components/WorkingCloudLogo';
 
 export default function Areas() {
   const { area, enter } = useArea();
@@ -13,7 +14,7 @@ export default function Areas() {
     <div className="min-h-screen bg-background flex flex-col">
       <div className="flex-1 flex flex-col items-center justify-center p-6">
         <div className="text-center mb-10 animate-fade-in">
-          <h1 className="text-3xl md:text-5xl font-bold gradient-text">Working Buddy</h1>
+          <h1 className="text-3xl md:text-5xl font-bold"><WorkingCloudLogo className="text-3xl md:text-5xl" /></h1>
           <p className="text-muted-foreground mt-2 text-sm md:text-base">Pick a space to focus on. Everything stays neatly in its own lane.</p>
         </div>
         <div className="grid sm:grid-cols-3 gap-5 max-w-4xl w-full">
