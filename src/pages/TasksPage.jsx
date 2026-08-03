@@ -73,6 +73,9 @@ export default function TasksPage() {
     { key: 'in_progress', label: 'In Progress' },
     { key: 'done', label: 'Done' }
   ];
+  const overdueItems = filtered.filter((t) => { const n = daysUntil(t.due_date); return n !== null && n < 0 && t.status !== 'done'; })
+    .sort((a, b) => (parseDate(a.due_date)?.getTime() || 0) - (parseDate(b.due_date)?.getTime() || 0));
+  const overdueIds = new Set(overdueItems.map((t) => t.id));
 
   const { toast } = useToast();
   async function toggle(t) {
@@ -212,8 +215,20 @@ export default function TasksPage() {
           <PriorityView tasks={filtered} events={[]} courses={courses} onToggle={toggle} />
         ) : (
           <div className="space-y-6">
+            {overdueItems.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full text-rose-700 bg-rose-50 ring-1 ring-rose-200">Overdue</span>
+                  <span className="text-xs text-muted-foreground">{overdueItems.length}</span>
+                  <div className="flex-1 h-px bg-border/60" />
+                </div>
+                <div className="space-y-2">
+                  {overdueItems.map((t) => <TaskRow key={t.id} task={t} course={courseMap[t.course_id]} selectMode={selectMode} selected={selected.has(t.id)} onSelect={() => toggleSelect(t.id)} onToggle={() => toggle(t)} onEdit={() => { setEditTask(t); setModal(true); }} onDelete={() => remove(t)} />)}
+                </div>
+              </div>
+            )}
             {groups.map(({ key, label }) => {
-              const items = filtered.filter((t) => t.status === key).sort((a, b) => {
+              const items = filtered.filter((t) => t.status === key && !overdueIds.has(t.id)).sort((a, b) => {
                 if (key === 'done') return new Date(b.updated_date) - new Date(a.updated_date);
                 const da = parseDate(a.due_date)?.getTime() || Infinity;
                 const db = parseDate(b.due_date)?.getTime() || Infinity;

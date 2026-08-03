@@ -15,7 +15,7 @@ const EXTRACTION_SCHEMA = {
         properties: {
           title: { type: "string" },
           due_date: { type: "string", description: "ISO date if available, otherwise empty string" },
-          type: { type: "string", enum: ["assignment", "exam", "quiz", "study", "reading", "project", "misc"] },
+          type: { type: "string", enum: ["assignment", "exam", "quiz", "study", "reading", "project", "lecture", "office_hours", "lab", "misc"] },
           description: { type: "string" }
         }
       }
@@ -32,6 +32,21 @@ const EXTRACTION_SCHEMA = {
           type: { type: "string", enum: ["exam", "deadline", "class", "study", "event", "holiday"] },
           location: { type: "string" },
           description: { type: "string" }
+        }
+      }
+    },
+    contacts: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          name: { type: "string" },
+          role: { type: "string", description: "e.g. professor, TA, advisor, manager, client, doctor" },
+          email: { type: "string" },
+          phone: { type: "string" },
+          office_location: { type: "string" },
+          office_hours: { type: "string" },
+          class_times: { type: "string" }
         }
       }
     }
@@ -65,7 +80,8 @@ export default async function(req) {
       semester: output.semester || '',
       topics: Array.isArray(output.topics) ? output.topics : [],
       tasks: Array.isArray(output.tasks) ? output.tasks : [],
-      events: Array.isArray(output.events) ? output.events : []
+      events: Array.isArray(output.events) ? output.events : [],
+      contacts: Array.isArray(output.contacts) ? output.contacts : []
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

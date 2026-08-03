@@ -53,7 +53,7 @@ export default function CoursesPage() {
           <p className="text-sm text-muted-foreground mt-1">{area === 'school' ? 'Your semester at a glance. Drop in a syllabus to auto-fill everything.' : 'Group and track everything in this space.'}</p>
         </div>
         <div className="flex gap-2">
-          {area === 'school' && <Button variant="outline" onClick={() => setImporter(true)} className="rounded-xl"><Sparkles className="w-4 h-4 mr-1.5 text-indigo-600" /> Import syllabus</Button>}
+          <Button variant="outline" onClick={() => setImporter(true)} className="rounded-xl"><Sparkles className="w-4 h-4 mr-1.5 text-indigo-600" /> {area === 'school' ? 'Import syllabus' : 'Import document'}</Button>
           <Button onClick={() => { setEdit(null); setModal(true); }} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> Add {a.singular.toLowerCase()}</Button>
         </div>
       </div>
@@ -64,9 +64,9 @@ export default function CoursesPage() {
         <Card className="p-10 text-center">
           <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-4"><GraduationCap className="w-7 h-7 text-indigo-600" /></div>
           <p className="font-semibold text-lg">No {a.groupingLabel.toLowerCase()} yet</p>
-          <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">{area === 'school' ? 'Add a course manually, or import a syllabus to create one with all deadlines auto-filled.' : 'Add one to start grouping your tasks and events.'}</p>
+          <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">{area === 'school' ? 'Add a course manually, or import a syllabus to create one with all deadlines auto-filled.' : 'Add one manually, or import a document to auto-fill tasks, deadlines & contacts.'}</p>
           <div className="flex gap-2 justify-center mt-5">
-            {area === 'school' && <Button onClick={() => setImporter(true)}><Sparkles className="w-4 h-4 mr-1.5" /> Import syllabus</Button>}
+            <Button onClick={() => setImporter(true)}><Sparkles className="w-4 h-4 mr-1.5" /> {area === 'school' ? 'Import syllabus' : 'Import document'}</Button>
             <Button variant="outline" onClick={() => { setEdit(null); setModal(true); }}>Add manually</Button>
           </div>
         </Card>
@@ -114,7 +114,7 @@ export default function CoursesPage() {
       )}
 
       <CourseModal open={modal} onClose={() => { setModal(false); setEdit(null); }} onSave={saveCourse} course={edit} index={courses.length} areaLabel={a.singular} area={area} />
-      <SyllabusImporter open={importer} onClose={() => setImporter(false)} courses={courses} onDone={load} />
+      <SyllabusImporter open={importer} onClose={() => setImporter(false)} courses={courses} area={area} onDone={load} />
     </div>
   );
 }
