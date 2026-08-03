@@ -50,7 +50,7 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
       description: description.trim(),
       due_date: due,
       priority, status, type, repeat,
-      repeat_days: repeat === 'weekly' ? repeatDays : [],
+      repeat_days: repeat !== 'none' ? repeatDays : [],
       repeat_start_date: repeat !== 'none' ? (repeatStart ? fromInputDate(repeatStart) : due) : null,
       repeat_end_date: repeat !== 'none' && repeatEnd ? fromInputDate(repeatEnd) : null,
       course_id: courseId === 'none' ? null : courseId
@@ -125,7 +125,7 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
               </SelectContent>
             </Select>
           </div>
-          {repeat === 'weekly' && (
+          {repeat !== 'none' && (
             <div className="space-y-1.5">
               <Label>On these days</Label>
               <div className="flex gap-1.5">
@@ -139,7 +139,7 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
                   );
                 })}
               </div>
-              <p className="text-[11px] text-muted-foreground">Leave empty to repeat weekly from the start date.</p>
+              <p className="text-[11px] text-muted-foreground">Pick the weekdays you want it to appear on. Leave empty to repeat on every occurrence.</p>
             </div>
           )}
           {repeat !== 'none' && (

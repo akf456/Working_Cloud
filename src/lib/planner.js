@@ -220,13 +220,15 @@ export function expandTaskOccurrences(task, genEnd) {
   const end = task.repeat_end_date ? startOfDay(parseDate(task.repeat_end_date)) : startOfDay(genEnd);
   const cap = startOfDay(genEnd);
   const out = [];
+  const wdays = (task.repeat_days && task.repeat_days.length) ? task.repeat_days.map(Number) : null;
   if (task.repeat === 'daily') {
     let d = a0, n = 0;
     while (d.getTime() <= end.getTime() && d.getTime() <= cap.getTime() && n < 1000) {
-      out.push(d); d = addDays(d, 1); n++;
+      if (!wdays || wdays.includes(d.getDay())) out.push(d);
+      d = addDays(d, 1); n++;
     }
   } else if (task.repeat === 'weekly') {
-    const days = (task.repeat_days && task.repeat_days.length) ? task.repeat_days.map(Number) : [a0.getDay()];
+    const days = wdays || [a0.getDay()];
     let d = a0, n = 0;
     while (d.getTime() <= end.getTime() && d.getTime() <= cap.getTime() && n < 7000) {
       if (days.includes(d.getDay())) out.push(d);
@@ -239,7 +241,7 @@ export function expandTaskOccurrences(task, genEnd) {
       const dim = new Date(y, m + 1, 0).getDate();
       const d = startOfDay(new Date(y, m, Math.min(dom, dim)));
       if (d.getTime() > end.getTime() || d.getTime() > cap.getTime()) break;
-      out.push(d);
+      if (!wdays || wdays.includes(d.getDay())) out.push(d);
     }
   }
   return out;
