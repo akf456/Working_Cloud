@@ -1,14 +1,29 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useArea } from '@/lib/AreaContext';
 import { AREA_LIST } from '@/lib/areas';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, BarChart3 } from 'lucide-react';
 import WorkingCloudLogo from '@/components/WorkingCloudLogo';
+import AreaDistribution from '@/components/AreaDistribution';
+import { base44 } from '@/api/base44Client';
+
+const HIDE_KEY = 'wc_hide_time_goes';
 
 export default function Areas() {
   const { area, enter } = useArea();
   const nav = useNavigate();
+  const [tasks, setTasks] = useState([]);
+  const [hidden, setHidden] = useState(() => localStorage.getItem(HIDE_KEY) === '1');
+
+  useEffect(() => {
+    if (area) return;
+    base44.entities.Task.list('-due_date', 500).then(setTasks).catch(() => {});
+  }, [area]);
+
   if (area) return <Navigate to="/dashboard" replace />;
+
+  const dismiss = () => { setHidden(true); localStorage.setItem(HIDE_KEY, '1'); };
+  const show = () => { setHidden(false); localStorage.removeItem(HIDE_KEY); };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -34,6 +49,16 @@ export default function Areas() {
               </span>
             </button>
           ))}
+        </div>
+
+        <div className="max-w-4xl w-full mt-8 animate-fade-in">
+          {hidden ? (
+            <button onClick={show} className="w-full rounded-2xl border border-dashed border-border bg-card/50 px-4 py-3 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/40 transition inline-flex items-center justify-center gap-2">
+              <BarChart3 className="w-4 h-4" /> Show “Where your time goes”
+            </button>
+          ) : (
+            <AreaDistribution tasks={tasks} onDismiss={dismiss} />
+          )}
         </div>
       </div>
     </div>

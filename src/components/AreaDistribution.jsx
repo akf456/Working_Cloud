@@ -2,8 +2,9 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { AREA_LIST } from '@/lib/areas';
+import { EyeOff } from 'lucide-react';
 
-export default function AreaDistribution({ tasks, currentArea }) {
+export default function AreaDistribution({ tasks, currentArea, onDismiss }) {
   const data = AREA_LIST.filter((a) => a.key !== 'shareable').map((a) => {
     const list = tasks.filter((t) => t.area === a.key);
     return { name: a.label, key: a.key, total: list.length, color: a.monoBg };
@@ -11,7 +12,14 @@ export default function AreaDistribution({ tasks, currentArea }) {
   const busiest = [...data].sort((a, b) => b.total - a.total)[0];
   return (
     <Card className="p-5">
-      <h2 className="font-semibold text-lg mb-1">Where your time goes</h2>
+      <div className="flex items-center justify-between mb-1">
+        <h2 className="font-semibold text-lg">Where your time goes</h2>
+        {onDismiss && (
+          <button onClick={onDismiss} className="text-muted-foreground hover:text-foreground transition" title="Hide overview" aria-label="Hide overview">
+            <EyeOff className="w-4 h-4" />
+          </button>
+        )}
+      </div>
       <p className="text-sm text-muted-foreground mb-4">Tasks across your areas — see which section is taking up the most.</p>
       <div className="h-40">
         <ResponsiveContainer width="100%" height="100%">
