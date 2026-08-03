@@ -4,8 +4,8 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 
 import { AREA_LIST } from '@/lib/areas';
 import { EyeOff } from 'lucide-react';
 
-export default function AreaDistribution({ tasks, currentArea, onDismiss }) {
-  const data = AREA_LIST.filter((a) => a.key !== 'shareable').map((a) => {
+export default function AreaDistribution({ tasks, currentArea, onDismiss, hiddenAreas = [] }) {
+  const data = AREA_LIST.filter((a) => !hiddenAreas.includes(a.key)).map((a) => {
     const list = tasks.filter((t) => t.area === a.key);
     return { name: a.label, key: a.key, total: list.length, color: a.monoBg };
   });
