@@ -27,7 +27,7 @@ export const AREAS = {
     accent: '#334155',
     tagline: 'Meetings, deadlines & projects',
     gradient: 'from-[#475569] to-[#94a3b8]',
-    monoBg: '#2B2D31',
+    monoBg: '#6B7280',
     soft: 'bg-slate-100 text-slate-700',
     theme: {
       '--primary': '220 13% 18%',
@@ -58,7 +58,7 @@ export const AREAS = {
     accent: '#0d9488',
     tagline: 'Events, errands & memories',
     gradient: 'from-[#5eead4] to-[#86efac]',
-    monoBg: '#003153',
+    monoBg: '#1B4D7A',
     soft: 'bg-teal-50 text-teal-600',
     theme: {
       '--primary': '168 58% 42%',
@@ -77,14 +77,14 @@ export const AREAS = {
   },
   shareable: {
     key: 'shareable',
-    label: 'Shareable',
+    label: 'Shareables',
     singular: 'Group',
     Icon: Users,
     groupingLabel: 'Groups',
     accent: '#f97316',
     tagline: 'Groups, family & shared plans',
     gradient: 'from-[#fb923c] to-[#fcd34b]',
-    monoBg: '#004225',
+    monoBg: '#1B5E3C',
     soft: 'bg-orange-50 text-orange-600',
     theme: {
       '--primary': '14 80% 60%',
