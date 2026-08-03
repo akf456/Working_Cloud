@@ -1,8 +1,9 @@
 import {
   FileText, Award, HelpCircle, BookOpen, BookMarked,
-  FolderKanban, CircleDot, CalendarClock, Flag, PartyPopper, Coffee
+  FolderKanban, CircleDot, CalendarClock, Flag, PartyPopper, Coffee,
+  Presentation, Clock, FlaskConical
 } from 'lucide-react';
-import { format, parseISO, isValid, differenceInCalendarDays } from 'date-fns';
+import { format, parseISO, isValid, differenceInCalendarDays, addDays, addMonths, startOfDay } from 'date-fns';
 
 export const COURSE_COLORS = [
   '#6366f1', '#ec4899', '#14b8a6', '#f59e0b',
@@ -22,6 +23,9 @@ export const TASK_TYPE = {
   study: { label: 'Study', Icon: BookOpen, chip: 'text-teal-700 bg-teal-50' },
   reading: { label: 'Reading', Icon: BookMarked, chip: 'text-sky-700 bg-sky-50' },
   project: { label: 'Project', Icon: FolderKanban, chip: 'text-violet-700 bg-violet-50' },
+  lecture: { label: 'Lecture', Icon: Presentation, chip: 'text-indigo-700 bg-indigo-50' },
+  office_hours: { label: 'Office Hours', Icon: Clock, chip: 'text-emerald-700 bg-emerald-50' },
+  lab: { label: 'Lab', Icon: FlaskConical, chip: 'text-cyan-700 bg-cyan-50' },
   misc: { label: 'Misc', Icon: CircleDot, chip: 'text-slate-700 bg-slate-100' }
 };
 
@@ -52,7 +56,7 @@ export const QUOTES = [
 
 export const TYPE_COLORS = {
   assignment: '#6366f1', exam: '#e11d48', quiz: '#f59e0b', study: '#14b8a6',
-  reading: '#0ea5e9', project: '#8b5cf6', misc: '#94a3b8'
+  reading: '#0ea5e9', project: '#8b5cf6', lecture: '#6366f1', office_hours: '#10b981', lab: '#06b6d4', misc: '#94a3b8'
 };
 
 const QUOTES_SCHOOL = [
@@ -199,4 +203,44 @@ export function priorityScore(task) {
   if (overdue) s += 2.5;
   if (task.type === 'exam') s += urgency * 0.6 + 0.15;
   return s;
+}
+
+// Expand a task into its occurrence dates (start-of-day) up to `genEnd`.
+// Non-recurring tasks return their single due date (if any).
+// For recurring tasks, occurrences run from repeat_start_date (or due_date) to
+// repeat_end_date (or genEnd), respecting daily/weekly (with repeat_days)/monthly.
+export function expandTaskOccurrences(task, genEnd) {
+  if (!task.repeat || task.repeat === 'none') {
+    const d = parseDate(task.due_date);
+    return d ? [startOfDay(d)] : [];
+  }
+  const anchor = parseDate(task.repeat_start_date || task.due_date);
+  if (!anchor) return [];
+  const a0 = startOfDay(anchor);
+  const end = task.repeat_end_date ? startOfDay(parseDate(task.repeat_end_date)) : startOfDay(genEnd);
+  const cap = startOfDay(genEnd);
+  const out = [];
+  if (task.repeat === 'daily') {
+    let d = a0, n = 0;
+    while (d.getTime() <= end.getTime() && d.getTime() <= cap.getTime() && n < 1000) {
+      out.push(d); d = addDays(d, 1); n++;
+    }
+  } else if (task.repeat === 'weekly') {
+    const days = (task.repeat_days && task.repeat_days.length) ? task.repeat_days.map(Number) : [a0.getDay()];
+    let d = a0, n = 0;
+    while (d.getTime() <= end.getTime() && d.getTime() <= cap.getTime() && n < 7000) {
+      if (days.includes(d.getDay())) out.push(d);
+      d = addDays(d, 1); n++;
+    }
+  } else if (task.repeat === 'monthly') {
+    const dom = a0.getDate();
+    for (let i = 0; i < 36; i++) {
+      const y = a0.getFullYear(), m = a0.getMonth() + i;
+      const dim = new Date(y, m + 1, 0).getDate();
+      const d = startOfDay(new Date(y, m, Math.min(dom, dim)));
+      if (d.getTime() > end.getTime() || d.getTime() > cap.getTime()) break;
+      out.push(d);
+    }
+  }
+  return out;
 }

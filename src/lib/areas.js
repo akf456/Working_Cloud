@@ -13,7 +13,7 @@ export const AREAS = {
     monoBg: '#D4AF37',
     soft: 'bg-violet-50 text-violet-600',
     theme: {},
-    typeSuggestions: ['Assignment', 'Exam', 'Quiz', 'Study', 'Reading', 'Project'],
+    typeSuggestions: ['Assignment', 'Exam', 'Quiz', 'Study', 'Reading', 'Project', 'Lecture', 'Office Hours', 'Lab'],
     groupingSuggestions: ['Calculus II', 'Intro to CS', 'English 101', 'Biology Lab', 'World History'],
     titlePlaceholder: 'e.g. Problem set 4',
     taskTitleSuggestions: ['Problem set 4', 'Midterm prep', 'Lab report', 'Reading notes', 'Group project']
@@ -44,7 +44,7 @@ export const AREAS = {
       '--muted-foreground': '220 9% 46%',
       '--border': '220 13% 91%'
     },
-    typeSuggestions: ['Project', 'Meeting', 'Deadline', 'Report', 'Review', 'Follow-up', 'Email', 'Prep'],
+    typeSuggestions: ['Project', 'Meeting', 'Standup', '1:1', 'Training', 'Deadline', 'Report', 'Review', 'Follow-up', 'Email', 'Prep'],
     groupingSuggestions: ['Project', 'Q3 Launch', 'Client Onboarding', 'Marketing', 'Research', 'Operations'],
     titlePlaceholder: 'e.g. Draft Q3 report',
     taskTitleSuggestions: ['Draft Q3 report', 'Prep client deck', 'Review pull requests', 'Team check-in', 'Send invoice']
@@ -70,7 +70,7 @@ export const AREAS = {
       '--ring': '168 58% 42%'
     },
     customizable: true,
-    typeSuggestions: ['Groceries', 'Errands', 'Health', 'Home', 'Family', 'Fitness', 'Finances', 'Hobby'],
+    typeSuggestions: ['Groceries', 'Errands', 'Health', 'Home', 'Family', 'Fitness', 'Finances', 'Hobby', 'Workout', 'Appointment', 'Routine', 'Medication'],
     groupingSuggestions: ['Health', 'Home', 'Finances', 'Family', 'Fitness', 'Travel', 'Hobby'],
     titlePlaceholder: 'e.g. Grocery run',
     taskTitleSuggestions: ['Grocery run', 'Morning workout', 'Pay bills', 'Call family', 'Plan weekend trip']
@@ -101,7 +101,7 @@ export const AREAS = {
       '--muted-foreground': '20 12% 48%',
       '--border': '30 30% 90%'
     },
-    typeSuggestions: ['Chore', 'Group task', 'Planning', 'Event', 'Supply run', 'Coordination', 'Reminder'],
+    typeSuggestions: ['Chore', 'Group task', 'Planning', 'Event', 'Supply run', 'Coordination', 'Reminder', 'Chore rotation', 'Check-in', 'Cleanup'],
     groupingSuggestions: ['Family', 'Roommates', 'Group Trip', 'Event Committee', 'Chores', 'Shared Expenses'],
     titlePlaceholder: 'e.g. Plan house chores',
     taskTitleSuggestions: ['Plan house chores', 'Group grocery run', 'Schedule cleanup', 'Split expenses', 'Organize trip']

@@ -5,9 +5,9 @@ import { Card } from '@/components/ui/card';
 import { ChevronLeft, ChevronRight, Plus, CalendarDays, Printer } from 'lucide-react';
 import {
   startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval,
-  addMonths, subMonths, isSameMonth, isSameDay, parseISO, isValid, format
+  addMonths, subMonths, isSameMonth, isSameDay, parseISO, isValid, format, startOfDay
 } from 'date-fns';
-import { EVENT_TYPE, parseDate, fmtTime, fmt } from '@/lib/planner';
+import { EVENT_TYPE, parseDate, fmtTime, fmt, expandTaskOccurrences } from '@/lib/planner';
 import EventModal from '@/components/EventModal';
 import { trashItem } from '@/lib/trash';
 import { useArea } from '@/lib/AreaContext';
@@ -41,10 +41,50 @@ export default function CalendarPage() {
     return eachDayOfInterval({ start, end });
   }, [cursor]);
 
+  const today = useMemo(() => startOfDay(new Date()), []);
+
+  // Build a map of day -> items, expanding recurring tasks into occurrences and
+  // floating overdue (past-due, incomplete) tasks onto today's cell flagged red.
+  const { dayMap, overdueTasks } = useMemo(() => {
+    const map = new Map();
+    const key = (d) => format(d, 'yyyy-MM-dd');
+    const cell = (d) => {
+      const k = key(d);
+      if (!map.has(k)) map.set(k, { evs: [], tks: [] });
+      return map.get(k);
+    };
+    events.forEach((e) => { const d = parseDate(e.start_date); if (d) cell(startOfDay(d)).evs.push(e); });
+
+    const gridEnd = days[days.length - 1];
+    const genEnd = gridEnd.getTime() > today.getTime() ? gridEnd : today;
+    const overdue = [];
+    tasks.filter((t) => t.status !== 'done').forEach((t) => {
+      const occs = expandTaskOccurrences(t, genEnd);
+      let missed = null;
+      occs.forEach((o) => {
+        if (o.getTime() >= today.getTime()) {
+          if (o.getTime() <= gridEnd.getTime()) cell(o).tks.push(t);
+        } else if (!missed || o.getTime() > missed.getTime()) {
+          missed = o;
+        }
+      });
+      if (missed) overdue.push({ task: t, due: missed });
+    });
+    return { dayMap: map, overdueTasks: overdue };
+  }, [events, tasks, days, today]);
+
   function itemsForDay(day) {
-    const evs = events.filter((e) => { const d = parseDate(e.start_date); return d && isSameDay(d, day); });
-    const tks = tasks.filter((t) => t.status !== 'done' && t.due_date && (() => { const d = parseDate(t.due_date); return d && isSameDay(d, day); }));
-    return { evs, tks };
+    const entry = dayMap.get(format(day, 'yyyy-MM-dd')) || { evs: [], tks: [] };
+    const tks = entry.tks.map((t) => ({ ...t }));
+    if (isSameDay(day, today)) {
+      const byId = new Map(tks.map((t) => [t.id, t]));
+      overdueTasks.forEach((o) => {
+        const existing = byId.get(o.task.id);
+        if (existing) { existing._overdue = true; existing._overdueDue = o.due; }
+        else { const copy = { ...o.task, _overdue: true, _overdueDue: o.due }; tks.push(copy); byId.set(o.task.id, copy); }
+      });
+    }
+    return { evs: entry.evs, tks };
   }
 
   const courseMap = Object.fromEntries(courses.map((c) => [c.id, c]));
@@ -93,6 +133,9 @@ export default function CalendarPage() {
                 {c.code || c.name}
               </span>
             ))}
+            <span className="inline-flex items-center gap-1.5 text-[11px] text-rose-600">
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-600" /> Overdue
+            </span>
           </div>
           <div className="grid grid-cols-7 text-center text-xs font-medium text-muted-foreground mb-1">
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => <div key={d} className="py-1">{d}</div>)}
@@ -102,19 +145,23 @@ export default function CalendarPage() {
               const { evs, tks } = itemsForDay(day);
               const inMonth = isSameMonth(day, cursor);
               const isSel = isSameDay(day, selected);
-              const today = isSameDay(day, new Date());
+              const isToday = isSameDay(day, today);
               return (
                 <button key={day.toISOString()} onClick={() => setSelected(day)}
                   className={`min-h-[58px] md:min-h-[84px] rounded-lg border p-1.5 text-left transition flex flex-col
                     ${isSel ? 'border-indigo-400 bg-indigo-50/50' : 'border-transparent hover:bg-accent/50'}
                     ${!inMonth ? 'opacity-35' : ''}`}>
-                  <span className={`text-xs font-semibold w-6 h-6 flex items-center justify-center rounded-full ${today ? 'bg-indigo-600 text-white' : ''}`}>{format(day, 'd')}</span>
+                  <span className={`text-xs font-semibold w-6 h-6 flex items-center justify-center rounded-full ${isToday ? 'bg-indigo-600 text-white' : ''}`}>{format(day, 'd')}</span>
                   <div className="mt-1 space-y-0.5 overflow-hidden">
                     {evs.slice(0, 2).map((e) => {
                       const col = evColor(e);
                       return <div key={e.id} className="text-[10px] truncate rounded px-1 py-0.5" style={{ backgroundColor: col + '22', color: col }}>{e.title}</div>;
                     })}
-                    {tks.slice(0, 2).map((t) => { const col = tkColor(t); return <div key={t.id} className="text-[10px] truncate rounded px-1 py-0.5" style={{ backgroundColor: col + '22', color: col }}>⚑ {t.title}</div>; })}
+                    {tks.slice(0, 2).map((t, i) => {
+                      const overdue = !!t._overdue;
+                      const col = overdue ? '#dc2626' : tkColor(t);
+                      return <div key={t.id + (overdue ? '-o' : '') + i} className="text-[10px] truncate rounded px-1 py-0.5 font-medium" style={{ backgroundColor: col + '22', color: col }}>{overdue ? '⚠ ' : '⚑ '}{t.title}</div>;
+                    })}
                     {(evs.length + tks.length) > 4 && <div className="text-[10px] text-muted-foreground px-1">+{evs.length + tks.length - 4} more</div>}
                   </div>
                 </button>
@@ -149,12 +196,13 @@ export default function CalendarPage() {
                 </div>
               );
             })}
-            {selectedItems.tks.map((t) => {
+            {selectedItems.tks.map((t, i) => {
               const c = courseMap[t.course_id];
+              const overdue = !!t._overdue;
               return (
-                <div key={t.id} className="rounded-xl border border-amber-200 bg-amber-50/40 p-3">
-                  <p className="font-medium text-sm">⚑ {t.title}</p>
-                  <p className="text-xs text-muted-foreground">Task deadline{c ? ` · ${c.code || c.name}` : ''}</p>
+                <div key={t.id + (overdue ? '-o' : '') + i} className={`rounded-xl border p-3 ${overdue ? 'border-rose-300 bg-rose-50/60' : 'border-amber-200 bg-amber-50/40'}`}>
+                  <p className="font-medium text-sm text-rose-700">{overdue ? '⚠ ' : '⚑ '}{t.title}</p>
+                  <p className="text-xs text-muted-foreground">{overdue ? `Overdue · was due ${fmt(t._overdueDue)}` : 'Task deadline'}{c ? ` · ${c.code || c.name}` : ''}</p>
                 </div>
               );
             })}

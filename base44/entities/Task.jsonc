@@ -68,6 +68,23 @@
       "default": "none",
       "title": "Repeat"
     },
+    "repeat_days": {
+      "type": "array",
+      "items": {
+        "type": "integer"
+      },
+      "title": "Repeat Days"
+    },
+    "repeat_start_date": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Repeat Start"
+    },
+    "repeat_end_date": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Repeat End"
+    },
     "area": {
       "type": "string",
       "enum": [
