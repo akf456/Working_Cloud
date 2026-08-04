@@ -10,6 +10,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { AREAS } from '@/lib/areas';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { Trash2 } from 'lucide-react';
+import { getThemeMode, setThemeMode as setModePref, getCustomBg, setCustomBg as setBgPref, DEFAULT_BG_HEX } from '@/lib/theme';
 
 const AREA_DEFAULTS = {
   school: { primary: '#a78bfa', accent: '#ddd6fe', text: '#1f2937', background: '', image: '' },
@@ -32,6 +33,8 @@ export default function Settings() {
   const [p, setP] = useState(AREA_DEFAULTS.personal);
   const [saving, setSaving] = useState(false);
   const [delOpen, setDelOpen] = useState(false);
+  const [mode, setMode] = useState(getThemeMode());
+  const [bg, setBg] = useState(getCustomBg());
 
   useEffect(() => {
     const saved = user?.area_themes?.[area] || (area === 'personal' ? user?.personal_theme : null);
@@ -86,6 +89,23 @@ export default function Settings() {
           </div>
         </div>
         <div className="flex justify-end mt-5"><Button onClick={save} disabled={saving}>{saving ? 'Saving…' : `Save ${AREAS[area].label} colors`}</Button></div>
+      </Card>
+
+      <Card className="p-5 mb-5">
+        <h2 className="font-semibold text-lg mb-1">Appearance</h2>
+        <p className="text-sm text-muted-foreground mb-4">Choose how the app looks. The default is a soft cream — pick Light, Dark, or match your system, and personalize the background color.</p>
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label>Theme</Label>
+            <div className="flex gap-2 flex-wrap">
+              {[{ v: 'light', l: 'Light' }, { v: 'dark', l: 'Dark' }, { v: 'system', l: 'Match system' }].map((o) => (
+                <Button key={o.v} variant={mode === o.v ? 'default' : 'outline'} onClick={() => { setModePref(o.v); setMode(o.v); }}>{o.l}</Button>
+              ))}
+            </div>
+          </div>
+          <ColorRow label="Background color (Light mode)" value={bg || DEFAULT_BG_HEX} onChange={(v) => { setBgPref(v); setBg(v); }} />
+          {bg && <Button variant="ghost" size="sm" onClick={() => { setBgPref(''); setBg(''); }}>Reset to default</Button>}
+        </div>
       </Card>
 
       <Card className="p-5">

@@ -27,6 +27,7 @@ import Settings from '@/pages/Settings';
 import EncouragePage from '@/pages/EncouragePage';
 import { AnimatePresence } from 'framer-motion';
 import SplashOverlay from '@/components/SplashOverlay';
+import { applyTheme, getThemeMode } from '@/lib/theme';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -81,11 +82,13 @@ const AuthenticatedApp = () => {
 
 function App() {
   useEffect(() => {
+    applyTheme();
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const apply = () => document.documentElement.classList.toggle('dark', mq.matches);
-    apply();
-    mq.addEventListener('change', apply);
-    return () => mq.removeEventListener('change', apply);
+    const onSys = () => { if (getThemeMode() === 'system') applyTheme(); };
+    mq.addEventListener('change', onSys);
+    const onStorage = (e) => { if (!e.key || e.key === 'wc_theme' || e.key === 'wc_bg') applyTheme(); };
+    window.addEventListener('storage', onStorage);
+    return () => { mq.removeEventListener('change', onSys); window.removeEventListener('storage', onStorage); };
   }, []);
 
   const [showSplash, setShowSplash] = useState(() => {
