@@ -23,6 +23,7 @@ import ContactsPage from '@/pages/ContactsPage';
 import TrashPage from '@/pages/TrashPage';
 import ShareBoard from '@/pages/ShareBoard';
 import Settings from '@/pages/Settings';
+import EncouragePage from '@/pages/EncouragePage';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -66,6 +67,7 @@ const AuthenticatedApp = () => {
           <Route path="/contacts" element={<ContactsPage />} />
           <Route path="/trash" element={<TrashPage />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/encourage" element={<EncouragePage />} />
         </Route>
       </Route>
       <Route path="*" element={<PageNotFound />} />

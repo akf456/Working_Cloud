@@ -1,0 +1,50 @@
+{
+  "name": "Encouragement",
+  "type": "object",
+  "properties": {
+    "message": {
+      "type": "string",
+      "title": "Message"
+    },
+    "from_name": {
+      "type": "string",
+      "title": "From"
+    },
+    "color": {
+      "type": "string",
+      "default": "#fcd34b",
+      "title": "Color"
+    }
+  },
+  "required": [
+    "message"
+  ],
+  "rls": {
+    "create": {},
+    "read": {},
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
