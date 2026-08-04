@@ -8,11 +8,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { PRIORITY, TASK_TYPE } from '@/lib/planner';
 import { toInputDateTime, fromInputDateTime, toInputDate, fromInputDate } from '@/lib/planner';
 import { AREAS } from '@/lib/areas';
+import ApplyColorPanel from '@/components/ApplyColorPanel';
 
 const WDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const PALETTE = ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b', '#8b5cf6', '#ef4444', '#0ea5e9', '#84cc16'];
 
-export default function TaskModal({ open, onClose, onSave, task, courses = [], area = 'school' }) {
+export default function TaskModal({ open, onClose, onSave, task, courses = [], area = 'school', tasks = [], onApplyColor }) {
   const [title, setTitle] = useState(task?.title || '');
   const [description, setDescription] = useState(task?.description || '');
   const [dueDate, setDueDate] = useState(task?.due_date ? toInputDateTime(task.due_date) : '');
@@ -26,6 +27,7 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
   const [repeatEnd, setRepeatEnd] = useState(task?.repeat_end_date ? toInputDate(task.repeat_end_date) : '');
   const [color, setColor] = useState(task?.color || '');
   const [flagged, setFlagged] = useState(task?.flag === 'manual');
+  const [recolorIds, setRecolorIds] = useState(new Set());
 
   React.useEffect(() => {
     setTitle(task?.title || '');
@@ -41,11 +43,13 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
     setRepeatEnd(task?.repeat_end_date ? toInputDate(task.repeat_end_date) : '');
     setColor(task?.color || '');
     setFlagged(task?.flag === 'manual');
+    setRecolorIds(new Set());
   }, [task, open]);
 
   function toggleDay(i) {
     setRepeatDays((p) => (p.includes(i) ? p.filter((d) => d !== i) : [...p, i]));
   }
+  function toggleRecolor(id) { setRecolorIds((p) => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; }); }
 
   function submit() {
     if (!title.trim() || !dueDate) return;
@@ -64,6 +68,7 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
       flag,
       course_id: courseId === 'none' ? null : courseId
     });
+    if (recolorIds.size && color && onApplyColor) onApplyColor([...recolorIds], color);
     onClose();
   }
 
@@ -200,6 +205,18 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
               <p className="text-[11px] text-muted-foreground">Overdue tasks are flagged automatically.</p>
             </div>
           </div>
+          {color && (
+            <ApplyColorPanel
+              color={color}
+              tasks={tasks.filter((t) => t.id !== task?.id)}
+              area={area}
+              courses={courses}
+              selectedIds={recolorIds}
+              onToggle={toggleRecolor}
+              onSelectAll={(ids) => setRecolorIds(new Set(ids))}
+              onClear={() => setRecolorIds(new Set())}
+            />
+          )}
           <div className="space-y-1.5">
             <Label htmlFor="t-desc">Notes</Label>
             <Textarea id="t-desc" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="Details, links, requirements…" />

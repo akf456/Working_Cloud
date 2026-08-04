@@ -114,6 +114,11 @@ export default function TasksPage() {
     else await base44.entities.Task.create({ ...data, area });
     setEditTask(null); load();
   }
+  async function applyColorToTasks(ids, color) {
+    if (!ids.length) return;
+    await base44.entities.Task.bulkUpdate(ids.map((id) => ({ id, color })));
+    load();
+  }
 
   const row = (t) => <TaskRow key={t.id} task={t} course={courseMap[t.course_id]} selectMode={selectMode} selected={selected.has(t.id)} onSelect={() => toggleSelect(t.id)} onToggle={() => toggle(t)} onEdit={() => { setEditTask(t); setModal(true); }} onDelete={() => remove(t)} onDuplicate={() => duplicate(t)} />;
 
@@ -251,7 +256,7 @@ export default function TasksPage() {
           </div>
         )}
 
-      <TaskModal open={modal} onClose={() => { setModal(false); setEditTask(null); }} onSave={saveTask} task={editTask} courses={courses} area={area} />
+      <TaskModal open={modal} onClose={() => { setModal(false); setEditTask(null); }} onSave={saveTask} task={editTask} courses={courses} area={area} tasks={tasks} onApplyColor={applyColorToTasks} />
     </div>
   );
 }
