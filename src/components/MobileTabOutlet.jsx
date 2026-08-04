@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useOutlet, useNavigationType } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useArea } from '@/lib/AreaContext';
 import Dashboard from '@/pages/Dashboard';
 import CalendarPage from '@/pages/CalendarPage';
 import TasksPage from '@/pages/TasksPage';
@@ -30,16 +31,39 @@ export default function MobileTabOutlet() {
   const navType = useNavigationType();
   const path = location.pathname;
   const isTab = TAB_PATHS.includes(path);
+  const { area } = useArea();
 
-  // Per-tab scroll memory so switching cached tabs restores position.
+  // Per-tab scroll memory. Desktop keeps the original path-only in-memory behavior;
+  // mobile keys by area+path and persists to sessionStorage so positions survive
+  // tab switches, area switches and refreshes.
   const savedScroll = useRef({});
   const prevPath = useRef(path);
+  const prevKey = useRef(`${area}:${path}`);
+
   useEffect(() => {
-    savedScroll.current[prevPath.current] = window.scrollY;
-    prevPath.current = path;
-    if (TAB_PATHS.includes(path)) window.scrollTo({ top: savedScroll.current[path] ?? 0 });
-    else window.scrollTo({ top: 0 });
-  }, [path]);
+    if (!isMobile) {
+      savedScroll.current[prevPath.current] = window.scrollY;
+      prevPath.current = path;
+      if (TAB_PATHS.includes(path)) window.scrollTo({ top: savedScroll.current[path] ?? 0 });
+      else window.scrollTo({ top: 0 });
+      return;
+    }
+
+    const curKey = `${area}:${path}`;
+    savedScroll.current[prevKey.current] = window.scrollY;
+    try { sessionStorage.setItem('wc_scroll:' + prevKey.current, String(window.scrollY)); } catch {}
+    prevKey.current = curKey;
+
+    if (TAB_PATHS.includes(path)) {
+      let y = savedScroll.current[curKey];
+      if (y == null) { try { y = Number(sessionStorage.getItem('wc_scroll:' + curKey)) || 0; } catch { y = 0; } }
+      const top = y || 0;
+      window.scrollTo({ top });
+      const raf = requestAnimationFrame(() => window.scrollTo({ top }));
+      return () => cancelAnimationFrame(raf);
+    }
+    window.scrollTo({ top: 0 });
+  }, [path, area, isMobile]);
 
   if (!isMobile) return <>{outlet}</>;
 

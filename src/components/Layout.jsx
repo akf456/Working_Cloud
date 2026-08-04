@@ -57,6 +57,13 @@ export default function Layout() {
 
   function openShare() { setShareOpen(true); }
 
+  function handleBack() {
+    const hasModal = new URLSearchParams(window.location.search).has('modal');
+    if (window.history.length > 1) nav(-1);
+    else if (hasModal) nav(pathname, { replace: true });
+    else nav('/dashboard');
+  }
+
   const isChildScreen = !['/dashboard', '/calendar', '/tasks', '/courses'].includes(pathname);
 
   return (
@@ -123,7 +130,7 @@ export default function Layout() {
       {/* Mobile top bar */}
       <header className="md:hidden fixed top-0 inset-x-0 z-30 h-[calc(3.5rem+env(safe-area-inset-top,0px))] pt-[env(safe-area-inset-top,0px)] flex items-center justify-between px-4 bg-card/80 backdrop-blur border-b border-border/60">
         {isChildScreen ? (
-          <button onClick={() => nav(-1)} className="flex items-center gap-1 text-sm font-semibold text-muted-foreground hover:text-primary">
+          <button onClick={handleBack} className="flex items-center gap-1 text-sm font-semibold text-muted-foreground hover:text-primary">
             <ChevronLeft className="w-5 h-5" /> Back
           </button>
         ) : (
