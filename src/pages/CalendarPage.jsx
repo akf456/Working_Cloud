@@ -11,6 +11,7 @@ import { EVENT_TYPE, parseDate, fmtTime, fmt, expandTaskOccurrences, expandEvent
 import EventModal from '@/components/EventModal';
 import { trashItem } from '@/lib/trash';
 import { useArea } from '@/lib/AreaContext';
+import { useSearchParams } from 'react-router-dom';
 
 export default function CalendarPage() {
   const [cursor, setCursor] = useState(new Date());
@@ -19,9 +20,17 @@ export default function CalendarPage() {
   const [courses, setCourses] = useState([]);
   const [selected, setSelected] = useState(new Date());
   const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState(false);
-  const [editEvent, setEditEvent] = useState(null);
+  const [searchParams, setSearchParams] = useSearchParams();
   const { area } = useArea();
+  const modalEvent = searchParams.get('modal') === 'event';
+  const eventIdParam = searchParams.get('id');
+  const editEvent = (modalEvent && eventIdParam && eventIdParam !== 'new') ? events.find((e) => e.id === eventIdParam) || null : null;
+  function openEventModal(e) {
+    setSearchParams((prev) => { const n = new URLSearchParams(prev); n.set('modal', 'event'); n.set('id', e?.id || 'new'); return n; });
+  }
+  function closeEventModal() {
+    setSearchParams((prev) => { const n = new URLSearchParams(prev); n.delete('modal'); n.delete('id'); return n; });
+  }
 
   async function load() {
     setLoading(true);
@@ -87,7 +96,7 @@ export default function CalendarPage() {
   async function saveEvent(data) {
     if (data.id) await base44.entities.Event.update(data.id, data);
     else await base44.entities.Event.create({ ...data, area });
-    setEditEvent(null); load();
+    load();
   }
 
   async function deleteEvent(e) {
@@ -124,7 +133,7 @@ export default function CalendarPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => window.print()} className="rounded-xl"><Printer className="w-4 h-4 mr-1.5" /> Print</Button>
-          <Button onClick={() => { setEditEvent(null); setModal(true); }} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> Add event</Button>
+          <Button onClick={() => openEventModal(null)} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> Add event</Button>
         </div>
       </div>
 
@@ -205,7 +214,7 @@ export default function CalendarPage() {
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-3 mt-2">
-                    <button className="text-xs font-medium text-indigo-600 hover:underline" onClick={() => { setEditEvent(e); setModal(true); }}>Edit</button>
+                    <button className="text-xs font-medium text-indigo-600 hover:underline" onClick={() => openEventModal(e)}>Edit</button>
                     <button className="text-xs font-medium text-indigo-600 hover:underline" onClick={() => duplicateEvent(e)}>Duplicate</button>
                     <button className="text-xs font-medium text-rose-600 hover:underline" onClick={() => deleteEvent(e)}>Delete</button>
                   </div>
@@ -229,14 +238,14 @@ export default function CalendarPage() {
               <div className="flex flex-col items-center justify-center py-10 text-center text-muted-foreground">
                 <CalendarDays className="w-8 h-8 mb-2 opacity-50" />
                 <p className="text-sm">Nothing scheduled.</p>
-                <Button variant="outline" size="sm" className="mt-3" onClick={() => { setEditEvent(null); setModal(true); }}>Add event</Button>
+                <Button variant="outline" size="sm" className="mt-3" onClick={() => openEventModal(null)}>Add event</Button>
               </div>
             )}
           </div>
         </Card>
       </div>
 
-      <EventModal open={modal} onClose={() => { setModal(false); setEditEvent(null); }} onSave={saveEvent} event={editEvent} courses={courses}
+      <EventModal open={modalEvent} onClose={closeEventModal} onSave={saveEvent} event={editEvent} courses={courses}
         defaultStart={selected.toISOString()} area={area} />
     </div>
   );

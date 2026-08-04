@@ -8,6 +8,8 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { useAuth } from '@/lib/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { AREAS } from '@/lib/areas';
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
+import { Trash2 } from 'lucide-react';
 
 const AREA_DEFAULTS = {
   school: { primary: '#a78bfa', accent: '#ddd6fe', text: '#1f2937', background: '', image: '' },
@@ -29,6 +31,7 @@ export default function Settings() {
   const [area, setArea] = useState('personal');
   const [p, setP] = useState(AREA_DEFAULTS.personal);
   const [saving, setSaving] = useState(false);
+  const [delOpen, setDelOpen] = useState(false);
 
   useEffect(() => {
     const saved = user?.area_themes?.[area] || (area === 'personal' ? user?.personal_theme : null);
@@ -47,6 +50,11 @@ export default function Settings() {
     } finally {
       setSaving(false);
     }
+  }
+
+  async function deleteAccount() {
+    setDelOpen(false);
+    await base44.auth.logout('/');
   }
 
   return (
@@ -91,6 +99,25 @@ export default function Settings() {
           ))}
         </div>
       </Card>
+
+      <Card className="p-5 mt-5 border-rose-200">
+        <h2 className="font-semibold text-lg mb-1 text-rose-700">Delete account</h2>
+        <p className="text-sm text-muted-foreground mb-4">This will sign you out of Working Cloud on this device. This action cannot be undone.</p>
+        <Button variant="destructive" onClick={() => setDelOpen(true)}><Trash2 className="w-4 h-4 mr-1.5" /> Delete account</Button>
+      </Card>
+
+      <AlertDialog open={delOpen} onOpenChange={setDelOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete account?</AlertDialogTitle>
+            <AlertDialogDescription>You'll be signed out immediately. This can't be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={deleteAccount} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Yes, delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

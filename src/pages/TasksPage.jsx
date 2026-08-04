@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
+import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -26,8 +27,16 @@ export default function TasksPage() {
   const [course, setCourse] = useState('all');
   const [status, setStatus] = useState('all');
   const [type, setType] = useState('all');
-  const [modal, setModal] = useState(false);
-  const [editTask, setEditTask] = useState(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const modalTask = searchParams.get('modal') === 'task';
+  const taskIdParam = searchParams.get('id');
+  const editTask = (modalTask && taskIdParam && taskIdParam !== 'new') ? tasks.find((t) => t.id === taskIdParam) || null : null;
+  function openTaskModal(t) {
+    setSearchParams((prev) => { const n = new URLSearchParams(prev); n.set('modal', 'task'); n.set('id', t?.id || 'new'); return n; });
+  }
+  function closeTaskModal() {
+    setSearchParams((prev) => { const n = new URLSearchParams(prev); n.delete('modal'); n.delete('id'); return n; });
+  }
   const [view, setView] = useState('status');
   const [priority, setPriority] = useState('all');
   const [due, setDue] = useState('all');
@@ -82,8 +91,13 @@ export default function TasksPage() {
   const { toast } = useToast();
   async function toggle(t) {
     const completing = t.status !== 'done';
-    await toggleTaskStatus(t);
-    if (completing) toast({ title: 'Task completed! 🎉', description: celebrate() });
+    setTasks((prev) => prev.map((x) => x.id === t.id ? { ...x, status: completing ? 'done' : 'todo' } : x));
+    try {
+      await toggleTaskStatus(t);
+      if (completing) toast({ title: 'Task completed! 🎉', description: celebrate() });
+    } catch (e) {
+      toast({ title: 'Could not update task', variant: 'destructive' });
+    }
     load();
   }
   async function remove(t) { await trashItem('Task', t, area); load(); }
@@ -112,7 +126,7 @@ export default function TasksPage() {
   async function saveTask(data) {
     if (data.id) await base44.entities.Task.update(data.id, data);
     else await base44.entities.Task.create({ ...data, area });
-    setEditTask(null); load();
+    load();
   }
   async function applyColorToTasks(ids, color) {
     if (!ids.length) return;
@@ -120,7 +134,7 @@ export default function TasksPage() {
     load();
   }
 
-  const row = (t) => <TaskRow key={t.id} task={t} course={courseMap[t.course_id]} selectMode={selectMode} selected={selected.has(t.id)} onSelect={() => toggleSelect(t.id)} onToggle={() => toggle(t)} onEdit={() => { setEditTask(t); setModal(true); }} onDelete={() => remove(t)} onDuplicate={() => duplicate(t)} />;
+  const row = (t) => <TaskRow key={t.id} task={t} course={courseMap[t.course_id]} selectMode={selectMode} selected={selected.has(t.id)} onSelect={() => toggleSelect(t.id)} onToggle={() => toggle(t)} onEdit={() => openTaskModal(t)} onDelete={() => remove(t)} onDuplicate={() => duplicate(t)} />;
 
   return (
     <div className="p-4 md:p-8 max-w-5xl mx-auto animate-fade-in">
@@ -132,7 +146,7 @@ export default function TasksPage() {
         <div className="flex gap-2">
           <Button variant={selectMode ? 'default' : 'outline'} onClick={() => { setSelectMode((m) => !m); setSelected(new Set()); }} className="rounded-xl"><CheckSquare className="w-4 h-4 mr-1.5" /> {selectMode ? 'Done' : 'Select'}</Button>
           <Button variant="outline" onClick={exportTasks} className="rounded-xl"><Download className="w-4 h-4 mr-1.5" /> Export</Button>
-          <Button onClick={() => { setEditTask(null); setModal(true); }} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> New task</Button>
+          <Button onClick={() => openTaskModal(null)} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> New task</Button>
         </div>
       </div>
 
@@ -256,7 +270,7 @@ export default function TasksPage() {
           </div>
         )}
 
-      <TaskModal open={modal} onClose={() => { setModal(false); setEditTask(null); }} onSave={saveTask} task={editTask} courses={courses} area={area} tasks={tasks} onApplyColor={applyColorToTasks} />
+      <TaskModal open={modalTask} onClose={closeTaskModal} onSave={saveTask} task={editTask} courses={courses} area={area} tasks={tasks} onApplyColor={applyColorToTasks} />
     </div>
   );
 }

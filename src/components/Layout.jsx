@@ -111,7 +111,7 @@ export default function Layout() {
       </aside>
 
       {/* Mobile top bar */}
-      <header className="md:hidden fixed top-0 inset-x-0 z-30 h-14 flex items-center justify-between px-4 bg-card/80 backdrop-blur border-b border-border/60">
+      <header className="md:hidden fixed top-0 inset-x-0 z-30 h-[calc(3.5rem+env(safe-area-inset-top,0px))] pt-[env(safe-area-inset-top,0px)] flex items-center justify-between px-4 bg-card/80 backdrop-blur border-b border-border/60">
         <WorkingCloudLogo className="text-base" />
         <div className="flex items-center gap-3">
           <button onClick={() => setWhatNew(true)} className="relative text-muted-foreground hover:text-primary" title="What's New">
@@ -127,13 +127,13 @@ export default function Layout() {
         </div>
       </header>
 
-      <main className="flex-1 min-w-0 pb-24 md:pb-0 pt-14 md:pt-0 relative z-10">
+      <main className="flex-1 min-w-0 pb-24 md:pb-0 pt-[calc(3.5rem+env(safe-area-inset-top,0px))] md:pt-0 relative z-10">
         <RefreshBanner />
         <Outlet />
       </main>
 
       {/* Mobile bottom nav */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 grid bg-card/90 backdrop-blur border-t border-border/60" style={{ gridTemplateColumns: `repeat(${bottomNav.length}, minmax(0, 1fr))` }}>
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 grid bg-card/90 backdrop-blur border-t border-border/60 pb-[env(safe-area-inset-bottom,0px)]" style={{ gridTemplateColumns: `repeat(${bottomNav.length}, minmax(0, 1fr))` }}>
         {bottomNav.map(({ to, label, Icon }) => (
           <Link key={to} to={to} className={`flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-medium ${isActive(to) ? 'text-primary' : 'text-muted-foreground'}`}>
             <Icon className="w-5 h-5" /> {label}
