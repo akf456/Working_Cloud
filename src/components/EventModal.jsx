@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import SheetSelect from '@/components/SheetSelect';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { EVENT_TYPE, toInputDateTime, fromInputDateTime, toInputDate, fromInputDate } from '@/lib/planner';
@@ -79,21 +79,14 @@ export default function EventModal({ open, onClose, onSave, event, courses = [],
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Type</Label>
-              <Select value={type} onValueChange={setType}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{Object.entries(EVENT_TYPE).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}</SelectContent>
-              </Select>
+              <SheetSelect value={type} onValueChange={setType} placeholder="Type"
+                options={Object.entries(EVENT_TYPE).map(([k, v]) => ({ value: k, label: v.label }))} />
             </div>
             {area === 'school' && (
               <div className="space-y-1.5">
                 <Label>Course</Label>
-                <Select value={courseId} onValueChange={setCourseId}>
-                  <SelectTrigger><SelectValue placeholder="No course" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No course</SelectItem>
-                    {courses.map((c) => <SelectItem key={c.id} value={c.id}>{c.code ? `${c.code} — ` : ''}{c.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <SheetSelect value={courseId} onValueChange={setCourseId} placeholder="No course"
+                  options={[{ value: 'none', label: 'No course' }, ...courses.map((c) => ({ value: c.id, label: c.code ? `${c.code} — ${c.name}` : c.name }))]} />
               </div>
             )}
           </div>
@@ -113,15 +106,8 @@ export default function EventModal({ open, onClose, onSave, event, courses = [],
           </label>
           <div className="space-y-1.5">
             <Label>Repeat</Label>
-            <Select value={repeat} onValueChange={setRepeat}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Does not repeat</SelectItem>
-                <SelectItem value="daily">Daily</SelectItem>
-                <SelectItem value="weekly">Weekly</SelectItem>
-                <SelectItem value="monthly">Monthly</SelectItem>
-              </SelectContent>
-            </Select>
+            <SheetSelect value={repeat} onValueChange={setRepeat} placeholder="Repeat"
+              options={[{ value: 'none', label: 'Does not repeat' }, { value: 'daily', label: 'Daily' }, { value: 'weekly', label: 'Weekly' }, { value: 'monthly', label: 'Monthly' }]} />
           </div>
           {repeat !== 'none' && (
             <div className="space-y-1.5">

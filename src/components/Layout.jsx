@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import MobileTabOutlet from '@/components/MobileTabOutlet';
-import { LayoutDashboard, CalendarDays, ListTodo, GraduationCap, Sparkles, Users, Trash2, LayoutGrid, Palette, Share2, Check, Settings as SettingsIcon, Bell, MessageCircle } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, ListTodo, GraduationCap, Sparkles, Users, Trash2, LayoutGrid, Palette, Share2, Check, Settings as SettingsIcon, Bell, MessageCircle, ChevronLeft } from 'lucide-react';
 import { useArea } from '@/lib/AreaContext';
 import { AREAS } from '@/lib/areas';
 import { areaThemeVars, areaImage } from '@/lib/areaTheme';
@@ -49,6 +49,8 @@ export default function Layout() {
   function switchArea() { exit(); nav('/areas'); }
 
   function openShare() { setShareOpen(true); }
+
+  const isChildScreen = !['/dashboard', '/calendar', '/tasks', '/courses'].includes(pathname);
 
   return (
     <div className="min-h-screen flex relative" style={theme}>
@@ -113,19 +115,27 @@ export default function Layout() {
 
       {/* Mobile top bar */}
       <header className="md:hidden fixed top-0 inset-x-0 z-30 h-[calc(3.5rem+env(safe-area-inset-top,0px))] pt-[env(safe-area-inset-top,0px)] flex items-center justify-between px-4 bg-card/80 backdrop-blur border-b border-border/60">
-        <WorkingCloudLogo className="text-base" />
-        <div className="flex items-center gap-3">
-          <button onClick={() => setWhatNew(true)} className="relative text-muted-foreground hover:text-primary" title="What's New">
-            <Bell className="w-5 h-5" />
-            {getUnseenChangelog().length > 0 && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-rose-500" />}
+        {isChildScreen ? (
+          <button onClick={() => nav(-1)} className="flex items-center gap-1 text-sm font-semibold text-muted-foreground hover:text-primary">
+            <ChevronLeft className="w-5 h-5" /> Back
           </button>
-          <button onClick={() => setPersonalize(true)} className="text-muted-foreground hover:text-primary" title="Customize"><Palette className="w-5 h-5" /></button>
-          <button onClick={openShare} className="text-muted-foreground hover:text-primary"><Share2 className="w-5 h-5" /></button>
-          <Link to="/settings" className="text-muted-foreground hover:text-primary"><SettingsIcon className="w-5 h-5" /></Link>
-          <button onClick={switchArea} className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-primary">
-            <LayoutGrid className="w-4 h-4" /> Areas
-          </button>
-        </div>
+        ) : (
+          <>
+            <WorkingCloudLogo className="text-base" />
+            <div className="flex items-center gap-3">
+              <button onClick={() => setWhatNew(true)} className="relative text-muted-foreground hover:text-primary" title="What's New">
+                <Bell className="w-5 h-5" />
+                {getUnseenChangelog().length > 0 && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-rose-500" />}
+              </button>
+              <button onClick={() => setPersonalize(true)} className="text-muted-foreground hover:text-primary" title="Customize"><Palette className="w-5 h-5" /></button>
+              <button onClick={openShare} className="text-muted-foreground hover:text-primary"><Share2 className="w-5 h-5" /></button>
+              <Link to="/settings" className="text-muted-foreground hover:text-primary"><SettingsIcon className="w-5 h-5" /></Link>
+              <button onClick={switchArea} className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-primary">
+                <LayoutGrid className="w-4 h-4" /> Areas
+              </button>
+            </div>
+          </>
+        )}
       </header>
 
       <main className="flex-1 min-w-0 pb-24 md:pb-0 pt-[calc(3.5rem+env(safe-area-inset-top,0px))] md:pt-0 relative z-10" style={{ overflowX: 'clip' }}>
@@ -136,7 +146,7 @@ export default function Layout() {
       {/* Mobile bottom nav */}
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 grid bg-card/90 backdrop-blur border-t border-border/60 pb-[env(safe-area-inset-bottom,0px)]" style={{ gridTemplateColumns: `repeat(${bottomNav.length}, minmax(0, 1fr))` }}>
         {bottomNav.map(({ to, label, Icon }) => (
-          <Link key={to} to={to} className={`flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-medium ${isActive(to) ? 'text-primary' : 'text-muted-foreground'}`}>
+          <Link key={to} to={to} onClick={(e) => { if (isActive(to)) { e.preventDefault(); window.scrollTo({ top: 0 }); } }} className={`flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-medium ${isActive(to) ? 'text-primary' : 'text-muted-foreground'}`}>
             <Icon className="w-5 h-5" /> {label}
           </Link>
         ))}

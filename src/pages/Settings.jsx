@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import SheetSelect from '@/components/SheetSelect';
 import { useAuth } from '@/lib/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { AREAS } from '@/lib/areas';
@@ -73,12 +73,8 @@ export default function Settings() {
         <div className="space-y-4">
           <div className="space-y-1.5">
             <Label>Area</Label>
-            <Select value={area} onValueChange={setArea}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {Object.values(AREAS).map((a) => <SelectItem key={a.key} value={a.key}>{a.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <SheetSelect value={area} onValueChange={setArea} placeholder="Area"
+              options={Object.values(AREAS).map((a) => ({ value: a.key, label: a.label }))} />
           </div>
           <ColorRow label="Primary / accent" value={p.primary} onChange={(v) => setP({ ...p, primary: v })} />
           <ColorRow label="Secondary accent" value={p.accent} onChange={(v) => setP({ ...p, accent: v })} />

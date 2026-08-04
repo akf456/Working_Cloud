@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import SheetSelect from '@/components/SheetSelect';
 import { Textarea } from '@/components/ui/textarea';
 import { PRIORITY, TASK_TYPE } from '@/lib/planner';
 import { toInputDateTime, fromInputDateTime, toInputDate, fromInputDate } from '@/lib/planner';
@@ -88,10 +88,8 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
             <div className="space-y-1.5">
               <Label>Type</Label>
               {area === 'school' ? (
-                <Select value={type} onValueChange={setType}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{Object.entries(TASK_TYPE).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}</SelectContent>
-                </Select>
+                <SheetSelect value={type} onValueChange={setType} placeholder="Type"
+                  options={Object.entries(TASK_TYPE).map(([k, v]) => ({ value: k, label: v.label }))} />
               ) : (
                 <>
                   <Input value={type} onChange={(e) => setType(e.target.value)} placeholder="Name this type…" list="task-types" />
@@ -103,10 +101,8 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
             </div>
             <div className="space-y-1.5">
               <Label>Priority</Label>
-              <Select value={priority} onValueChange={setPriority}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{Object.entries(PRIORITY).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}</SelectContent>
-              </Select>
+              <SheetSelect value={priority} onValueChange={setPriority} placeholder="Priority"
+                options={Object.entries(PRIORITY).map(([k, v]) => ({ value: k, label: v.label }))} />
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -117,27 +113,14 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
             </div>
             <div className="space-y-1.5">
               <Label>Status</Label>
-              <Select value={status} onValueChange={setStatus}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todo">To Do</SelectItem>
-                  <SelectItem value="in_progress">In Progress</SelectItem>
-                  <SelectItem value="done">Done</SelectItem>
-                </SelectContent>
-              </Select>
+              <SheetSelect value={status} onValueChange={setStatus} placeholder="Status"
+                options={[{ value: 'todo', label: 'To Do' }, { value: 'in_progress', label: 'In Progress' }, { value: 'done', label: 'Done' }]} />
             </div>
           </div>
           <div className="space-y-1.5">
             <Label>Repeat</Label>
-            <Select value={repeat} onValueChange={setRepeat}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Does not repeat</SelectItem>
-                <SelectItem value="daily">Daily</SelectItem>
-                <SelectItem value="weekly">Weekly</SelectItem>
-                <SelectItem value="monthly">Monthly</SelectItem>
-              </SelectContent>
-            </Select>
+            <SheetSelect value={repeat} onValueChange={setRepeat} placeholder="Repeat"
+              options={[{ value: 'none', label: 'Does not repeat' }, { value: 'daily', label: 'Daily' }, { value: 'weekly', label: 'Weekly' }, { value: 'monthly', label: 'Monthly' }]} />
           </div>
           {repeat !== 'none' && (
             <div className="space-y-1.5">
@@ -172,13 +155,8 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
           {area === 'school' && (
             <div className="space-y-1.5">
               <Label>Course</Label>
-              <Select value={courseId} onValueChange={setCourseId}>
-                <SelectTrigger><SelectValue placeholder="No course" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No course</SelectItem>
-                  {courses.map((c) => <SelectItem key={c.id} value={c.id}>{c.code ? `${c.code} — ` : ''}{c.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <SheetSelect value={courseId} onValueChange={setCourseId} placeholder="No course"
+                options={[{ value: 'none', label: 'No course' }, ...courses.map((c) => ({ value: c.id, label: c.code ? `${c.code} — ${c.name}` : c.name }))]} />
             </div>
           )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
