@@ -40,8 +40,8 @@ export default function Areas() {
   const visible = AREA_LIST.filter((a) => !hiddenAreas.has(a.key));
 
   return (
-    <div className="relative min-h-screen bg-background flex flex-col">
-      <div className="absolute top-4 right-4 z-10">
+    <div className="relative min-h-screen bg-background flex flex-col pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)]">
+      <div className="absolute top-[calc(1rem+env(safe-area-inset-top,0px))] right-[calc(1rem+env(safe-area-inset-right,0px))] z-10">
         <ManageAreas hidden={hiddenAreas} onToggle={toggleArea} />
       </div>
       <div className="flex-1 flex flex-col items-center justify-center p-6">

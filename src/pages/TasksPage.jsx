@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import SheetSelect from '@/components/SheetSelect';
+import PullToRefresh from '@/components/PullToRefresh';
 import { Plus, Search, Pencil, Trash2, Inbox, Download, CheckSquare, ChevronDown, Copy } from 'lucide-react';
 import { toggleTaskStatus } from '@/lib/tasks';
 import { taskTypeMeta, PRIORITY, STATUS, dueLabel, daysUntil, parseDate, fmt } from '@/lib/planner';
@@ -137,7 +138,7 @@ export default function TasksPage() {
   const row = (t) => <TaskRow key={t.id} task={t} course={courseMap[t.course_id]} selectMode={selectMode} selected={selected.has(t.id)} onSelect={() => toggleSelect(t.id)} onToggle={() => toggle(t)} onEdit={() => openTaskModal(t)} onDelete={() => remove(t)} onDuplicate={() => duplicate(t)} />;
 
   return (
-    <div className="p-4 md:p-8 max-w-5xl mx-auto animate-fade-in">
+    <PullToRefresh onRefresh={load} className="p-4 md:p-8 max-w-5xl mx-auto animate-fade-in">
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold">Tasks</h1>
@@ -165,58 +166,25 @@ export default function TasksPage() {
         </div>
         {area === 'school' && (
           <div className="w-full md:w-36">
-            <Select value={course} onValueChange={setCourse}>
-              <SelectTrigger><SelectValue placeholder="Course" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All courses</SelectItem>
-                {courses.map((c) => <SelectItem key={c.id} value={c.id}>{c.code || c.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <SheetSelect value={course} onValueChange={setCourse} placeholder="Course"
+              options={[{ value: 'all', label: 'All courses' }, ...courses.map((c) => ({ value: c.id, label: c.code || c.name }))]} />
           </div>
         )}
         <div className="w-full md:w-36">
-          <Select value={priority} onValueChange={setPriority}>
-            <SelectTrigger><SelectValue placeholder="Priority" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All priorities</SelectItem>
-              <SelectItem value="high">High</SelectItem>
-              <SelectItem value="medium">Medium</SelectItem>
-              <SelectItem value="low">Low</SelectItem>
-            </SelectContent>
-          </Select>
+          <SheetSelect value={priority} onValueChange={setPriority} placeholder="Priority"
+            options={[{ value: 'all', label: 'All priorities' }, { value: 'high', label: 'High' }, { value: 'medium', label: 'Medium' }, { value: 'low', label: 'Low' }]} />
         </div>
         <div className="w-full md:w-36">
-          <Select value={due} onValueChange={setDue}>
-            <SelectTrigger><SelectValue placeholder="Due" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Any due date</SelectItem>
-              <SelectItem value="overdue">Overdue</SelectItem>
-              <SelectItem value="today">Due today</SelectItem>
-              <SelectItem value="week">Due this week</SelectItem>
-              <SelectItem value="month">Due this month</SelectItem>
-            </SelectContent>
-          </Select>
+          <SheetSelect value={due} onValueChange={setDue} placeholder="Due"
+            options={[{ value: 'all', label: 'Any due date' }, { value: 'overdue', label: 'Overdue' }, { value: 'today', label: 'Due today' }, { value: 'week', label: 'Due this week' }, { value: 'month', label: 'Due this month' }]} />
         </div>
         <div className="w-full md:w-36">
-          <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All status</SelectItem>
-              <SelectItem value="overdue">Overdue</SelectItem>
-              <SelectItem value="todo">To Do</SelectItem>
-              <SelectItem value="in_progress">In Progress</SelectItem>
-              <SelectItem value="done">Done</SelectItem>
-            </SelectContent>
-          </Select>
+          <SheetSelect value={status} onValueChange={setStatus} placeholder="Status"
+            options={[{ value: 'all', label: 'All status' }, { value: 'overdue', label: 'Overdue' }, { value: 'todo', label: 'To Do' }, { value: 'in_progress', label: 'In Progress' }, { value: 'done', label: 'Done' }]} />
         </div>
         <div className="w-full md:w-36">
-          <Select value={type} onValueChange={setType}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All types</SelectItem>
-              {[...new Set(tasks.map((t) => t.type).filter(Boolean))].map((k) => <SelectItem key={k} value={k}>{taskTypeMeta(k).label}</SelectItem>)}
-            </SelectContent>
-          </Select>
+          <SheetSelect value={type} onValueChange={setType} placeholder="Type"
+            options={[{ value: 'all', label: 'All types' }, ...[...new Set(tasks.map((t) => t.type).filter(Boolean))].map((k) => ({ value: k, label: taskTypeMeta(k).label }))]} />
         </div>
       </Card>
 
@@ -271,7 +239,7 @@ export default function TasksPage() {
         )}
 
       <TaskModal open={modalTask} onClose={closeTaskModal} onSave={saveTask} task={editTask} courses={courses} area={area} tasks={tasks} onApplyColor={applyColorToTasks} />
-    </div>
+    </PullToRefresh>
   );
 }
 

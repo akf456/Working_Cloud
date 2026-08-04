@@ -101,3 +101,23 @@
   100% { transform: scale(1); opacity: 1; }
 }
 .animate-pop { animation: pop 0.25s ease-out both; }
+
+@media (max-width: 767px) {
+  button, [role="button"], a.nav-link {
+    min-height: 44px;
+  }
+  [role="checkbox"] {
+    position: relative;
+  }
+  [role="checkbox"]::after {
+    content: "";
+    position: absolute;
+    inset: -14px;
+    border-radius: 6px;
+  }
+  *::-webkit-scrollbar { display: none; }
+  * { scrollbar-width: none; }
+}
+
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }

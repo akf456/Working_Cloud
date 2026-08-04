@@ -9,6 +9,7 @@ import {
 } from 'date-fns';
 import { EVENT_TYPE, parseDate, fmtTime, fmt, expandTaskOccurrences, expandEventOccurrences } from '@/lib/planner';
 import EventModal from '@/components/EventModal';
+import PullToRefresh from '@/components/PullToRefresh';
 import { trashItem } from '@/lib/trash';
 import { useArea } from '@/lib/AreaContext';
 import { useSearchParams } from 'react-router-dom';
@@ -125,7 +126,7 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-6xl mx-auto animate-fade-in">
+    <PullToRefresh onRefresh={load} className="p-4 md:p-8 max-w-6xl mx-auto animate-fade-in">
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold">Calendar</h1>
@@ -247,6 +248,6 @@ export default function CalendarPage() {
 
       <EventModal open={modalEvent} onClose={closeEventModal} onSave={saveEvent} event={editEvent} courses={courses}
         defaultStart={selected.toISOString()} area={area} />
-    </div>
+    </PullToRefresh>
   );
 }

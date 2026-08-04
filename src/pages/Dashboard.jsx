@@ -11,6 +11,7 @@ import TaskModal from '@/components/TaskModal';
 import WorkloadBreakdown from '@/components/WorkloadBreakdown';
 import OverdueBanner from '@/components/OverdueBanner';
 import DashboardCustomizeModal from '@/components/DashboardCustomizeModal';
+import PullToRefresh from '@/components/PullToRefresh';
 import { DASHBOARD_WIDGETS, DEFAULT_DASHBOARD_ORDER } from '@/lib/dashboardWidgets';
 import { useArea } from '@/lib/AreaContext';
 import { useAuth } from '@/lib/AuthContext';
@@ -218,7 +219,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-6xl mx-auto animate-fade-in">
+    <PullToRefresh onRefresh={load} className="p-4 md:p-8 max-w-6xl mx-auto animate-fade-in">
       {/* Hero */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
         <div>
@@ -240,7 +241,7 @@ export default function Dashboard() {
 
       <TaskModal open={taskModal} onClose={() => setTaskModal(false)} onSave={saveTask} courses={courses} area={area} />
       <DashboardCustomizeModal open={customize} onClose={() => setCustomize(false)} order={order} hidden={[...hidden]} onSave={saveLayout} />
-    </div>
+    </PullToRefresh>
   );
 }
 

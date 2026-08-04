@@ -54,11 +54,16 @@ export default function Settings() {
 
   async function deleteAccount() {
     setDelOpen(false);
+    try {
+      await base44.functions.invoke('deleteAccount', {});
+    } catch (e) {
+      toast({ title: 'Could not delete data', description: e.message, variant: 'destructive' });
+    }
     await base44.auth.logout('/');
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-2xl mx-auto animate-fade-in">
+    <div className="p-4 md:p-8 max-w-2xl mx-auto animate-fade-in pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
       <h1 className="text-2xl md:text-3xl font-bold mb-1">Settings</h1>
       <p className="text-sm text-muted-foreground mb-6">Manage your color scheme & preferences.</p>
 

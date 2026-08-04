@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Plus, Sparkles, Pencil, Trash2, BookOpen, ListTodo, CalendarClock, GraduationCap } from 'lucide-react';
 import { fmt, dueLabel, daysUntil, parseDate } from '@/lib/planner';
 import SyllabusImporter from '@/components/SyllabusImporter';
+import PullToRefresh from '@/components/PullToRefresh';
 import { trashItem } from '@/lib/trash';
 import { useArea } from '@/lib/AreaContext';
 import { AREAS } from '@/lib/areas';
@@ -46,7 +47,7 @@ export default function CoursesPage() {
   }
 
   return (
-    <div className="p-4 md:p-8 max-w-6xl mx-auto animate-fade-in">
+    <PullToRefresh onRefresh={load} className="p-4 md:p-8 max-w-6xl mx-auto animate-fade-in">
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold">{a.groupingLabel}</h1>
@@ -115,7 +116,7 @@ export default function CoursesPage() {
 
       <CourseModal open={modal} onClose={() => { setModal(false); setEdit(null); }} onSave={saveCourse} course={edit} index={courses.length} areaLabel={a.singular} area={area} />
       <SyllabusImporter open={importer} onClose={() => setImporter(false)} courses={courses} area={area} onDone={load} />
-    </div>
+    </PullToRefresh>
   );
 }
 
