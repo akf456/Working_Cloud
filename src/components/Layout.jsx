@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import MobileTabOutlet from '@/components/MobileTabOutlet';
-import { LayoutDashboard, CalendarDays, ListTodo, GraduationCap, Sparkles, Users, Trash2, LayoutGrid, Palette, Share2, Check, Settings as SettingsIcon, Bell, MessageCircle, ChevronLeft } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, ListTodo, GraduationCap, Sparkles, Users, Trash2, LayoutGrid, Palette, Share2, Check, Settings as SettingsIcon, Bell, MessageCircle, ChevronLeft, Menu } from 'lucide-react';
 import { useArea } from '@/lib/AreaContext';
 import { AREAS } from '@/lib/areas';
 import { areaThemeVars, areaImage } from '@/lib/areaTheme';
@@ -13,6 +13,7 @@ import WorkingCloudLogo from '@/components/WorkingCloudLogo';
 import ShareModal from '@/components/ShareModal';
 import WhatNewModal from '@/components/WhatNewModal';
 import RefreshBanner from '@/components/RefreshBanner';
+import MoreSheet from '@/components/MoreSheet';
 import { useAppUpdate } from '@/hooks/useAppUpdate';
 import { getUnseenChangelog } from '@/lib/changelog';
 
@@ -25,6 +26,7 @@ export default function Layout() {
   const [personalize, setPersonalize] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [whatNew, setWhatNew] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const { needsRefresh } = useAppUpdate();
   useEffect(() => { if (getUnseenChangelog().length) setWhatNew(true); }, []);
   if (!area) return <Navigate to="/" replace />;
@@ -44,7 +46,12 @@ export default function Layout() {
     { to: '/settings', label: 'Settings', Icon: SettingsIcon }
   ];
   if (area === 'shareable') NAV.splice(5, 0, { to: '/encourage', label: 'Encouragement', Icon: MessageCircle });
-  const bottomNav = NAV.filter((i) => i.kind !== 'button' && i.to !== '/settings');
+  const bottomNav = [
+    { to: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
+    { to: '/calendar', label: 'Calendar', Icon: CalendarDays },
+    { to: '/tasks', label: 'Tasks', Icon: ListTodo },
+    { to: '/courses', label: a.groupingLabel, Icon: GraduationCap },
+  ];
   const isActive = (to) => pathname === to || pathname.startsWith(to + '/');
   function switchArea() { exit(); nav('/areas'); }
 
@@ -128,11 +135,8 @@ export default function Layout() {
                 {getUnseenChangelog().length > 0 && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-rose-500" />}
               </button>
               <button onClick={() => setPersonalize(true)} className="text-muted-foreground hover:text-primary" title="Customize"><Palette className="w-5 h-5" /></button>
-              <button onClick={openShare} className="text-muted-foreground hover:text-primary"><Share2 className="w-5 h-5" /></button>
-              <Link to="/settings" className="text-muted-foreground hover:text-primary"><SettingsIcon className="w-5 h-5" /></Link>
-              <button onClick={switchArea} className="flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-primary">
-                <LayoutGrid className="w-4 h-4" /> Areas
-              </button>
+              <button onClick={openShare} className="text-muted-foreground hover:text-primary" title="Share"><Share2 className="w-5 h-5" /></button>
+              <button onClick={() => setMoreOpen(true)} className="text-muted-foreground hover:text-primary" title="More"><Menu className="w-5 h-5" /></button>
             </div>
           </>
         )}
@@ -144,17 +148,20 @@ export default function Layout() {
       </main>
 
       {/* Mobile bottom nav */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 grid bg-card/90 backdrop-blur border-t border-border/60 pb-[env(safe-area-inset-bottom,0px)]" style={{ gridTemplateColumns: `repeat(${bottomNav.length}, minmax(0, 1fr))` }}>
-        {bottomNav.map(({ to, label, Icon }) => (
-          <Link key={to} to={to} onClick={(e) => { if (isActive(to)) { e.preventDefault(); window.scrollTo({ top: 0 }); } }} className={`flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-medium ${isActive(to) ? 'text-primary' : 'text-muted-foreground'}`}>
-            <Icon className="w-5 h-5" /> {label}
-          </Link>
-        ))}
-      </nav>
+      {!isChildScreen && (
+        <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 grid bg-card/90 backdrop-blur border-t border-border/60 pb-[env(safe-area-inset-bottom,0px)]" style={{ gridTemplateColumns: `repeat(${bottomNav.length}, minmax(0, 1fr))` }}>
+          {bottomNav.map(({ to, label, Icon }) => (
+            <Link key={to} to={to} onClick={(e) => { if (isActive(to)) { e.preventDefault(); window.scrollTo({ top: 0 }); } }} className={`flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-medium ${isActive(to) ? 'text-primary' : 'text-muted-foreground'}`}>
+              <Icon className="w-5 h-5" /> {label}
+            </Link>
+          ))}
+        </nav>
+      )}
 
       {personalize && <PersonalizeModal open area={area} onClose={() => setPersonalize(false)} />}
       <ShareModal open={shareOpen} area={area} onClose={() => setShareOpen(false)} />
       <WhatNewModal open={whatNew} onClose={() => setWhatNew(false)} />
+      <MoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} area={area} onNavigate={(to) => nav(to)} onAreas={switchArea} onLogout={() => base44.auth.logout('/')} />
     </div>
   );
 }

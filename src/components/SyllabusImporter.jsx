@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import SheetSelect from '@/components/SheetSelect';
 import { UploadCloud, Loader2, CheckCircle2, FileText, CalendarClock, ListChecks, Sparkles, Users } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { COURSE_COLORS, TASK_TYPE, EVENT_TYPE } from '@/lib/planner';
@@ -183,13 +183,8 @@ export default function SyllabusImporter({ open, onClose, courses = [], area = '
             {isSchool && (
               <div className="space-y-1.5">
                 <Label>Attach to course</Label>
-                <Select value={courseId} onValueChange={setCourseId}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="new">+ Create new course</SelectItem>
-                    {courses.map((c) => <SelectItem key={c.id} value={c.id}>{c.code ? `${c.code} — ` : ''}{c.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <SheetSelect value={courseId} onValueChange={setCourseId} placeholder="Attach to course"
+                  options={[{ value: 'new', label: '+ Create new course' }, ...courses.map((c) => ({ value: c.id, label: c.code ? `${c.code} — ${c.name}` : c.name }))]} />
               </div>
             )}
 

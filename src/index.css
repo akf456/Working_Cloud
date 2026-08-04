@@ -103,6 +103,8 @@
 .animate-pop { animation: pop 0.25s ease-out both; }
 
 @media (max-width: 767px) {
+  * { -webkit-tap-highlight-color: transparent; }
+  header, nav { user-select: none; -webkit-user-select: none; }
   button, [role="button"], a.nav-link {
     min-height: 44px;
   }

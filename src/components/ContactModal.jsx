@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import SheetSelect from '@/components/SheetSelect';
 
 export const CONTACT_ROLE = {
   professor: { label: 'Professor' },
@@ -50,12 +50,8 @@ export default function ContactModal({ open, onClose, onSave, contact, courses, 
             {area === 'school' && (
               <div className="space-y-1.5">
                 <Label>Role</Label>
-                <Select value={form.role || 'professor'} onValueChange={(v) => set('role', v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(CONTACT_ROLE).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <SheetSelect value={form.role || 'professor'} onValueChange={(v) => set('role', v)} placeholder="Role"
+                  options={Object.entries(CONTACT_ROLE).map(([k, v]) => ({ value: k, label: v.label }))} />
               </div>
             )}
           </div>
@@ -72,13 +68,8 @@ export default function ContactModal({ open, onClose, onSave, contact, courses, 
           {area === 'school' && (
             <div className="space-y-1.5">
               <Label>Course</Label>
-              <Select value={form.course_id || 'none'} onValueChange={(v) => set('course_id', v === 'none' ? '' : v)}>
-                <SelectTrigger><SelectValue placeholder="No course" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No course</SelectItem>
-                  {courses.map((c) => <SelectItem key={c.id} value={c.id}>{c.code || c.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <SheetSelect value={form.course_id || 'none'} onValueChange={(v) => set('course_id', v === 'none' ? '' : v)} placeholder="No course"
+                options={[{ value: 'none', label: 'No course' }, ...courses.map((c) => ({ value: c.id, label: c.code || c.name }))]} />
             </div>
           )}
           <div className="grid grid-cols-2 gap-3">

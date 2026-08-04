@@ -103,7 +103,7 @@ export default function Settings() {
 
       <Card className="p-5 mt-5 border-rose-200">
         <h2 className="font-semibold text-lg mb-1 text-rose-700">Delete account</h2>
-        <p className="text-sm text-muted-foreground mb-4">This will sign you out of Working Cloud on this device. This action cannot be undone.</p>
+        <p className="text-sm text-muted-foreground mb-4">This will permanently delete your account and wipe all of your data, including tasks, events, courses, and contacts. This action is permanent and cannot be undone.</p>
         <Button variant="destructive" onClick={() => setDelOpen(true)}><Trash2 className="w-4 h-4 mr-1.5" /> Delete account</Button>
       </Card>
 
