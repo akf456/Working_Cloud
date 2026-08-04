@@ -14,6 +14,30 @@
       "type": "string",
       "default": "#fcd34b",
       "title": "Color"
+    },
+    "recipient_emails": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "title": "Recipient Emails"
+    },
+    "recipient_names": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "title": "Recipient Names"
+    },
+    "is_group": {
+      "type": "boolean",
+      "default": false,
+      "title": "Group Message"
+    },
+    "allow_others": {
+      "type": "boolean",
+      "default": false,
+      "title": "Allow Others"
     }
   },
   "required": [
@@ -21,7 +45,24 @@
   ],
   "rls": {
     "create": {},
-    "read": {},
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.recipient_emails": "{{user.email}}"
+        },
+        {
+          "data.allow_others": true
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
     "update": {
       "$or": [
         {
