@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
@@ -25,6 +25,8 @@ import TrashPage from '@/pages/TrashPage';
 import ShareBoard from '@/pages/ShareBoard';
 import Settings from '@/pages/Settings';
 import EncouragePage from '@/pages/EncouragePage';
+import { AnimatePresence } from 'framer-motion';
+import SplashOverlay from '@/components/SplashOverlay';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -86,8 +88,20 @@ function App() {
     return () => mq.removeEventListener('change', apply);
   }, []);
 
+  const [showSplash, setShowSplash] = useState(() => {
+    try { return !sessionStorage.getItem('wc_splash'); } catch { return true; }
+  });
+  useEffect(() => {
+    if (!showSplash) return;
+    try { sessionStorage.setItem('wc_splash', '1'); } catch {}
+    const t = setTimeout(() => setShowSplash(false), 2600);
+    return () => clearTimeout(t);
+  }, [showSplash]);
+
   return (
-    <AuthProvider>
+    <>
+      <AnimatePresence>{showSplash && <SplashOverlay onClose={() => setShowSplash(false)} />}</AnimatePresence>
+      <AuthProvider>
       <AreaProvider>
       <QueryClientProvider client={queryClientInstance}>
         <Router>
@@ -98,6 +112,7 @@ function App() {
       </QueryClientProvider>
       </AreaProvider>
     </AuthProvider>
+    </>
   )
 }
 
