@@ -79,8 +79,12 @@ export default function SyllabusImporter({ open, onClose, courses = [], area = '
       });
       const eventFields = (e, cid) => ({
         title: e.title, description: e.description || '', start_date: e.start_date,
-        end_date: e.end_date || e.start_date, all_day: e.all_day ?? true,
+        end_date: e.end_date || e.start_date, all_day: e.all_day ?? false,
         type: EVENT_TYPE[e.type] ? e.type : 'event', location: e.location || '',
+        repeat: e.repeat || 'none',
+        repeat_days: Array.isArray(e.repeat_days) ? e.repeat_days.map(Number) : [],
+        repeat_start_date: e.repeat_start_date || null,
+        repeat_end_date: e.repeat_end_date || null,
         course_id: cid || null, source: 'syllabus', area
       });
       const contactFields = (c, cid) => ({
@@ -190,7 +194,7 @@ export default function SyllabusImporter({ open, onClose, courses = [], area = '
             )}
 
             {isSchool && courseId === 'new' && (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label>Course name</Label>
                   <Input value={courseName} onChange={(e) => setCourseName(e.target.value)} placeholder="Calculus II" />

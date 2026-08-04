@@ -2,7 +2,12 @@
 import { useState, useEffect } from "react";
 
 const TOAST_LIMIT = 20;
-const TOAST_REMOVE_DELAY = 1000000;
+// How long a dismissed toast lingers in the DOM before being removed (lets the
+// exit animation play).
+const TOAST_REMOVE_DELAY = 400;
+// Default auto-dismiss window. A toast dismisses itself after this many ms
+// unless the caller passes a custom `duration` (use Infinity to keep it).
+const TOAST_AUTO_DISMISS = 5000;
 
 const actionTypes = {
   ADD_TOAST: "ADD_TOAST",
@@ -19,6 +24,7 @@ function genId() {
 }
 
 const toastTimeouts = new Map();
+const autoDismissTimeouts = new Map();
 
 const addToRemoveQueue = (toastId) => {
   if (toastTimeouts.has(toastId)) {
@@ -44,6 +50,14 @@ const _clearFromRemoveQueue = (toastId) => {
   }
 };
 
+const clearAutoDismiss = (toastId) => {
+  const t = autoDismissTimeouts.get(toastId);
+  if (t) {
+    clearTimeout(t);
+    autoDismissTimeouts.delete(toastId);
+  }
+};
+
 export const reducer = (state, action) => {
   switch (action.type) {
     case actionTypes.ADD_TOAST:
@@ -66,9 +80,11 @@ export const reducer = (state, action) => {
       // ! Side effects ! - This could be extracted into a dismissToast() action,
       // but I'll keep it here for simplicity
       if (toastId) {
+        clearAutoDismiss(toastId);
         addToRemoveQueue(toastId);
       } else {
         state.toasts.forEach((toast) => {
+          clearAutoDismiss(toast.id);
           addToRemoveQueue(toast.id);
         });
       }
@@ -92,6 +108,7 @@ export const reducer = (state, action) => {
           toasts: [],
         };
       }
+      clearAutoDismiss(action.toastId);
       return {
         ...state,
         toasts: state.toasts.filter((t) => t.id !== action.toastId),
@@ -110,7 +127,7 @@ function dispatch(action) {
   });
 }
 
-function toast({ ...props }) {
+function toast({ duration = TOAST_AUTO_DISMISS, ...props }) {
   const id = genId();
 
   const update = (props) =>
@@ -133,6 +150,12 @@ function toast({ ...props }) {
       },
     },
   });
+
+  // Auto-dismiss after the configured duration (unless Infinity or <= 0).
+  if (duration !== Infinity && duration > 0) {
+    const t = setTimeout(() => dismiss(), duration);
+    autoDismissTimeouts.set(id, t);
+  }
 
   return {
     id,
@@ -161,4 +184,4 @@ function useToast() {
   };
 }
 
-export { useToast, toast }; 
+export { useToast, toast };

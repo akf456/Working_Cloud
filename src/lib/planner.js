@@ -246,3 +246,46 @@ export function expandTaskOccurrences(task, genEnd) {
   }
   return out;
 }
+
+// Expand an event into its occurrence dates (start-of-day) up to `genEnd`.
+// Non-recurring events return their single start date. Recurring events run
+// from repeat_start_date (or start_date) to repeat_end_date (or genEnd),
+// respecting daily/weekly (with repeat_days)/monthly — mirrors tasks so the
+// calendar shows every occurrence of a recurring class/meeting.
+export function expandEventOccurrences(event, genEnd) {
+  if (!event.repeat || event.repeat === 'none') {
+    const d = parseDate(event.start_date);
+    return d ? [startOfDay(d)] : [];
+  }
+  const anchor = parseDate(event.repeat_start_date || event.start_date);
+  if (!anchor) return [];
+  const a0 = startOfDay(anchor);
+  const end = event.repeat_end_date ? startOfDay(parseDate(event.repeat_end_date)) : startOfDay(genEnd);
+  const cap = startOfDay(genEnd);
+  const out = [];
+  const wdays = (event.repeat_days && event.repeat_days.length) ? event.repeat_days.map(Number) : null;
+  if (event.repeat === 'daily') {
+    let d = a0, n = 0;
+    while (d.getTime() <= end.getTime() && d.getTime() <= cap.getTime() && n < 1000) {
+      if (!wdays || wdays.includes(d.getDay())) out.push(d);
+      d = addDays(d, 1); n++;
+    }
+  } else if (event.repeat === 'weekly') {
+    const days = wdays || [a0.getDay()];
+    let d = a0, n = 0;
+    while (d.getTime() <= end.getTime() && d.getTime() <= cap.getTime() && n < 7000) {
+      if (days.includes(d.getDay())) out.push(d);
+      d = addDays(d, 1); n++;
+    }
+  } else if (event.repeat === 'monthly') {
+    const dom = a0.getDate();
+    for (let i = 0; i < 36; i++) {
+      const y = a0.getFullYear(), m = a0.getMonth() + i;
+      const dim = new Date(y, m + 1, 0).getDate();
+      const d = startOfDay(new Date(y, m, Math.min(dom, dim)));
+      if (d.getTime() > end.getTime() || d.getTime() > cap.getTime()) break;
+      if (!wdays || wdays.includes(d.getDay())) out.push(d);
+    }
+  }
+  return out;
+}

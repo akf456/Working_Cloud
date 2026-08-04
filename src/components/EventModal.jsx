@@ -6,9 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { EVENT_TYPE, toInputDateTime, fromInputDateTime } from '@/lib/planner';
+import { EVENT_TYPE, toInputDateTime, fromInputDateTime, toInputDate, fromInputDate } from '@/lib/planner';
 
-export default function EventModal({ open, onClose, onSave, event, courses = [], defaultStart }) {
+const WDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+export default function EventModal({ open, onClose, onSave, event, courses = [], defaultStart, area = 'school' }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [start, setStart] = useState('');
@@ -17,6 +19,10 @@ export default function EventModal({ open, onClose, onSave, event, courses = [],
   const [type, setType] = useState('event');
   const [courseId, setCourseId] = useState('none');
   const [location, setLocation] = useState('');
+  const [repeat, setRepeat] = useState('none');
+  const [repeatDays, setRepeatDays] = useState([]);
+  const [repeatStart, setRepeatStart] = useState('');
+  const [repeatEnd, setRepeatEnd] = useState('');
 
   useEffect(() => {
     const base = event?.start_date || defaultStart;
@@ -28,19 +34,33 @@ export default function EventModal({ open, onClose, onSave, event, courses = [],
     setType(event?.type || 'event');
     setCourseId(event?.course_id || 'none');
     setLocation(event?.location || '');
+    setRepeat(event?.repeat || 'none');
+    setRepeatDays(Array.isArray(event?.repeat_days) ? event.repeat_days : []);
+    setRepeatStart(event?.repeat_start_date ? toInputDate(event.repeat_start_date) : (base ? toInputDate(base) : ''));
+    setRepeatEnd(event?.repeat_end_date ? toInputDate(event.repeat_end_date) : '');
   }, [event, open, defaultStart]);
+
+  function toggleDay(i) {
+    setRepeatDays((p) => (p.includes(i) ? p.filter((d) => d !== i) : [...p, i]));
+  }
 
   function submit() {
     if (!title.trim() || !start) return;
+    const startISO = fromInputDateTime(start);
     onSave({
+      ...(event?.id ? { id: event.id } : {}),
       title: title.trim(),
       description: description.trim(),
-      start_date: fromInputDateTime(start),
-      end_date: end ? fromInputDateTime(end) : fromInputDateTime(start),
+      start_date: startISO,
+      end_date: end ? fromInputDateTime(end) : startISO,
       all_day: allDay,
       type,
       course_id: courseId === 'none' ? null : courseId,
-      location: location.trim()
+      location: location.trim(),
+      repeat,
+      repeat_days: repeat !== 'none' ? repeatDays : [],
+      repeat_start_date: repeat !== 'none' ? (repeatStart ? fromInputDate(repeatStart) : startISO) : null,
+      repeat_end_date: repeat !== 'none' && repeatEnd ? fromInputDate(repeatEnd) : null
     });
     onClose();
   }
@@ -56,7 +76,7 @@ export default function EventModal({ open, onClose, onSave, event, courses = [],
             <Label>Title</Label>
             <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Midterm Exam" autoFocus />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Type</Label>
               <Select value={type} onValueChange={setType}>
@@ -64,18 +84,20 @@ export default function EventModal({ open, onClose, onSave, event, courses = [],
                 <SelectContent>{Object.entries(EVENT_TYPE).map(([k, v]) => <SelectItem key={k} value={k}>{v.label}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
-              <Label>Course</Label>
-              <Select value={courseId} onValueChange={setCourseId}>
-                <SelectTrigger><SelectValue placeholder="No course" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No course</SelectItem>
-                  {courses.map((c) => <SelectItem key={c.id} value={c.id}>{c.code ? `${c.code} — ` : ''}{c.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
+            {area === 'school' && (
+              <div className="space-y-1.5">
+                <Label>Course</Label>
+                <Select value={courseId} onValueChange={setCourseId}>
+                  <SelectTrigger><SelectValue placeholder="No course" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No course</SelectItem>
+                    {courses.map((c) => <SelectItem key={c.id} value={c.id}>{c.code ? `${c.code} — ` : ''}{c.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Starts</Label>
               <Input type="datetime-local" value={start} onChange={(e) => setStart(e.target.value)} disabled={allDay && false} />
@@ -89,6 +111,48 @@ export default function EventModal({ open, onClose, onSave, event, courses = [],
             <Checkbox checked={allDay} onCheckedChange={(v) => setAllDay(!!v)} />
             All day
           </label>
+          <div className="space-y-1.5">
+            <Label>Repeat</Label>
+            <Select value={repeat} onValueChange={setRepeat}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Does not repeat</SelectItem>
+                <SelectItem value="daily">Daily</SelectItem>
+                <SelectItem value="weekly">Weekly</SelectItem>
+                <SelectItem value="monthly">Monthly</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {repeat !== 'none' && (
+            <div className="space-y-1.5">
+              <Label>On these days</Label>
+              <div className="flex gap-1.5">
+                {WDAYS.map((w, i) => {
+                  const on = repeatDays.includes(i);
+                  return (
+                    <button type="button" key={i} onClick={() => toggleDay(i)}
+                      className={`w-9 h-9 rounded-lg text-xs font-medium border transition ${on ? 'bg-primary text-primary-foreground border-primary' : 'border-input hover:bg-accent'}`}>
+                      {w[0]}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-[11px] text-muted-foreground">Pick the weekdays it occurs on. Leave empty to repeat on every occurrence.</p>
+            </div>
+          )}
+          {repeat !== 'none' && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Starts on</Label>
+                <Input type="date" value={repeatStart} onChange={(e) => setRepeatStart(e.target.value)} />
+                <p className="text-[11px] text-muted-foreground">Defaults to the start date.</p>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Ends on (optional)</Label>
+                <Input type="date" value={repeatEnd} onChange={(e) => setRepeatEnd(e.target.value)} />
+              </div>
+            </div>
+          )}
           <div className="space-y-1.5">
             <Label>Location</Label>
             <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Room / link" />

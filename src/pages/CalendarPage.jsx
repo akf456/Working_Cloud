@@ -7,7 +7,7 @@ import {
   startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval,
   addMonths, subMonths, isSameMonth, isSameDay, parseISO, isValid, format, startOfDay
 } from 'date-fns';
-import { EVENT_TYPE, parseDate, fmtTime, fmt, expandTaskOccurrences } from '@/lib/planner';
+import { EVENT_TYPE, parseDate, fmtTime, fmt, expandTaskOccurrences, expandEventOccurrences } from '@/lib/planner';
 import EventModal from '@/components/EventModal';
 import { trashItem } from '@/lib/trash';
 import { useArea } from '@/lib/AreaContext';
@@ -54,9 +54,16 @@ export default function CalendarPage() {
       if (!map.has(k)) map.set(k, { evs: [], tks: [] });
       return map.get(k);
     };
-    events.forEach((e) => { const d = parseDate(e.start_date); if (d) cell(startOfDay(d)).evs.push(e); });
     const gridStart = days[0];
     const gridEnd = days[days.length - 1];
+    events.forEach((e) => {
+      const occs = expandEventOccurrences(e, gridEnd);
+      occs.forEach((o) => {
+        if (o.getTime() >= gridStart.getTime() && o.getTime() <= gridEnd.getTime()) {
+          cell(o).evs.push(e);
+        }
+      });
+    });
     tasks.filter((t) => t.status !== 'done').forEach((t) => {
       const occs = expandTaskOccurrences(t, gridEnd);
       occs.forEach((o) => {
@@ -85,6 +92,27 @@ export default function CalendarPage() {
 
   async function deleteEvent(e) {
     await trashItem('Event', e, area); load();
+  }
+
+  async function duplicateEvent(e) {
+    const copy = {
+      title: `${e.title} (copy)`,
+      description: e.description || '',
+      start_date: e.start_date,
+      end_date: e.end_date || e.start_date,
+      all_day: e.all_day ?? false,
+      type: e.type || 'event',
+      course_id: e.course_id || null,
+      location: e.location || '',
+      repeat: e.repeat || 'none',
+      repeat_days: Array.isArray(e.repeat_days) ? e.repeat_days : [],
+      repeat_start_date: e.repeat_start_date || null,
+      repeat_end_date: e.repeat_end_date || null,
+      source: 'manual',
+      area
+    };
+    await base44.entities.Event.create(copy);
+    load();
   }
 
   return (
@@ -176,9 +204,10 @@ export default function CalendarPage() {
                       {e.location && <p className="text-xs text-muted-foreground">📍 {e.location}</p>}
                     </div>
                   </div>
-                  <div className="flex gap-2 mt-2 opacity-0 group-hover:opacity-100 transition">
-                    <button className="text-xs text-indigo-600 hover:underline" onClick={() => { setEditEvent(e); setModal(true); }}>Edit</button>
-                    <button className="text-xs text-rose-600 hover:underline" onClick={() => deleteEvent(e)}>Delete</button>
+                  <div className="flex flex-wrap gap-3 mt-2">
+                    <button className="text-xs font-medium text-indigo-600 hover:underline" onClick={() => { setEditEvent(e); setModal(true); }}>Edit</button>
+                    <button className="text-xs font-medium text-indigo-600 hover:underline" onClick={() => duplicateEvent(e)}>Duplicate</button>
+                    <button className="text-xs font-medium text-rose-600 hover:underline" onClick={() => deleteEvent(e)}>Delete</button>
                   </div>
                 </div>
               );
@@ -208,7 +237,7 @@ export default function CalendarPage() {
       </div>
 
       <EventModal open={modal} onClose={() => { setModal(false); setEditEvent(null); }} onSave={saveEvent} event={editEvent} courses={courses}
-        defaultStart={selected.toISOString()} />
+        defaultStart={selected.toISOString()} area={area} />
     </div>
   );
 }

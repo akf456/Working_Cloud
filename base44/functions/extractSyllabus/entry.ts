@@ -11,7 +11,7 @@ const EXTRACTION_SCHEMA = {
     topics: { type: "array", items: { type: "string" }, description: "Topics or themes covered." },
     tasks: {
       type: "array",
-      description: "All tasks, deadlines, and SCHEDULED RECURRING items. Model recurring class times, lectures, labs, and office hours as weekly-repeating tasks (repeat=weekly) so they appear on every occurrence day.",
+      description: "One-off tasks, assignments, and deadlines: homework, problem sets, readings, projects, exams, quizzes, and study sessions with a single due date. Do NOT put recurring scheduled class/lecture/lab/office-hours times here — those go in events with repeat=weekly.",
       items: {
         type: "object",
         properties: {
@@ -28,17 +28,21 @@ const EXTRACTION_SCHEMA = {
     },
     events: {
       type: "array",
-      description: "One-off calendar events (a single exam, holiday, meeting). Do NOT include recurring class times here — those go in tasks with repeat=weekly.",
+      description: "Calendar events. INCLUDE recurring scheduled meetings here — class times, lectures, labs, office hours, and recurring work meetings that occur on specific weekdays over a date range MUST be modeled as weekly-repeating events (repeat=weekly) with the correct repeat_days, repeat_start_date, and repeat_end_date so they appear on every occurrence day on the calendar. Use repeat=none for one-off events (a single exam, holiday, meeting).",
       items: {
         type: "object",
         properties: {
-          title: { type: "string" },
-          start_date: { type: "string", description: "ISO datetime if available, otherwise empty string" },
-          end_date: { type: "string", description: "ISO datetime if available, otherwise empty string" },
-          all_day: { type: "boolean" },
-          type: { type: "string", enum: ["exam", "deadline", "class", "study", "event", "holiday"] },
-          location: { type: "string" },
-          description: { type: "string" }
+          title: { type: "string", description: "Short title, e.g. 'Lecture', 'Office Hours', 'Team standup'." },
+          start_date: { type: "string", description: "ISO datetime of the FIRST occurrence (include the time of day, e.g. 2026-08-04T07:30:00). For one-off events, the event datetime. Empty string only if truly unknown." },
+          end_date: { type: "string", description: "ISO datetime of the end of the FIRST occurrence (e.g. 2026-08-04T09:30:00). For recurring events, this end time applies to every occurrence. Empty if none." },
+          all_day: { type: "boolean", description: "true if it spans the whole day (no specific time). false for timed classes/meetings." },
+          type: { type: "string", enum: ["exam", "deadline", "class", "study", "event", "holiday"], description: "Use 'class' for lectures/class times, 'study' for study sessions, 'event' for meetings/misc." },
+          location: { type: "string", description: "Room, building, or link if present, else empty." },
+          description: { type: "string", description: "Any extra details." },
+          repeat: { type: "string", enum: ["none", "daily", "weekly", "monthly"], description: "Use 'weekly' for scheduled meetings that occur on specific weekdays over a date range (e.g. 'Tuesdays and Wednesdays, Aug 3 to Aug 21'). Use 'none' for one-off events." },
+          repeat_days: { type: "array", items: { type: "integer" }, description: "For weekly repeats ONLY: weekday numbers where 0=Sunday,1=Monday,2=Tuesday,3=Wednesday,4=Thursday,5=Friday,6=Saturday. CRITICAL — map day names to numbers exactly: Sunday=0, Monday=1, Tuesday=2, Wednesday=3, Thursday=4, Friday=5, Saturday=6. Examples: 'Tuesdays and Wednesdays' -> [2,3]; 'MWF' -> [1,3,5]; 'Mon/Wed/Fri' -> [1,3,5]; 'TR' -> [2,4]. Empty array for non-weekly." },
+          repeat_start_date: { type: "string", description: "ISO date for the start of the recurring period (e.g. 2026-08-03). Weekly repeats only; empty otherwise." },
+          repeat_end_date: { type: "string", description: "ISO date for the end of the recurring period (e.g. 2026-08-21). Weekly repeats only; empty otherwise." }
         }
       }
     },

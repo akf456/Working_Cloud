@@ -79,7 +79,7 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
             <Input id="t-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={AREAS[area]?.titlePlaceholder || 'Task title'} list="task-titles" autoFocus />
             <datalist id="task-titles">{(AREAS[area]?.taskTitleSuggestions || []).map((s) => <option key={s} value={s} />)}</datalist>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Type</Label>
               {area === 'school' ? (
@@ -104,7 +104,7 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Deadline <span className="text-rose-500">*</span></Label>
               <Input type="datetime-local" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
@@ -152,7 +152,7 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
             </div>
           )}
           {repeat !== 'none' && (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Starts on</Label>
                 <Input type="date" value={repeatStart} onChange={(e) => setRepeatStart(e.target.value)} />
@@ -176,7 +176,7 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
               </Select>
             </div>
           )}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Task color</Label>
               <div className="flex items-center gap-2">
