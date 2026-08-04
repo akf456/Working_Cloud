@@ -101,7 +101,11 @@ export default function TasksPage() {
     }
     load();
   }
-  async function remove(t) { await trashItem('Task', t, area); load(); }
+  async function remove(t) {
+    setTasks((prev) => prev.filter((x) => x.id !== t.id));
+    try { await trashItem('Task', t, area); } catch (e) { toast({ title: 'Could not delete', variant: 'destructive' }); }
+    load();
+  }
   async function duplicate(t) {
     const { id, created_date, updated_date, created_by_id, ...rest } = t;
     await base44.entities.Task.create({ ...rest, title: `${t.title} (copy)` });
@@ -111,13 +115,17 @@ export default function TasksPage() {
   function selectAll() { setSelected(new Set(filtered.map((t) => t.id))); }
   function clearSel() { setSelected(new Set()); }
   async function bulkTrash() {
-    const items = tasks.filter((t) => selected.has(t.id));
+    const ids = new Set(selected);
+    setTasks((prev) => prev.filter((t) => !ids.has(t.id)));
+    const items = tasks.filter((t) => ids.has(t.id));
     for (const t of items) await trashItem('Task', t, area);
     setSelected(new Set()); setSelectMode(false); load();
   }
   async function bulkStatus(s) {
     if (!selected.size) return;
-    await base44.entities.Task.bulkUpdate([...selected].map((id) => ({ id, status: s })));
+    const ids = [...selected];
+    setTasks((prev) => prev.map((t) => ids.includes(t.id) ? { ...t, status: s } : t));
+    try { await base44.entities.Task.bulkUpdate(ids.map((id) => ({ id, status: s }))); } catch (e) { toast({ title: 'Could not update', variant: 'destructive' }); }
     setSelected(new Set()); load();
   }
   function exportTasks() {
@@ -125,8 +133,14 @@ export default function TasksPage() {
     downloadCSV(`tasks-${area}.csv`, rows);
   }
   async function saveTask(data) {
-    if (data.id) await base44.entities.Task.update(data.id, data);
-    else await base44.entities.Task.create({ ...data, area });
+    if (data.id) {
+      setTasks((prev) => prev.map((t) => t.id === data.id ? { ...t, ...data } : t));
+      try { await base44.entities.Task.update(data.id, data); } catch (e) { toast({ title: 'Could not save', variant: 'destructive' }); }
+    } else {
+      const temp = { ...data, area, id: `temp-${Date.now()}`, created_date: new Date().toISOString(), status: data.status || 'todo' };
+      setTasks((prev) => [temp, ...prev]);
+      try { await base44.entities.Task.create({ ...data, area }); } catch (e) { toast({ title: 'Could not create', variant: 'destructive' }); }
+    }
     load();
   }
   async function applyColorToTasks(ids, color) {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate, Navigate, Outlet } from 'react-router-dom';
+import { Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
+import MobileTabOutlet from '@/components/MobileTabOutlet';
 import { LayoutDashboard, CalendarDays, ListTodo, GraduationCap, Sparkles, Users, Trash2, LayoutGrid, Palette, Share2, Check, Settings as SettingsIcon, Bell, MessageCircle } from 'lucide-react';
 import { useArea } from '@/lib/AreaContext';
 import { AREAS } from '@/lib/areas';
@@ -127,9 +128,9 @@ export default function Layout() {
         </div>
       </header>
 
-      <main className="flex-1 min-w-0 pb-24 md:pb-0 pt-[calc(3.5rem+env(safe-area-inset-top,0px))] md:pt-0 relative z-10">
+      <main className="flex-1 min-w-0 pb-24 md:pb-0 pt-[calc(3.5rem+env(safe-area-inset-top,0px))] md:pt-0 relative z-10" style={{ overflowX: 'clip' }}>
         <RefreshBanner />
-        <Outlet />
+        <MobileTabOutlet />
       </main>
 
       {/* Mobile bottom nav */}

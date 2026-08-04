@@ -33,20 +33,26 @@ export default function SubtaskList({ parent }) {
       alert("A subtask can't be due after its parent task. Pick a date on or before " + toInputDate(parent.due_date) + '.');
       return;
     }
-    await base44.entities.Subtask.create({
-      parent_task_id: parent.id,
-      title: title.trim(),
-      due_date: due ? fromInputDate(due) : null,
-      status: 'todo',
-    });
-    setTitle(''); setDue(''); load();
+    const temp = { id: `temp-${Date.now()}`, parent_task_id: parent.id, title: title.trim(), due_date: due ? fromInputDate(due) : null, status: 'todo' };
+    setItems((prev) => [...prev, temp]);
+    setTitle(''); setDue('');
+    try {
+      await base44.entities.Subtask.create({ parent_task_id: parent.id, title: temp.title, due_date: temp.due_date, status: 'todo' });
+    } catch (e) { /* load will reconcile */ }
+    load();
   }
 
   async function toggle(st) {
-    await base44.entities.Subtask.update(st.id, { status: st.status === 'done' ? 'todo' : 'done' });
+    const next = st.status === 'done' ? 'todo' : 'done';
+    setItems((prev) => prev.map((i) => i.id === st.id ? { ...i, status: next } : i));
+    try { await base44.entities.Subtask.update(st.id, { status: next }); } catch (e) { /* load will reconcile */ }
     load();
   }
-  async function remove(id) { await base44.entities.Subtask.delete(id); load(); }
+  async function remove(id) {
+    setItems((prev) => prev.filter((i) => i.id !== id));
+    try { await base44.entities.Subtask.delete(id); } catch (e) { /* load will reconcile */ }
+    load();
+  }
 
   const doneCount = items.filter((i) => i.status === 'done').length;
   const pct = items.length ? Math.round((doneCount / items.length) * 100) : 0;
