@@ -1,0 +1,65 @@
+{
+  "name": "SharableRoster",
+  "type": "object",
+  "properties": {
+    "member_emails": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "title": "Member Emails"
+    },
+    "member_names": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "title": "Member Names"
+    }
+  },
+  "required": [],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "data.member_emails": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}
