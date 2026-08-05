@@ -15,6 +15,7 @@ import PullToRefresh from '@/components/PullToRefresh';
 import { trashItem } from '@/lib/trash';
 import { toggleTaskDayCompletion, isTaskDoneOnDay, isRecurring } from '@/lib/tasks';
 import { celebrate } from '@/lib/celebrate';
+import { toggleEventDayCompletion, isEventDoneOnDay, isEventCompletable } from '@/lib/events';
 import { useToast } from '@/components/ui/use-toast';
 import { useArea } from '@/lib/AreaContext';
 import { useSearchParams } from 'react-router-dom';
@@ -85,7 +86,8 @@ export default function CalendarPage() {
       const occs = expandEventOccurrences(e, gridEnd);
       occs.forEach((o) => {
         if (o.getTime() >= gridStart.getTime() && o.getTime() <= gridEnd.getTime()) {
-          cell(o).evs.push(e);
+          const dateStr = format(o, 'yyyy-MM-dd');
+          cell(o).evs.push({ ...e, _date: dateStr, _done: isEventDoneOnDay(e, dateStr) });
         }
       });
     });
@@ -175,7 +177,26 @@ export default function CalendarPage() {
     try {
       await toggleTaskDayCompletion(t, dateStr);
       if (!wasDone) toast({ title: 'Completed for this day! 🎉', description: celebrate() });
-    } catch (e) {
+    } catch (err) {
+      toast({ title: 'Could not update', variant: 'destructive' });
+    }
+    load();
+  }
+
+  async function toggleEventDay(e) {
+    const dateStr = e._date;
+    const wasDone = !!e._done;
+    setEvents((prev) => prev.map((x) => {
+      if (x.id !== e.id) return x;
+      const cur = Array.isArray(x.completed_dates) ? [...x.completed_dates] : [];
+      const i = cur.indexOf(dateStr);
+      if (i >= 0) cur.splice(i, 1); else cur.push(dateStr);
+      return { ...x, completed_dates: cur };
+    }));
+    try {
+      await toggleEventDayCompletion(e, dateStr);
+      if (!wasDone) toast({ title: 'Completed! 🎉', description: celebrate() });
+    } catch (err) {
       toast({ title: 'Could not update', variant: 'destructive' });
     }
     load();
@@ -233,9 +254,10 @@ export default function CalendarPage() {
                     ${!inMonth ? 'opacity-35' : ''}`}>
                   <span className={`text-xs font-semibold w-6 h-6 flex items-center justify-center rounded-full ${isToday ? 'bg-indigo-600 text-white' : ''}`}>{format(day, 'd')}</span>
                   <div className="mt-1 space-y-0.5 overflow-hidden">
-                    {evs.slice(0, 2).map((e) => {
+                    {evs.slice(0, 2).map((e, i) => {
                       const col = evColor(e);
-                      return <div key={e.id} className="text-[10px] truncate rounded px-1 py-0.5" style={{ backgroundColor: col + '22', color: col }}>{e.title}</div>;
+                      const done = !!e._done;
+                      return <div key={e.id + (done ? '-d' : '') + i} className={`text-[10px] truncate rounded px-1 py-0.5 ${done ? 'line-through opacity-60' : ''}`} style={{ backgroundColor: col + '22', color: col }}>{done ? '✓ ' : ''}{e.title}</div>;
                     })}
                     {tks.slice(0, 2).map((t, i) => {
                       const done = !!t._done;
@@ -261,18 +283,25 @@ export default function CalendarPage() {
             {selectedItems.evs.map((e) => {
               const E = EVENT_TYPE[e.type] || EVENT_TYPE.event;
               const c = courseMap[e.course_id];
+              const done = !!e._done;
+              const completable = isEventCompletable(e);
               return (
                 <div key={e.id} className="group rounded-xl border border-border/60 p-3 hover:bg-accent/30 transition">
                   <div className="flex items-start gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: courseMap[e.course_id]?.color || E.dot }} />
+                    {completable ? (
+                      <Checkbox checked={done} onCheckedChange={() => toggleEventDay(e)} className="mt-1.5 shrink-0" />
+                    ) : (
+                      <span className="w-2.5 h-2.5 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: courseMap[e.course_id]?.color || E.dot }} />
+                    )}
                     <div className="min-w-0 flex-1">
-                      <p className="font-medium text-sm">{e.title}</p>
-                      <p className="text-xs text-muted-foreground">{E.label}{c ? ` · ${c.code || c.name}` : ''}</p>
+                      <p className={`font-medium text-sm ${done ? 'line-through opacity-70' : ''}`}>{e.title}</p>
+                      <p className="text-xs text-muted-foreground">{done && completable ? 'Completed' : E.label}{c ? ` · ${c.code || c.name}` : ''}</p>
                       {!e.all_day && <p className="text-xs text-muted-foreground">{fmtTime(e.start_date)}{e.end_date ? ` – ${fmtTime(e.end_date)}` : ''}</p>}
                       {e.location && <p className="text-xs text-muted-foreground">📍 {e.location}</p>}
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-3 mt-2">
+                    {completable && <button className="text-xs font-medium text-emerald-600 hover:underline" onClick={() => toggleEventDay(e)}>{done ? 'Mark not done' : 'Complete'}</button>}
                     <button className="text-xs font-medium text-indigo-600 hover:underline" onClick={() => openEventModal(e)}>Edit</button>
                     <button className="text-xs font-medium text-indigo-600 hover:underline" onClick={() => duplicateEvent(e)}>Duplicate</button>
                     <button className="text-xs font-medium text-rose-600 hover:underline" onClick={() => deleteEvent(e)}>Delete</button>
