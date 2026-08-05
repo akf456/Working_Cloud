@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -20,6 +20,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useArea } from '@/lib/AreaContext';
 import { useSearchParams } from 'react-router-dom';
 import SyllabusImporter from '@/components/SyllabusImporter';
+import CalendarYearView from '@/components/CalendarYearView';
 
 export default function CalendarPage() {
   const [cursor, setCursor] = useState(new Date());
@@ -29,6 +30,7 @@ export default function CalendarPage() {
   const [selected, setSelected] = useState(new Date());
   const [loading, setLoading] = useState(true);
   const [calImport, setCalImport] = useState(false);
+  const [view, setView] = useState('month');
   const [searchParams, setSearchParams] = useSearchParams();
   const { area } = useArea();
   const { toast } = useToast();
@@ -74,7 +76,7 @@ export default function CalendarPage() {
   // Each task appears ONLY on its due date / occurrence dates (expanded for
   // recurring tasks). Past-due incomplete tasks stay on their due-date cell
   // flagged red — they never float to today or appear on days before they're due.
-  const dayMap = useMemo(() => {
+  const buildDayMap = useCallback((gridStart, gridEnd) => {
     const map = new Map();
     const key = (d) => format(d, 'yyyy-MM-dd');
     const cell = (d) => {
@@ -82,8 +84,6 @@ export default function CalendarPage() {
       if (!map.has(k)) map.set(k, { evs: [], tks: [] });
       return map.get(k);
     };
-    const gridStart = days[0];
-    const gridEnd = days[days.length - 1];
     events.forEach((e) => {
       const occs = expandEventOccurrences(e, gridEnd);
       occs.forEach((o) => {
@@ -106,7 +106,16 @@ export default function CalendarPage() {
       });
     });
     return map;
-  }, [events, tasks, days, today]);
+  }, [events, tasks, today]);
+
+  const dayMap = useMemo(() => buildDayMap(days[0], days[days.length - 1]), [buildDayMap, days]);
+
+  const yearMap = useMemo(() => {
+    const y = cursor.getFullYear();
+    const yStart = startOfWeek(new Date(y, 0, 1), { weekStartsOn: 0 });
+    const yEnd = endOfWeek(new Date(y, 11, 31), { weekStartsOn: 0 });
+    return buildDayMap(yStart, yEnd);
+  }, [buildDayMap, cursor]);
 
   function itemsForDay(day) {
     return dayMap.get(format(day, 'yyyy-MM-dd')) || { evs: [], tks: [] };
@@ -204,6 +213,8 @@ export default function CalendarPage() {
     load();
   }
 
+  function pickYearDay(d) { setCursor(d); setSelected(d); setView('month'); }
+
   return (
     <PullToRefresh onRefresh={load} className="p-4 md:p-8 max-w-6xl mx-auto animate-fade-in">
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
@@ -211,7 +222,9 @@ export default function CalendarPage() {
           <h1 className="text-2xl md:text-3xl font-bold">Calendar</h1>
           <p className="text-sm text-muted-foreground mt-1">Exams, deadlines, classes & events in one view.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button variant={view === 'month' ? 'default' : 'outline'} size="sm" onClick={() => setView('month')} className="rounded-xl">Month</Button>
+          <Button variant={view === 'year' ? 'default' : 'outline'} size="sm" onClick={() => setView('year')} className="rounded-xl">Year</Button>
           <Button variant="outline" onClick={() => window.print()} className="rounded-xl"><Printer className="w-4 h-4 mr-1.5" /> Print</Button>
           <Button variant="outline" onClick={() => setCalImport(true)} className="rounded-xl"><Upload className="w-4 h-4 mr-1.5" /> Import calendar</Button>
           <Button variant="outline" onClick={() => openTaskModal(null)} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> New task</Button>
@@ -220,6 +233,19 @@ export default function CalendarPage() {
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
+        {view === 'year' ? (
+          <CalendarYearView
+            yearDate={cursor}
+            today={today}
+            itemsForDay={(d) => yearMap.get(format(d, 'yyyy-MM-dd')) || { evs: [], tks: [] }}
+            evColor={evColor}
+            tkColor={tkColor}
+            onSelectDay={pickYearDay}
+            onPrevYear={() => setCursor(new Date(cursor.getFullYear() - 1, cursor.getMonth(), 1))}
+            onNextYear={() => setCursor(new Date(cursor.getFullYear() + 1, cursor.getMonth(), 1))}
+            onToday={() => { setCursor(new Date()); setSelected(new Date()); }}
+          />
+        ) : (
         <Card className="lg:col-span-2 p-4 md:p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">{format(cursor, 'MMMM yyyy')}</h2>
@@ -277,6 +303,7 @@ export default function CalendarPage() {
             })}
           </div>
         </Card>
+        )}
 
         {/* Day detail */}
         <Card className="p-5">
