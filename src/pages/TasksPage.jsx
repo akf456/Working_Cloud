@@ -176,7 +176,7 @@ export default function TasksPage() {
         </div>
       </div>
 
-      <OverdueBanner tasks={tasks} courses={courses} />
+      <OverdueBanner tasks={tasks} courses={courses} onDone={load} />
 
       <div className="inline-flex rounded-xl bg-muted p-1 mb-5 self-start">
         <button onClick={() => setView('status')} className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition ${view === 'status' ? 'bg-background shadow-sm text-indigo-600' : 'text-muted-foreground hover:text-foreground'}`}>By status</button>

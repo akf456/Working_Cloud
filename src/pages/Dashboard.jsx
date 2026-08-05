@@ -233,7 +233,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <OverdueBanner tasks={tasks} courses={courses} />
+      <OverdueBanner tasks={tasks} courses={courses} onDone={load} />
 
       <div className="grid lg:grid-cols-3 gap-6">
         {visibleWidgets.map((k) => renderWidget(k))}
