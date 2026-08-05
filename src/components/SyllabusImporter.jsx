@@ -21,8 +21,12 @@ function mapRole(r, area) {
   return 'other';
 }
 
-export default function SyllabusImporter({ open, onClose, courses = [], area = 'school', onDone }) {
+function norm(s) { return (s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); }
+
+// mode: 'syllabus' (default) | 'calendar'
+export default function SyllabusImporter({ open, onClose, courses = [], area = 'school', onDone, mode = 'syllabus' }) {
   const isSchool = area === 'school';
+  const isCalendarMode = mode === 'calendar';
   const [file, setFile] = useState(null);
   const [courseId, setCourseId] = useState('new');
   const [courseName, setCourseName] = useState('');
@@ -49,7 +53,7 @@ export default function SyllabusImporter({ open, onClose, courses = [], area = '
       const res = await base44.functions.invoke('extractSyllabus', { file_url });
       const d = res.data;
       setData(d);
-      if (isSchool) {
+      if (isSchool && !isCalendarMode) {
         if (d.course_name && courseId === 'new' && !courseName) setCourseName(d.course_name);
         if (d.course_code && courseId === 'new' && !courseCode) setCourseCode(d.course_code);
       }
@@ -66,7 +70,6 @@ export default function SyllabusImporter({ open, onClose, courses = [], area = '
       const incomingTasks = (data?.tasks || []).filter((t) => t.title);
       const incomingEvents = (data?.events || []).filter((e) => e.title && e.start_date);
       const incomingContacts = (data?.contacts || []).filter((c) => c.name);
-      const norm = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 
       const taskFields = (t, cid) => ({
         title: t.title, description: t.description || '', due_date: t.due_date || null,
@@ -93,9 +96,35 @@ export default function SyllabusImporter({ open, onClose, courses = [], area = '
         class_times: c.class_times || '', course_id: cid || null, area
       });
 
-      let added = 0, flagged = 0;
+      let added = 0, skipped = 0;
 
-      if (!isSchool) {
+      if (isCalendarMode) {
+        // Calendar import: deduplicate against existing events/tasks by title+date.
+        const [existEvents, existTasks] = await Promise.all([
+          base44.entities.Event.filter({ area, source: 'syllabus' }, null, 500),
+          base44.entities.Task.filter({ area, source: 'syllabus' }, null, 500)
+        ]);
+
+        const existEventKeys = new Set(existEvents.map((e) => norm(e.title) + '|' + (e.start_date || '').slice(0, 10)));
+        const existTaskKeys = new Set(existTasks.map((t) => norm(t.title) + '|' + (t.due_date || '').slice(0, 10)));
+
+        const newEvents = incomingEvents.filter((e) => {
+          const k = norm(e.title) + '|' + (e.start_date || '').slice(0, 10);
+          return !existEventKeys.has(k);
+        });
+        const newTasks = incomingTasks.filter((t) => {
+          const k = norm(t.title) + '|' + (t.due_date || '').slice(0, 10);
+          return !existTaskKeys.has(k);
+        });
+
+        skipped = (incomingEvents.length - newEvents.length) + (incomingTasks.length - newTasks.length);
+
+        if (newEvents.length) { await base44.entities.Event.bulkCreate(newEvents.map((e) => eventFields(e, null))); added += newEvents.length; }
+        if (newTasks.length) { await base44.entities.Task.bulkCreate(newTasks.map((t) => taskFields(t, null))); added += newTasks.length; }
+        if (incomingContacts.length) { await base44.entities.Contact.bulkCreate(incomingContacts.map((c) => contactFields(c, null))); added += incomingContacts.length; }
+
+        setSummary({ calendar: true, added, skipped });
+      } else if (!isSchool) {
         if (incomingTasks.length) { await base44.entities.Task.bulkCreate(incomingTasks.map((t) => taskFields(t, null))); added += incomingTasks.length; }
         if (incomingEvents.length) { await base44.entities.Event.bulkCreate(incomingEvents.map((e) => eventFields(e, null))); added += incomingEvents.length; }
         if (incomingContacts.length) { await base44.entities.Contact.bulkCreate(incomingContacts.map((c) => contactFields(c, null))); added += incomingContacts.length; }
@@ -132,7 +161,6 @@ export default function SyllabusImporter({ open, onClose, courses = [], area = '
             else toAddTasks.push(t);
           }
           const toFlagTasks = existTasks.filter((e) => !matchedTaskIds.has(e.id) && e.flag !== 'Previous syllabus');
-
           const toAddEvents = [];
           const matchedEventIds = new Set();
           for (const e of incomingEvents) {
@@ -146,9 +174,9 @@ export default function SyllabusImporter({ open, onClose, courses = [], area = '
           if (toAddEvents.length) { await base44.entities.Event.bulkCreate(toAddEvents.map((e) => eventFields(e, cid))); added += toAddEvents.length; }
           if (incomingContacts.length) { await base44.entities.Contact.bulkCreate(incomingContacts.map((c) => contactFields(c, cid))); added += incomingContacts.length; }
           if (taskUpdates.length) await base44.entities.Task.bulkUpdate(taskUpdates);
-          if (toFlagTasks.length) { await base44.entities.Task.bulkUpdate(toFlagTasks.map((t) => ({ id: t.id, flag: 'Previous syllabus' }))); flagged += toFlagTasks.length; }
-          if (toFlagEvents.length) { await base44.entities.Event.bulkUpdate(toFlagEvents.map((e) => ({ id: e.id, flag: 'Previous syllabus' }))); flagged += toFlagEvents.length; }
-          setSummary({ diff: true, added, flagged });
+          if (toFlagTasks.length) await base44.entities.Task.bulkUpdate(toFlagTasks.map((t) => ({ id: t.id, flag: 'Previous syllabus' })));
+          if (toFlagEvents.length) await base44.entities.Event.bulkUpdate(toFlagEvents.map((e) => ({ id: e.id, flag: 'Previous syllabus' })));
+          setSummary({ diff: true, added, flagged: toFlagTasks.length + toFlagEvents.length });
         }
       }
 
@@ -161,26 +189,37 @@ export default function SyllabusImporter({ open, onClose, courses = [], area = '
     }
   }
 
+  const title = isCalendarMode ? 'Import calendar' : (isSchool ? 'Syllabus importer' : 'Document importer');
+  const description = isCalendarMode
+    ? 'Upload a school district calendar, schedule PDF, screenshot, or fax copy — AI extracts holidays, breaks, events, and key dates. Duplicates are automatically skipped.'
+    : (isSchool
+      ? (courseId !== 'new' ? 'AI compares this to the existing course — new items are added, and items no longer in the syllabus are flagged, never deleted.' : 'Upload a syllabus — AI pulls out deadlines, exam dates, contacts & topics for you to review.')
+      : 'Upload a document — AI pulls out tasks, deadlines & contacts for this space. Adjust anything anytime.');
+
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-2xl max-h-[88vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2"><Sparkles className="w-5 h-5 text-indigo-600" /> {isSchool ? 'Syllabus importer' : 'Document importer'}</DialogTitle>
-          <DialogDescription>{isSchool
-            ? (courseId !== 'new' ? 'AI compares this to the existing course — new items are added, and items no longer in the syllabus are flagged, never deleted.' : 'Upload a syllabus — AI pulls out deadlines, exam dates, contacts & topics for you to review.')
-            : 'Upload a document — AI pulls out tasks, deadlines & contacts for this space. Adjust anything anytime.'}</DialogDescription>
+          <DialogTitle className="flex items-center gap-2"><Sparkles className="w-5 h-5 text-indigo-600" /> {title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
 
         {done ? (
           <div className="py-10 text-center">
             <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-3" />
             <p className="font-semibold text-lg">{summary?.diff ? 'Updated!' : 'All set!'}</p>
-            <p className="text-sm text-muted-foreground mt-1">{summary?.diff ? `Added ${summary.added} new · flagged ${summary.flagged} from the previous syllabus (never deleted).` : 'Tasks, events & contacts were added to your planner. Adjust anything anytime.'}</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {summary?.calendar
+                ? `Added ${summary.added} item${summary.added !== 1 ? 's' : ''} to your calendar.${summary.skipped ? ` Skipped ${summary.skipped} duplicate${summary.skipped !== 1 ? 's' : ''}.` : ''}`
+                : summary?.diff
+                  ? `Added ${summary.added} new · flagged ${summary.flagged} from the previous syllabus (never deleted).`
+                  : 'Tasks, events & contacts were added to your planner. Adjust anything anytime.'}
+            </p>
             <Button className="mt-5" onClick={onClose}>Done</Button>
           </div>
         ) : (
           <div className="space-y-4 py-1">
-            {isSchool && (
+            {isSchool && !isCalendarMode && (
               <div className="space-y-1.5">
                 <Label>Attach to course</Label>
                 <SheetSelect value={courseId} onValueChange={setCourseId} placeholder="Attach to course"
@@ -188,7 +227,7 @@ export default function SyllabusImporter({ open, onClose, courses = [], area = '
               </div>
             )}
 
-            {isSchool && courseId === 'new' && (
+            {isSchool && !isCalendarMode && courseId === 'new' && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label>Course name</Label>
@@ -202,12 +241,12 @@ export default function SyllabusImporter({ open, onClose, courses = [], area = '
             )}
 
             <div className="space-y-1.5">
-              <Label>{isSchool ? 'Syllabus file' : 'Document file'}</Label>
+              <Label>{isCalendarMode ? 'Calendar file (PDF, image, screenshot, fax copy)' : (isSchool ? 'Syllabus file' : 'Document file')}</Label>
               <label className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border hover:border-indigo-400 hover:bg-indigo-50/40 transition cursor-pointer py-8 px-4 text-center">
                 <UploadCloud className="w-7 h-7 text-indigo-500" />
-                <span className="text-sm font-medium">{file ? file.name : 'Click to upload — PDF, DOC, image'}</span>
+                <span className="text-sm font-medium">{file ? file.name : 'Click to upload — PDF, image, screenshot'}</span>
                 <span className="text-xs text-muted-foreground">{file ? `${(file.size / 1024).toFixed(0)} KB` : 'or drop it here'}</span>
-                <input type="file" className="hidden" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.txt" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+                <input type="file" className="hidden" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.txt,.gif,.webp,.tiff,.bmp" onChange={(e) => setFile(e.target.files?.[0] || null)} />
               </label>
             </div>
 
@@ -216,6 +255,9 @@ export default function SyllabusImporter({ open, onClose, courses = [], area = '
             {data && (
               <div className="space-y-3 rounded-xl border border-border bg-muted/30 p-4 animate-fade-in">
                 <p className="text-sm font-semibold flex items-center gap-2"><FileText className="w-4 h-4 text-indigo-600" /> Extracted preview</p>
+                {(data.semester || data.course_name) && (
+                  <p className="text-xs text-muted-foreground">{[data.course_name, data.semester].filter(Boolean).join(' · ')}</p>
+                )}
                 <div className="grid grid-cols-4 gap-2 text-center">
                   <Stat icon={ListChecks} label="Tasks" n={data.tasks?.length || 0} />
                   <Stat icon={CalendarClock} label="Events" n={data.events?.length || 0} />
@@ -234,22 +276,23 @@ export default function SyllabusImporter({ open, onClose, courses = [], area = '
                   </div>
                 )}
                 {(data.tasks?.length > 0 || data.events?.length > 0) && (
-                  <div className="max-h-48 overflow-y-auto space-y-1.5 text-sm">
+                  <div className="max-h-52 overflow-y-auto space-y-1.5 text-sm">
+                    <p className="text-xs font-semibold text-muted-foreground">Events &amp; tasks</p>
+                    {(data.events || []).slice(0, 20).map((e, i) => (
+                      <div key={'e' + i} className="flex items-center justify-between gap-2 bg-card rounded-lg px-3 py-1.5">
+                        <span className="truncate">{e.title}</span>
+                        <span className="text-xs text-muted-foreground shrink-0">{EVENT_TYPE[e.type]?.label || 'Event'}{e.start_date ? ` · ${new Date(e.start_date).toLocaleDateString()}` : ''}{e.repeat && e.repeat !== 'none' ? ` · ${e.repeat}` : ''}</span>
+                      </div>
+                    ))}
                     {(data.tasks || []).slice(0, 12).map((t, i) => (
                       <div key={'t' + i} className="flex items-center justify-between gap-2 bg-card rounded-lg px-3 py-1.5">
                         <span className="truncate">{t.title}</span>
                         <span className="text-xs text-muted-foreground shrink-0">{TASK_TYPE[t.type]?.label || 'Misc'}{t.due_date ? ` · ${new Date(t.due_date).toLocaleDateString()}` : ''}</span>
                       </div>
                     ))}
-                    {(data.events || []).slice(0, 6).map((e, i) => (
-                      <div key={'e' + i} className="flex items-center justify-between gap-2 bg-card rounded-lg px-3 py-1.5">
-                        <span className="truncate">{e.title}</span>
-                        <span className="text-xs text-muted-foreground shrink-0">{EVENT_TYPE[e.type]?.label || 'Event'}{e.start_date ? ` · ${new Date(e.start_date).toLocaleDateString()}` : ''}</span>
-                      </div>
-                    ))}
                   </div>
                 )}
-                <p className="text-xs text-muted-foreground">Review the details — you can edit everything after it’s added.</p>
+                <p className="text-xs text-muted-foreground">Review the details — you can edit everything after it's added.</p>
               </div>
             )}
 
@@ -261,7 +304,7 @@ export default function SyllabusImporter({ open, onClose, courses = [], area = '
                 </Button>
               ) : (
                 <Button onClick={handleConfirm} disabled={saving}>
-                  {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving…</> : (isSchool && courseId !== 'new' ? 'Update planner' : 'Add to planner')}
+                  {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving…</> : (isCalendarMode ? 'Import to calendar' : (isSchool && courseId !== 'new' ? 'Update planner' : 'Add to planner'))}
                 </Button>
               )}
             </DialogFooter>

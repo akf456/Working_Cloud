@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { ChevronLeft, ChevronRight, Plus, CalendarDays, Printer } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, CalendarDays, Printer, Upload } from 'lucide-react';
 import {
   startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval,
   addMonths, subMonths, isSameMonth, isSameDay, parseISO, isValid, format, startOfDay
@@ -19,6 +19,7 @@ import { toggleEventDayCompletion, isEventDoneOnDay, isEventCompletable } from '
 import { useToast } from '@/components/ui/use-toast';
 import { useArea } from '@/lib/AreaContext';
 import { useSearchParams } from 'react-router-dom';
+import SyllabusImporter from '@/components/SyllabusImporter';
 
 export default function CalendarPage() {
   const [cursor, setCursor] = useState(new Date());
@@ -27,6 +28,7 @@ export default function CalendarPage() {
   const [courses, setCourses] = useState([]);
   const [selected, setSelected] = useState(new Date());
   const [loading, setLoading] = useState(true);
+  const [calImport, setCalImport] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const { area } = useArea();
   const { toast } = useToast();
@@ -211,6 +213,7 @@ export default function CalendarPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => window.print()} className="rounded-xl"><Printer className="w-4 h-4 mr-1.5" /> Print</Button>
+          <Button variant="outline" onClick={() => setCalImport(true)} className="rounded-xl"><Upload className="w-4 h-4 mr-1.5" /> Import calendar</Button>
           <Button variant="outline" onClick={() => openTaskModal(null)} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> New task</Button>
           <Button onClick={() => openEventModal(null)} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> Add event</Button>
         </div>
@@ -347,6 +350,7 @@ export default function CalendarPage() {
       <EventModal open={modalEvent} onClose={closeEventModal} onSave={saveEvent} event={editEvent} courses={courses}
         defaultStart={selected.toISOString()} area={area} />
       <TaskModal open={modalTask} onClose={closeTaskModal} onSave={saveTask} task={editTask} courses={courses} area={area} tasks={tasks} onApplyColor={applyColorToTasks} />
+      <SyllabusImporter open={calImport} onClose={() => setCalImport(false)} courses={courses} area={area} onDone={() => { setCalImport(false); load(); }} mode="calendar" />
     </PullToRefresh>
   );
 }
