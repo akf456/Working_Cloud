@@ -9,8 +9,13 @@ import {
 } from 'date-fns';
 import { EVENT_TYPE, parseDate, fmtTime, fmt, expandTaskOccurrences, expandEventOccurrences } from '@/lib/planner';
 import EventModal from '@/components/EventModal';
+import TaskModal from '@/components/TaskModal';
+import { Checkbox } from '@/components/ui/checkbox';
 import PullToRefresh from '@/components/PullToRefresh';
 import { trashItem } from '@/lib/trash';
+import { toggleTaskDayCompletion, isTaskDoneOnDay, isRecurring } from '@/lib/tasks';
+import { celebrate } from '@/lib/celebrate';
+import { useToast } from '@/components/ui/use-toast';
 import { useArea } from '@/lib/AreaContext';
 import { useSearchParams } from 'react-router-dom';
 
@@ -23,6 +28,7 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(true);
   const [searchParams, setSearchParams] = useSearchParams();
   const { area } = useArea();
+  const { toast } = useToast();
   const modalEvent = searchParams.get('modal') === 'event';
   const eventIdParam = searchParams.get('id');
   const editEvent = (modalEvent && eventIdParam && eventIdParam !== 'new') ? events.find((e) => e.id === eventIdParam) || null : null;
@@ -30,6 +36,15 @@ export default function CalendarPage() {
     setSearchParams((prev) => { const n = new URLSearchParams(prev); n.set('modal', 'event'); n.set('id', e?.id || 'new'); return n; });
   }
   function closeEventModal() {
+    setSearchParams((prev) => { const n = new URLSearchParams(prev); n.delete('modal'); n.delete('id'); return n; });
+  }
+  const modalTask = searchParams.get('modal') === 'task';
+  const taskIdParam = searchParams.get('id');
+  const editTask = (modalTask && taskIdParam && taskIdParam !== 'new') ? tasks.find((t) => t.id === taskIdParam) || null : null;
+  function openTaskModal(t) {
+    setSearchParams((prev) => { const n = new URLSearchParams(prev); n.set('modal', 'task'); n.set('id', t?.id || 'new'); return n; });
+  }
+  function closeTaskModal() {
     setSearchParams((prev) => { const n = new URLSearchParams(prev); n.delete('modal'); n.delete('id'); return n; });
   }
 
@@ -74,11 +89,15 @@ export default function CalendarPage() {
         }
       });
     });
-    tasks.filter((t) => t.status !== 'done').forEach((t) => {
+    tasks.forEach((t) => {
+      const recurring = isRecurring(t);
+      if (!recurring && t.status === 'done') return;
       const occs = expandTaskOccurrences(t, gridEnd);
       occs.forEach((o) => {
         if (o.getTime() >= gridStart.getTime() && o.getTime() <= gridEnd.getTime()) {
-          cell(o).tks.push({ ...t, _overdue: o.getTime() < today.getTime() });
+          const dateStr = format(o, 'yyyy-MM-dd');
+          const done = isTaskDoneOnDay(t, dateStr);
+          cell(o).tks.push({ ...t, _date: dateStr, _done: done, _overdue: o.getTime() < today.getTime() });
         }
       });
     });
@@ -125,6 +144,43 @@ export default function CalendarPage() {
     load();
   }
 
+  async function saveTask(data) {
+    if (data.id) await base44.entities.Task.update(data.id, data);
+    else await base44.entities.Task.create({ ...data, area });
+    load();
+  }
+  async function deleteTask(t) {
+    await trashItem('Task', t, area); load();
+  }
+  async function duplicateTask(t) {
+    const { id, created_date, updated_date, created_by_id, completed_dates, _date, _done, _overdue, ...rest } = t;
+    await base44.entities.Task.create({ ...rest, title: `${t.title} (copy)`, completed_dates: [] });
+    load();
+  }
+  async function applyColorToTasks(ids, color) {
+    if (!ids.length) return;
+    await base44.entities.Task.bulkUpdate(ids.map((id) => ({ id, color })));
+    load();
+  }
+  async function toggleDay(t) {
+    const dateStr = t._date;
+    const wasDone = !!t._done;
+    setTasks((prev) => prev.map((x) => {
+      if (x.id !== t.id) return x;
+      const cur = Array.isArray(x.completed_dates) ? [...x.completed_dates] : [];
+      const i = cur.indexOf(dateStr);
+      if (i >= 0) cur.splice(i, 1); else cur.push(dateStr);
+      return { ...x, completed_dates: cur };
+    }));
+    try {
+      await toggleTaskDayCompletion(t, dateStr);
+      if (!wasDone) toast({ title: 'Completed for this day! 🎉', description: celebrate() });
+    } catch (e) {
+      toast({ title: 'Could not update', variant: 'destructive' });
+    }
+    load();
+  }
+
   return (
     <PullToRefresh onRefresh={load} className="p-4 md:p-8 max-w-6xl mx-auto animate-fade-in">
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
@@ -134,6 +190,7 @@ export default function CalendarPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => window.print()} className="rounded-xl"><Printer className="w-4 h-4 mr-1.5" /> Print</Button>
+          <Button variant="outline" onClick={() => openTaskModal(null)} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> New task</Button>
           <Button onClick={() => openEventModal(null)} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> Add event</Button>
         </div>
       </div>
@@ -181,11 +238,12 @@ export default function CalendarPage() {
                       return <div key={e.id} className="text-[10px] truncate rounded px-1 py-0.5" style={{ backgroundColor: col + '22', color: col }}>{e.title}</div>;
                     })}
                     {tks.slice(0, 2).map((t, i) => {
-                      const overdue = !!t._overdue;
+                      const done = !!t._done;
+                      const overdue = !done && !!t._overdue;
                       const flagged = t.flag === 'manual';
-                      const col = overdue ? '#dc2626' : tkColor(t);
-                      const sym = overdue ? '⚠ ' : flagged ? '⚑ ' : '';
-                      return <div key={t.id + (overdue ? '-o' : '') + i} className="text-[10px] truncate rounded px-1 py-0.5 font-medium" style={{ backgroundColor: col + '22', color: col }}>{sym}{t.title}</div>;
+                      const col = done ? '#16a34a' : overdue ? '#dc2626' : tkColor(t);
+                      const sym = done ? '✓ ' : overdue ? '⚠ ' : flagged ? '⚑ ' : '';
+                      return <div key={t.id + (done ? '-d' : overdue ? '-o' : '') + i} className={`text-[10px] truncate rounded px-1 py-0.5 font-medium ${done ? 'line-through opacity-60' : ''}`} style={{ backgroundColor: col + '22', color: col }}>{sym}{t.title}</div>;
                     })}
                     {(evs.length + tks.length) > 4 && <div className="text-[10px] text-muted-foreground px-1">+{evs.length + tks.length - 4} more</div>}
                   </div>
@@ -224,14 +282,25 @@ export default function CalendarPage() {
             })}
             {selectedItems.tks.map((t, i) => {
               const c = courseMap[t.course_id];
-              const overdue = !!t._overdue;
+              const done = !!t._done;
+              const overdue = !done && !!t._overdue;
               const flagged = t.flag === 'manual';
-              const col = overdue ? '#dc2626' : tkColor(t);
-              const sym = overdue ? '⚠ ' : flagged ? '⚑ ' : '';
+              const recurring = isRecurring(t);
+              const col = done ? '#16a34a' : overdue ? '#dc2626' : tkColor(t);
               return (
-                <div key={t.id + (overdue ? '-o' : '') + i} className="rounded-xl border p-3" style={{ borderColor: col + '55', backgroundColor: col + '14' }}>
-                  <p className="font-medium text-sm" style={{ color: overdue ? '#be123c' : col }}>{sym}{t.title}</p>
-                  <p className="text-xs text-muted-foreground">{overdue ? 'Overdue' : flagged ? 'Flagged' : 'Task deadline'}{c ? ` · ${c.code || c.name}` : ''}</p>
+                <div key={t.id + (done ? '-d' : overdue ? '-o' : '') + i} className="group rounded-xl border p-3 transition" style={{ borderColor: col + '55', backgroundColor: col + '14' }}>
+                  <div className="flex items-start gap-2">
+                    <Checkbox checked={done} onCheckedChange={() => toggleDay(t)} className="mt-0.5 shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className={`font-medium text-sm ${done ? 'line-through opacity-70' : ''}`} style={{ color: done ? '#16a34a' : overdue ? '#be123c' : col }}>{t.title}</p>
+                      <p className="text-xs text-muted-foreground">{done ? 'Completed' : overdue ? 'Overdue' : recurring ? 'Recurring task' : 'Task deadline'}{c ? ` · ${c.code || c.name}` : ''}{recurring ? ` · ${t._date}` : ''}{flagged ? ' · Flagged' : ''}</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-3 mt-2">
+                    <button className="text-xs font-medium text-indigo-600 hover:underline" onClick={() => openTaskModal(t)}>Edit</button>
+                    <button className="text-xs font-medium text-indigo-600 hover:underline" onClick={() => duplicateTask(t)}>Duplicate</button>
+                    <button className="text-xs font-medium text-rose-600 hover:underline" onClick={() => deleteTask(t)}>Delete</button>
+                  </div>
                 </div>
               );
             })}
@@ -248,6 +317,7 @@ export default function CalendarPage() {
 
       <EventModal open={modalEvent} onClose={closeEventModal} onSave={saveEvent} event={editEvent} courses={courses}
         defaultStart={selected.toISOString()} area={area} />
+      <TaskModal open={modalTask} onClose={closeTaskModal} onSave={saveTask} task={editTask} courses={courses} area={area} tasks={tasks} onApplyColor={applyColorToTasks} />
     </PullToRefresh>
   );
 }

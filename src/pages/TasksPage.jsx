@@ -8,8 +8,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import SheetSelect from '@/components/SheetSelect';
 import PullToRefresh from '@/components/PullToRefresh';
 import { Plus, Search, Pencil, Trash2, Inbox, Download, CheckSquare, ChevronDown, Copy } from 'lucide-react';
-import { toggleTaskStatus } from '@/lib/tasks';
+import { toggleTaskStatus, isTaskDoneOnDay, isRecurring } from '@/lib/tasks';
 import { taskTypeMeta, PRIORITY, STATUS, dueLabel, daysUntil, parseDate, fmt } from '@/lib/planner';
+import { format, startOfDay } from 'date-fns';
 import TaskModal from '@/components/TaskModal';
 import PriorityView from '@/components/PriorityView';
 import { celebrate } from '@/lib/celebrate';
@@ -91,11 +92,21 @@ export default function TasksPage() {
 
   const { toast } = useToast();
   async function toggle(t) {
-    const completing = t.status !== 'done';
-    setTasks((prev) => prev.map((x) => x.id === t.id ? { ...x, status: completing ? 'done' : 'todo' } : x));
+    const todayStr = format(startOfDay(new Date()), 'yyyy-MM-dd');
+    const wasDone = isTaskDoneOnDay(t, todayStr);
+    setTasks((prev) => prev.map((x) => {
+      if (x.id !== t.id) return x;
+      if (isRecurring(x)) {
+        const cur = Array.isArray(x.completed_dates) ? [...x.completed_dates] : [];
+        const i = cur.indexOf(todayStr);
+        if (i >= 0) cur.splice(i, 1); else cur.push(todayStr);
+        return { ...x, completed_dates: cur };
+      }
+      return { ...x, status: wasDone ? 'todo' : 'done' };
+    }));
     try {
       await toggleTaskStatus(t);
-      if (completing) toast({ title: 'Task completed! 🎉', description: celebrate() });
+      if (!wasDone) toast({ title: 'Task completed! 🎉', description: celebrate() });
     } catch (e) {
       toast({ title: 'Could not update task', variant: 'destructive' });
     }
@@ -282,7 +293,8 @@ function TaskRow({ task, course, onToggle, onEdit, onDelete, onDuplicate, select
   const [open, setOpen] = useState(false);
   const T = taskTypeMeta(task.type);
   const P = PRIORITY[task.priority] || PRIORITY.medium;
-  const done = task.status === 'done';
+  const todayStr = format(startOfDay(new Date()), 'yyyy-MM-dd');
+  const done = isTaskDoneOnDay(task, todayStr);
   const n = daysUntil(task.due_date);
   const overdue = n !== null && n < 0 && !done;
   return (

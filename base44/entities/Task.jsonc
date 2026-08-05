@@ -89,6 +89,13 @@
       "format": "date-time",
       "title": "Repeat End"
     },
+    "completed_dates": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "title": "Completed Dates"
+    },
     "area": {
       "type": "string",
       "enum": [
