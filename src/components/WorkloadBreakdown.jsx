@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Card } from '@/components/ui/card';
-import { taskTypeMeta, taskTypeColor, parseDate } from '@/lib/planner';
+import { taskTypeMeta, taskTypeColor, expandTasksToOccurrences } from '@/lib/planner';
 
 // Polar -> cartesian. 0deg = top, clockwise.
 function polar(cx, cy, r, deg) {
@@ -19,8 +19,8 @@ function donutSlice(cx, cy, rO, rI, start, end) {
   return `M ${ox1} ${oy1} A ${rO} ${rO} 0 ${large} 1 ${ox2} ${oy2} L ${ix2} ${iy2} A ${rI} ${rI} 0 ${large} 0 ${ix1} ${iy1} Z`;
 }
 
-function typeColor(tasksOfType, typeKey) {
-  const colors = tasksOfType.map((t) => t.color).filter(Boolean);
+function typeColor(items, typeKey) {
+  const colors = items.map((o) => o.color).filter(Boolean);
   if (colors.length) {
     const freq = {};
     let best = colors[0];
@@ -32,7 +32,6 @@ function typeColor(tasksOfType, typeKey) {
 }
 
 function shade(hex, alpha) {
-  // Convert #rrggbb to rgba with given alpha (best-effort; passes through non-hex).
   const m = /^#?([0-9a-f]{6})$/i.exec(hex || '');
   if (!m) return hex;
   const n = parseInt(m[1], 16);
@@ -41,13 +40,17 @@ function shade(hex, alpha) {
 }
 
 export default function WorkloadBreakdown({ tasks }) {
+  // Expand recurring tasks into one occurrence per day so a daily-recurring
+  // task counts as N subtasks (e.g. 17 days = 17), each restartable & done per day.
+  const occurrences = useMemo(() => expandTasksToOccurrences(tasks), [tasks]);
+
   const byType = {};
-  tasks.forEach((t) => {
-    const k = t.type || 'misc';
+  occurrences.forEach((o) => {
+    const k = o.type || 'misc';
     if (!byType[k]) byType[k] = { items: [], total: 0, done: 0 };
-    byType[k].items.push(t);
+    byType[k].items.push(o);
     byType[k].total++;
-    if (t.status === 'done') byType[k].done++;
+    if (o.done) byType[k].done++;
   });
 
   const rows = Object.entries(byType)
@@ -68,7 +71,6 @@ export default function WorkloadBreakdown({ tasks }) {
   const grandPct = grandTotal ? Math.round((grandDone / grandTotal) * 100) : 0;
   const allDone = grandTotal > 0 && grandDone === grandTotal;
 
-  // Build slice angles proportional to each type's task count.
   let angle = 0;
   const slices = rows.map((r) => {
     const span = grandTotal ? (r.total / grandTotal) * 360 : 0;
@@ -81,7 +83,7 @@ export default function WorkloadBreakdown({ tasks }) {
   return (
     <Card className="p-5">
       <h2 className="font-semibold text-lg mb-1">Workload breakdown</h2>
-      <p className="text-sm text-muted-foreground mb-4">Slices sized by task count — each fills as you complete tasks in that type.</p>
+      <p className="text-sm text-muted-foreground mb-4">Slices sized by task count (recurring tasks count one per day) — each fills as you complete tasks in that type.</p>
       <div className="grid sm:grid-cols-2 gap-4 items-center">
         <div className="relative h-44">
           {grandTotal === 0 ? (
@@ -97,11 +99,9 @@ export default function WorkloadBreakdown({ tasks }) {
                 const fullRing = s.done === s.total;
                 return (
                   <g key={s.key}>
-                    {/* Total container (light tint) — only the remaining part */}
                     {hasRemaining && (
                       <path d={donutSlice(100, 100, 80, 54, remainingStart, remainingEnd)} fill={shade(s.color, 0.22)} stroke="hsl(var(--background))" strokeWidth="1.5" />
                     )}
-                    {/* Completed portion (full color) */}
                     {s.done > 0 && (
                       <path d={donutSlice(100, 100, 80, 54, s.start, fullRing ? s.end : remainingStart)} fill={s.color} stroke="hsl(var(--background))" strokeWidth="1.5" />
                     )}

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { GraduationCap, ListTodo, CalendarClock, Award, Plus, ArrowRight, CheckCircle2, SlidersHorizontal } from 'lucide-react';
-import { greeting, quoteOfDay, fmt, dueLabel, daysUntil, taskTypeMeta, EVENT_TYPE, parseDate } from '@/lib/planner';
+import { greeting, quoteOfDay, fmt, dueLabel, daysUntil, taskTypeMeta, EVENT_TYPE, parseDate, expandTasksToOccurrences } from '@/lib/planner';
 import { isToday, isThisWeek, isThisMonth, isAfter } from 'date-fns';
 import TaskModal from '@/components/TaskModal';
 import WorkloadBreakdown from '@/components/WorkloadBreakdown';
@@ -40,24 +40,28 @@ export default function Dashboard() {
   useEffect(() => { load(); }, [area]);
 
   const open = tasks.filter((t) => t.status !== 'done');
-  const done = tasks.filter((t) => t.status === 'done');
-  const dueThisWeek = open.filter((t) => {
-    const d = parseDate(t.due_date); return d && (isThisWeek(d, { weekStartsOn: 1 }) || daysUntil(t.due_date) <= 7);
-  });
   const upcomingEvents = events.filter((e) => parseDate(e.start_date) && isAfter(parseDate(e.start_date), new Date()));
   const todayTasks = open.filter((t) => parseDate(t.due_date) && isToday(parseDate(t.due_date)));
   const todayEvents = events.filter((e) => parseDate(e.start_date) && isToday(parseDate(e.start_date)));
   const upcoming = [...open].filter((t) => parseDate(t.due_date)).sort((a, b) => new Date(a.due_date) - new Date(b.due_date)).slice(0, 6);
-  const total = tasks.length;
-  const pct = total ? Math.round((done.length / total) * 100) : 0;
   const courseMap = Object.fromEntries(courses.map((c) => [c.id, c]));
   const quote = quoteOfDay(area, courses);
-  const dueTodayAll = tasks.filter((t) => parseDate(t.due_date) && isToday(parseDate(t.due_date)));
-  const dayDone = dueTodayAll.filter((t) => t.status === 'done').length;
-  const dayTotal = dueTodayAll.length;
-  const dueMonthAll = tasks.filter((t) => parseDate(t.due_date) && isThisMonth(parseDate(t.due_date)));
-  const monthDone = dueMonthAll.filter((t) => t.status === 'done').length;
-  const monthTotal = dueMonthAll.length;
+
+  // Occurrence-based counts: a recurring task expands to one unit per day, so a
+  // daily-recurring task counts as N subtasks (e.g. 17 days = 17), each
+  // restartable and completable per day.
+  const occurrences = expandTasksToOccurrences(tasks);
+  const total = occurrences.length;
+  const doneCount = occurrences.filter((o) => o.done).length;
+  const pct = total ? Math.round((doneCount / total) * 100) : 0;
+  const openCount = total - doneCount;
+  const dueThisWeek = occurrences.filter((o) => !o.done && o.date && (isThisWeek(o.date, { weekStartsOn: 1 }) || daysUntil(o.date) <= 7));
+  const todayOcc = occurrences.filter((o) => o.date && isToday(o.date));
+  const dayDone = todayOcc.filter((o) => o.done).length;
+  const dayTotal = todayOcc.length;
+  const monthOcc = occurrences.filter((o) => o.date && isThisMonth(o.date));
+  const monthDone = monthOcc.filter((o) => o.done).length;
+  const monthTotal = monthOcc.length;
 
   async function saveTask(data) {
     if (data.id) await base44.entities.Task.update(data.id, data);
@@ -91,7 +95,7 @@ export default function Dashboard() {
         <div key={key} className={span}>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
             <StatCard icon={GraduationCap} tint="indigo" label={AREAS[area]?.groupingLabel || 'Courses'} value={courses.length} link="/courses" />
-            <StatCard icon={ListTodo} tint="violet" label="Open tasks" value={open.length} link="/tasks" />
+            <StatCard icon={ListTodo} tint="violet" label="Open tasks" value={openCount} link="/tasks" />
             <StatCard icon={CalendarClock} tint="amber" label="Due this week" value={dueThisWeek.length} link="/tasks" />
             <StatCard icon={Award} tint="rose" label="Upcoming events" value={upcomingEvents.length} link="/calendar" />
           </div>
@@ -171,7 +175,7 @@ export default function Dashboard() {
         <div key={key} className={span}>
           <Card className="p-5 flex flex-col h-full">
             <h2 className="font-semibold text-lg mb-1">Weekly progress</h2>
-            <p className="text-sm text-muted-foreground mb-4">{done.length} of {total} tasks done</p>
+            <p className="text-sm text-muted-foreground mb-4">{doneCount} of {total} tasks done</p>
             <div className="flex-1 flex flex-col items-center justify-center">
               <div className="relative w-40 h-40">
                 <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">

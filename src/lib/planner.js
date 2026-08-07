@@ -289,3 +289,31 @@ export function expandEventOccurrences(event, genEnd) {
   }
   return out;
 }
+
+// Flatten a task list into per-day "occurrence units" so widgets can count a
+// recurring task as N subtasks (one per day) instead of a single record.
+// - Recurring task: one unit per occurrence in [repeat_start_date, repeat_end_date]
+//   (or up to today when there's no end date). A unit is `done` when its day is
+//   in the task's `completed_dates` — so each day restarts at 0/1 and reads 1/1
+//   once completed that day.
+// - One-off task: a single unit, done when status === 'done'.
+// Each unit: { taskId, title, type, color, date (Date|null), dateStr, done, recurring }.
+export function expandTasksToOccurrences(tasks) {
+  const out = [];
+  tasks.forEach((task) => {
+    const recurring = !!(task.repeat && task.repeat !== 'none');
+    if (recurring) {
+      const genEnd = task.repeat_end_date ? parseDate(task.repeat_end_date) : new Date();
+      const occ = expandTaskOccurrences(task, genEnd);
+      occ.forEach((d) => {
+        const dateStr = format(d, 'yyyy-MM-dd');
+        const done = Array.isArray(task.completed_dates) && task.completed_dates.includes(dateStr);
+        out.push({ taskId: task.id, title: task.title, type: task.type || 'misc', color: task.color, date: d, dateStr, done, recurring: true });
+      });
+    } else {
+      const d = parseDate(task.due_date);
+      out.push({ taskId: task.id, title: task.title, type: task.type || 'misc', color: task.color, date: d, dateStr: d ? format(startOfDay(d), 'yyyy-MM-dd') : null, done: task.status === 'done', recurring: false });
+    }
+  });
+  return out;
+}
