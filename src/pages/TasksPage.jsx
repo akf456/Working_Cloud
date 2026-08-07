@@ -7,11 +7,13 @@ import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import SheetSelect from '@/components/SheetSelect';
 import PullToRefresh from '@/components/PullToRefresh';
-import { Plus, Search, Pencil, Trash2, Inbox, Download, CheckSquare, ChevronDown, Copy } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, Inbox, Download, CheckSquare, ChevronDown, Copy, CalendarClock } from 'lucide-react';
 import { toggleTaskStatus, isTaskDoneOnDay, isRecurring } from '@/lib/tasks';
-import { taskTypeMeta, PRIORITY, STATUS, dueLabel, daysUntil, parseDate, fmt } from '@/lib/planner';
+import { taskTypeMeta, PRIORITY, STATUS, dueLabel, daysUntil, parseDate, fmt, fmtTime, EVENT_TYPE } from '@/lib/planner';
 import { format, startOfDay } from 'date-fns';
+import { isEventCompletable, isEventDoneOnDay, toggleEventDayCompletion } from '@/lib/events';
 import TaskModal from '@/components/TaskModal';
+import EventModal from '@/components/EventModal';
 import PriorityView from '@/components/PriorityView';
 import { celebrate } from '@/lib/celebrate';
 import { useToast } from '@/components/ui/use-toast';
@@ -23,8 +25,11 @@ import { useArea } from '@/lib/AreaContext';
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState([]);
+  const [events, setEvents] = useState([]);
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [modalEvent, setModalEvent] = useState(false);
+  const [editEvent, setEditEvent] = useState(null);
   const [q, setQ] = useState('');
   const [course, setCourse] = useState('all');
   const [status, setStatus] = useState('all');
@@ -48,11 +53,12 @@ export default function TasksPage() {
 
   async function load() {
     setLoading(true);
-    const [t, c] = await Promise.all([
+    const [t, e, c] = await Promise.all([
       base44.entities.Task.filter({ area }, '-due_date', 300),
+      base44.entities.Event.filter({ area }, '-start_date', 300),
       base44.entities.Course.filter({ area })
     ]);
-    setTasks(t); setCourses(c);
+    setTasks(t); setEvents(e); setCourses(c);
     setLoading(false);
   }
   useEffect(() => { load(); }, [area]);
@@ -160,6 +166,57 @@ export default function TasksPage() {
     load();
   }
 
+  function openEventModal(e) { setEditEvent(e || null); setModalEvent(true); }
+  function closeEventModal() { setModalEvent(false); setEditEvent(null); }
+  async function saveEvent(data) {
+    if (data.id) {
+      setEvents((prev) => prev.map((x) => x.id === data.id ? { ...x, ...data } : x));
+      try { await base44.entities.Event.update(data.id, data); } catch (err) { toast({ title: 'Could not save', variant: 'destructive' }); }
+    } else {
+      const temp = { ...data, area, id: `temp-${Date.now()}`, created_date: new Date().toISOString() };
+      setEvents((prev) => [temp, ...prev]);
+      try { await base44.entities.Event.create({ ...data, area }); } catch (err) { toast({ title: 'Could not create', variant: 'destructive' }); }
+    }
+    load();
+  }
+  async function toggleEvent(e) {
+    const d = parseDate(e.start_date) || new Date();
+    const dateStr = format(startOfDay(d), 'yyyy-MM-dd');
+    const wasDone = isEventDoneOnDay(e, dateStr);
+    setEvents((prev) => prev.map((x) => {
+      if (x.id !== e.id) return x;
+      const cur = Array.isArray(x.completed_dates) ? [...x.completed_dates] : [];
+      const i = cur.indexOf(dateStr);
+      if (i >= 0) cur.splice(i, 1); else cur.push(dateStr);
+      return { ...x, completed_dates: cur };
+    }));
+    try {
+      await toggleEventDayCompletion(e, dateStr);
+      if (!wasDone) toast({ title: 'Completed! 🎉', description: celebrate() });
+    } catch (err) {
+      toast({ title: 'Could not update', variant: 'destructive' });
+    }
+    load();
+  }
+
+  const filteredEvents = useMemo(() => {
+    return events.filter((e) => {
+      if (!e.start_date) return false;
+      if (q && !e.title.toLowerCase().includes(q.toLowerCase())) return false;
+      if (course !== 'all' && e.course_id !== course) return false;
+      if (type !== 'all' && e.type !== type) return false;
+      if (due !== 'all') {
+        const n = daysUntil(e.start_date);
+        if (n === null) return false;
+        if (due === 'overdue' && !(n < 0)) return false;
+        if (due === 'today' && n !== 0) return false;
+        if (due === 'week' && !(n >= 0 && n <= 7)) return false;
+        if (due === 'month' && !(n >= 0 && n <= 30)) return false;
+      }
+      return true;
+    }).sort((a, b) => (parseDate(a.start_date)?.getTime() || 0) - (parseDate(b.start_date)?.getTime() || 0));
+  }, [events, q, course, type, due]);
+
   const row = (t) => <TaskRow key={t.id} task={t} course={courseMap[t.course_id]} selectMode={selectMode} selected={selected.has(t.id)} onSelect={() => toggleSelect(t.id)} onToggle={() => toggle(t)} onEdit={() => openTaskModal(t)} onDelete={() => remove(t)} onDuplicate={() => duplicate(t)} />;
 
   return (
@@ -244,6 +301,13 @@ export default function TasksPage() {
                 {overdueItems.map(row)}
               </CollapsibleGroup>
             )}
+            {filteredEvents.length > 0 && (
+              <CollapsibleGroup area={area} groupKey="events"
+                badge={<span className="text-xs font-semibold px-2 py-0.5 rounded-full text-violet-700 bg-violet-50 ring-1 ring-violet-200">Events &amp; deadlines</span>}
+                count={filteredEvents.length}>
+                {filteredEvents.map((e) => <EventRow key={e.id} event={e} course={courseMap[e.course_id]} onToggle={() => toggleEvent(e)} onEdit={() => openEventModal(e)} />)}
+              </CollapsibleGroup>
+            )}
             {groups.map(({ key, label }) => {
               const items = filtered.filter((t) => t.status === key && !overdueIds.has(t.id)).sort((a, b) => {
                 if (key === 'done') return new Date(b.updated_date) - new Date(a.updated_date);
@@ -264,6 +328,7 @@ export default function TasksPage() {
         )}
 
       <TaskModal open={modalTask} onClose={closeTaskModal} onSave={saveTask} task={editTask} courses={courses} area={area} tasks={tasks} onApplyColor={applyColorToTasks} />
+      <EventModal open={modalEvent} onClose={closeEventModal} onSave={saveEvent} event={editEvent} courses={courses} area={area} defaultStart={editEvent?.start_date} />
     </PullToRefresh>
   );
 }
@@ -285,6 +350,36 @@ function CollapsibleGroup({ area, groupKey, badge, count, children }) {
         <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${open ? '' : '-rotate-90'}`} />
       </button>
       {open && <div className="space-y-2">{children}</div>}
+    </div>
+  );
+}
+
+function EventRow({ event, course, onToggle, onEdit }) {
+  const E = EVENT_TYPE[event.type] || EVENT_TYPE.event;
+  const completable = isEventCompletable(event);
+  const d = parseDate(event.start_date) || new Date();
+  const dateStr = format(startOfDay(d), 'yyyy-MM-dd');
+  const done = completable && isEventDoneOnDay(event, dateStr);
+  const n = daysUntil(event.start_date);
+  const overdue = n !== null && n < 0;
+  return (
+    <div className={`group flex items-center gap-3 rounded-xl border px-3 py-3 hover:bg-accent/30 transition ${overdue ? 'border-rose-300 bg-rose-50' : 'border-border/60'} ${done ? 'opacity-60' : ''}`}>
+      <span className="w-1.5 self-stretch rounded-full shrink-0" style={{ backgroundColor: E.dot }} />
+      {completable && <Checkbox checked={done} onCheckedChange={onToggle} className="shrink-0" />}
+      <span className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${E.chip}`}><CalendarClock className="w-4 h-4" /></span>
+      <div className="min-w-0 flex-1">
+        <p className={`font-medium text-sm truncate ${done ? 'line-through' : ''} ${overdue ? 'text-rose-700 font-bold' : ''}`}>{event.title}</p>
+        <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground mt-0.5">
+          <span>· {E.label}</span>
+          {course && <><span>·</span><span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: course.color }} />{course.code || course.name}</span></>}
+          {event.source === 'syllabus' && <span className="text-indigo-500">· from syllabus</span>}
+          {event.location && <span>· {event.location}</span>}
+        </div>
+      </div>
+      <span className={`text-xs font-semibold shrink-0 ${overdue ? 'text-rose-600' : 'text-muted-foreground'}`}>{fmt(event.start_date, 'MMM d')}{!event.all_day ? ` · ${fmtTime(event.start_date)}` : ''}</span>
+      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition shrink-0">
+        <button onClick={onEdit} className="p-1.5 rounded-lg hover:bg-background text-muted-foreground hover:text-indigo-600" title="Edit"><Pencil className="w-3.5 h-3.5" /></button>
+      </div>
     </div>
   );
 }

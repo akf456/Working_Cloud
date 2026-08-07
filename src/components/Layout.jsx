@@ -71,7 +71,7 @@ export default function Layout() {
       {image && <div className="absolute inset-0 -z-0 bg-cover bg-center opacity-20 pointer-events-none" style={{ backgroundImage: `url(${image})` }} />}
 
       {/* Desktop sidebar */}
-      <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-border/60 bg-card/60 backdrop-blur px-4 py-6 relative z-10">
+      <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-border/60 bg-card/60 backdrop-blur px-4 py-6 sticky top-0 h-screen overflow-y-auto relative z-10">
         <div className="px-2 mb-5">
           <div className="flex items-center justify-between">
             <WorkingCloudLogo className="text-lg" />

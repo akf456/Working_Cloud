@@ -1,51 +1,127 @@
 import React from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Card } from '@/components/ui/card';
-import { taskTypeMeta, taskTypeColor } from '@/lib/planner';
+import { taskTypeMeta, taskTypeColor, parseDate } from '@/lib/planner';
+
+// Polar -> cartesian. 0deg = top, clockwise.
+function polar(cx, cy, r, deg) {
+  const a = ((deg - 90) * Math.PI) / 180;
+  return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+}
+
+// Donut slice path between [start, end) degrees.
+function donutSlice(cx, cy, rO, rI, start, end) {
+  if (end - start >= 359.999) end = start + 359.999;
+  const [ox1, oy1] = polar(cx, cy, rO, start);
+  const [ox2, oy2] = polar(cx, cy, rO, end);
+  const [ix2, iy2] = polar(cx, cy, rI, end);
+  const [ix1, iy1] = polar(cx, cy, rI, start);
+  const large = end - start > 180 ? 1 : 0;
+  return `M ${ox1} ${oy1} A ${rO} ${rO} 0 ${large} 1 ${ox2} ${oy2} L ${ix2} ${iy2} A ${rI} ${rI} 0 ${large} 0 ${ix1} ${iy1} Z`;
+}
+
+function typeColor(tasksOfType, typeKey) {
+  const colors = tasksOfType.map((t) => t.color).filter(Boolean);
+  if (colors.length) {
+    const freq = {};
+    let best = colors[0];
+    let max = 0;
+    colors.forEach((c) => { freq[c] = (freq[c] || 0) + 1; if (freq[c] > max) { max = freq[c]; best = c; } });
+    return best;
+  }
+  return taskTypeColor(typeKey);
+}
+
+function shade(hex, alpha) {
+  // Convert #rrggbb to rgba with given alpha (best-effort; passes through non-hex).
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex || '');
+  if (!m) return hex;
+  const n = parseInt(m[1], 16);
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  return `rgba(${r},${g},${b},${alpha})`;
+}
 
 export default function WorkloadBreakdown({ tasks }) {
   const byType = {};
   tasks.forEach((t) => {
     const k = t.type || 'misc';
-    if (!byType[k]) byType[k] = { total: 0, done: 0 };
+    if (!byType[k]) byType[k] = { items: [], total: 0, done: 0 };
+    byType[k].items.push(t);
     byType[k].total++;
     if (t.status === 'done') byType[k].done++;
   });
 
-  const rows = Object.entries(byType).filter(([, v]) => v.total > 0).map(([k, v]) => ({
-    key: k, name: taskTypeMeta(k).label, remaining: v.total - v.done, total: v.total,
-    done: v.done, pct: v.total ? Math.round((v.done / v.total) * 100) : 0, color: taskTypeColor(k)
-  }));
-  const pieData = rows.filter((r) => r.remaining > 0);
-  const allDone = pieData.length === 0;
+  const rows = Object.entries(byType)
+    .filter(([, v]) => v.total > 0)
+    .map(([k, v]) => ({
+      key: k,
+      name: taskTypeMeta(k).label,
+      total: v.total,
+      done: v.done,
+      remaining: v.total - v.done,
+      pct: v.total ? Math.round((v.done / v.total) * 100) : 0,
+      color: typeColor(v.items, k)
+    }))
+    .sort((a, b) => b.total - a.total);
+
+  const grandTotal = rows.reduce((s, r) => s + r.total, 0);
+  const grandDone = rows.reduce((s, r) => s + r.done, 0);
+  const grandPct = grandTotal ? Math.round((grandDone / grandTotal) * 100) : 0;
+  const allDone = grandTotal > 0 && grandDone === grandTotal;
+
+  // Build slice angles proportional to each type's task count.
+  let angle = 0;
+  const slices = rows.map((r) => {
+    const span = grandTotal ? (r.total / grandTotal) * 360 : 0;
+    const doneSpan = (r.done / r.total) * span;
+    const s = { ...r, start: angle, span, doneSpan, end: angle + span };
+    angle += span;
+    return s;
+  });
 
   return (
     <Card className="p-5">
       <h2 className="font-semibold text-lg mb-1">Workload breakdown</h2>
-      <p className="text-sm text-muted-foreground mb-4">What's left, by type — slices show remaining work.</p>
+      <p className="text-sm text-muted-foreground mb-4">Slices sized by task count — each fills as you complete tasks in that type.</p>
       <div className="grid sm:grid-cols-2 gap-4 items-center">
         <div className="relative h-44">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie data={allDone ? [{ name: 'Done', value: 1 }] : pieData} dataKey="value" nameKey="name"
-                innerRadius={52} outerRadius={78} paddingAngle={2} stroke="none">
-                {allDone
-                  ? <Cell fill="#e2e8f0" />
-                  : pieData.map((d) => <Cell key={d.key} fill={d.color} />)}
-              </Pie>
-              <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid hsl(var(--border))', fontSize: 12 }} />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            {allDone ? (
-              <span className="text-sm font-semibold text-emerald-600">All done 🎉</span>
-            ) : (
-              <>
-                <span className="text-2xl font-bold gradient-text">{pieData.reduce((s, d) => s + d.value, 0)}</span>
-                <span className="text-[11px] text-muted-foreground">remaining</span>
-              </>
-            )}
-          </div>
+          {grandTotal === 0 ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground">
+              <p className="text-sm">No tasks yet.</p>
+            </div>
+          ) : (
+            <svg viewBox="0 0 200 200" className="w-full h-full">
+              {slices.map((s) => {
+                const remainingStart = s.start + s.doneSpan;
+                const remainingEnd = s.end;
+                const hasRemaining = s.remaining > 0;
+                const fullRing = s.done === s.total;
+                return (
+                  <g key={s.key}>
+                    {/* Total container (light tint) — only the remaining part */}
+                    {hasRemaining && (
+                      <path d={donutSlice(100, 100, 80, 54, remainingStart, remainingEnd)} fill={shade(s.color, 0.22)} stroke="hsl(var(--background))" strokeWidth="1.5" />
+                    )}
+                    {/* Completed portion (full color) */}
+                    {s.done > 0 && (
+                      <path d={donutSlice(100, 100, 80, 54, s.start, fullRing ? s.end : remainingStart)} fill={s.color} stroke="hsl(var(--background))" strokeWidth="1.5" />
+                    )}
+                  </g>
+                );
+              })}
+            </svg>
+          )}
+          {grandTotal > 0 && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              {allDone ? (
+                <span className="text-sm font-semibold text-emerald-600">All done 🎉</span>
+              ) : (
+                <>
+                  <span className="text-2xl font-bold gradient-text">{grandPct}%</span>
+                  <span className="text-[11px] text-muted-foreground">{grandDone}/{grandTotal} done</span>
+                </>
+              )}
+            </div>
+          )}
         </div>
         <div className="space-y-2.5">
           {rows.length === 0 && <p className="text-sm text-muted-foreground">No tasks yet.</p>}
