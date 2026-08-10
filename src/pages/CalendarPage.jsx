@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { ChevronLeft, ChevronRight, Plus, CalendarDays, Printer, Upload } from 'lucide-react';
 import {
   startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval,
-  addMonths, subMonths, isSameMonth, isSameDay, parseISO, isValid, format, startOfDay
+  addMonths, subMonths, addDays, subDays, isSameMonth, isSameDay, isToday, parseISO, isValid, format, startOfDay
 } from 'date-fns';
 import { EVENT_TYPE, parseDate, fmtTime, fmt, expandTaskOccurrences, expandEventOccurrences } from '@/lib/planner';
 import EventModal from '@/components/EventModal';
@@ -21,6 +21,7 @@ import { useArea } from '@/lib/AreaContext';
 import { useSearchParams } from 'react-router-dom';
 import SyllabusImporter from '@/components/SyllabusImporter';
 import CalendarYearView from '@/components/CalendarYearView';
+import CalendarTimeGrid from '@/components/CalendarTimeGrid';
 
 export default function CalendarPage() {
   const [cursor, setCursor] = useState(new Date());
@@ -214,6 +215,7 @@ export default function CalendarPage() {
   }
 
   function pickYearDay(d) { setCursor(d); setSelected(d); setView('month'); }
+  function stepDay(n) { const d = new Date(selected); d.setDate(d.getDate() + n); setCursor(d); setSelected(d); }
 
   return (
     <PullToRefresh onRefresh={load} className="p-4 md:p-8 max-w-6xl mx-auto animate-fade-in">
@@ -223,6 +225,8 @@ export default function CalendarPage() {
           <p className="text-sm text-muted-foreground mt-1">Exams, deadlines, classes & events in one view.</p>
         </div>
         <div className="flex gap-2 flex-wrap">
+          <Button variant={view === 'day' ? 'default' : 'outline'} size="sm" onClick={() => setView('day')} className="rounded-xl">Day</Button>
+          <Button variant={view === 'week' ? 'default' : 'outline'} size="sm" onClick={() => setView('week')} className="rounded-xl">Week</Button>
           <Button variant={view === 'month' ? 'default' : 'outline'} size="sm" onClick={() => setView('month')} className="rounded-xl">Month</Button>
           <Button variant={view === 'year' ? 'default' : 'outline'} size="sm" onClick={() => setView('year')} className="rounded-xl">Year</Button>
           <Button variant="outline" onClick={() => window.print()} className="rounded-xl"><Printer className="w-4 h-4 mr-1.5" /> Print</Button>
@@ -232,7 +236,31 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
+        {view === 'day' || view === 'week' ? (
+          <>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">{view === 'day' ? format(selected, 'EEEE, MMM d, yyyy') : `${format(startOfWeek(cursor, { weekStartsOn: 0 }), 'MMM d')} – ${format(endOfWeek(cursor, { weekStartsOn: 0 }), 'MMM d, yyyy')}`}</h2>
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="icon" onClick={() => view === 'day' ? stepDay(-1) : setCursor(subDays(cursor, 7))}><ChevronLeft className="w-4 h-4" /></Button>
+                <Button variant="ghost" size="sm" onClick={() => { setCursor(new Date()); setSelected(new Date()); }}>Today</Button>
+                <Button variant="ghost" size="icon" onClick={() => view === 'day' ? stepDay(1) : setCursor(addDays(cursor, 7))}><ChevronRight className="w-4 h-4" /></Button>
+              </div>
+            </div>
+            <CalendarTimeGrid
+              days={view === 'day' ? [selected] : eachDayOfInterval({ start: startOfWeek(cursor, { weekStartsOn: 0 }), end: endOfWeek(cursor, { weekStartsOn: 0 }) })}
+              itemsForDay={itemsForDay}
+              evColor={evColor}
+              tkColor={tkColor}
+              today={today}
+              onEditEvent={openEventModal}
+              onEditTask={openTaskModal}
+              onToggleEvent={toggleEventDay}
+              onSelectDay={(d) => { setSelected(d); setCursor(d); setView('day'); }}
+              compact={view === 'week'}
+            />
+          </>
+        ) : (
+        <div className="grid lg:grid-cols-3 gap-6">
         {view === 'year' ? (
           <CalendarYearView
             yearDate={cursor}
@@ -373,6 +401,7 @@ export default function CalendarPage() {
           </div>
         </Card>
       </div>
+        )}
 
       <EventModal open={modalEvent} onClose={closeEventModal} onSave={saveEvent} event={editEvent} courses={courses}
         defaultStart={selected.toISOString()} area={area} />

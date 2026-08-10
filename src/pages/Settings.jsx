@@ -9,7 +9,8 @@ import { useAuth } from '@/lib/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { AREAS } from '@/lib/areas';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
-import { Trash2 } from 'lucide-react';
+import { Trash2, MessageSquare, Send } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 import { getThemeMode, setThemeMode as setModePref, getCustomBg, setCustomBg as setBgPref, DEFAULT_BG_HEX } from '@/lib/theme';
 
 const AREA_DEFAULTS = {
@@ -35,6 +36,27 @@ export default function Settings() {
   const [delOpen, setDelOpen] = useState(false);
   const [mode, setMode] = useState(getThemeMode());
   const [bg, setBg] = useState(getCustomBg());
+  const [fbMsg, setFbMsg] = useState('');
+  const [fbCat, setFbCat] = useState('general');
+  const [fbSending, setFbSending] = useState(false);
+  const [feedbackList, setFeedbackList] = useState([]);
+  const isAdmin = user?.role === 'admin';
+
+  async function loadFeedback() {
+    try { const list = await base44.entities.Feedback.list('-created_date', 50); setFeedbackList(list); } catch {}
+  }
+  useEffect(() => { if (isAdmin) loadFeedback(); }, [isAdmin]);
+  async function submitFeedback() {
+    if (!fbMsg.trim()) return;
+    setFbSending(true);
+    try {
+      await base44.entities.Feedback.create({ message: fbMsg.trim(), category: fbCat, from_name: user?.full_name || '', from_email: user?.email || '' });
+      setFbMsg(''); setFbCat('general');
+      toast({ title: 'Thanks for your feedback! 🙏' });
+      if (isAdmin) loadFeedback();
+    } catch (e) { toast({ title: 'Could not submit', description: e.message, variant: 'destructive' }); }
+    finally { setFbSending(false); }
+  }
 
   useEffect(() => {
     const saved = user?.area_themes?.[area] || (area === 'personal' ? user?.personal_theme : null);
@@ -106,6 +128,45 @@ export default function Settings() {
           <ColorRow label="Background color (Light mode)" value={bg || DEFAULT_BG_HEX} onChange={(v) => { setBgPref(v); setBg(v); }} />
           {bg && <Button variant="ghost" size="sm" onClick={() => { setBgPref(''); setBg(''); }}>Reset to default</Button>}
         </div>
+      </Card>
+
+      <Card className="p-5 mb-5">
+        <h2 className="font-semibold text-lg mb-1 flex items-center gap-2"><MessageSquare className="w-5 h-5 text-indigo-500" /> Feedback &amp; Suggestions</h2>
+        <p className="text-sm text-muted-foreground mb-4">Tell me how the app is working for you — bug reports, ideas, or anything you'd like to see next.</p>
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label>Category</Label>
+            <SheetSelect value={fbCat} onValueChange={setFbCat} placeholder="Category"
+              options={[
+                { value: 'general', label: 'General' },
+                { value: 'bug', label: 'Bug report' },
+                { value: 'suggestion', label: 'Suggestion' },
+                { value: 'other', label: 'Other' }
+              ]} />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Your message</Label>
+            <Textarea value={fbMsg} onChange={(e) => setFbMsg(e.target.value)} rows={4} placeholder="What's on your mind?" />
+          </div>
+          <div className="flex justify-end"><Button onClick={submitFeedback} disabled={fbSending || !fbMsg.trim()}><Send className="w-4 h-4 mr-1.5" /> {fbSending ? 'Sending…' : 'Send feedback'}</Button></div>
+        </div>
+        {isAdmin && feedbackList.length > 0 && (
+          <div className="mt-5 border-t border-border/60 pt-4">
+            <h3 className="font-semibold text-sm mb-2">Received ({feedbackList.length})</h3>
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {feedbackList.map((f) => (
+                <div key={f.id} className="rounded-lg border border-border/60 p-2.5 text-sm">
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-1">
+                    <span className="font-medium">{f.from_name || f.from_email || 'Anonymous'}</span>
+                    <span>{new Date(f.created_date).toLocaleDateString()}</span>
+                  </div>
+                  <span className="inline-block text-[10px] px-1.5 py-0.5 rounded bg-accent text-accent-foreground mb-1.5 capitalize">{f.category}</span>
+                  <p className="text-sm">{f.message}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </Card>
 
       <Card className="p-5">
