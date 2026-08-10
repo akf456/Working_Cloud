@@ -12,6 +12,7 @@ import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, A
 import { Trash2, MessageSquare, Send } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { getThemeMode, setThemeMode as setModePref, getCustomBg, setCustomBg as setBgPref, DEFAULT_BG_HEX } from '@/lib/theme';
+import { useI18n } from '@/lib/I18nContext';
 
 const AREA_DEFAULTS = {
   school: { primary: '#a78bfa', accent: '#ddd6fe', text: '#1f2937', background: '', image: '' },
@@ -29,6 +30,7 @@ const NOTES = {
 
 export default function Settings() {
   const { user, checkUserAuth } = useAuth();
+  const { t, lang, setLang, languages } = useI18n();
   const { toast } = useToast();
   const [area, setArea] = useState('personal');
   const [p, setP] = useState(AREA_DEFAULTS.personal);
@@ -52,9 +54,9 @@ export default function Settings() {
     try {
       await base44.entities.Feedback.create({ message: fbMsg.trim(), category: fbCat, from_name: user?.full_name || '', from_email: user?.email || '' });
       setFbMsg(''); setFbCat('general');
-      toast({ title: 'Thanks for your feedback! 🙏' });
+      toast({ title: t('toast.thanks') });
       if (isAdmin) loadFeedback();
-    } catch (e) { toast({ title: 'Could not submit', description: e.message, variant: 'destructive' }); }
+    } catch (e) { toast({ title: t('toast.couldNotSubmit'), description: e.message, variant: 'destructive' }); }
     finally { setFbSending(false); }
   }
 
@@ -69,9 +71,9 @@ export default function Settings() {
       const next = { ...(user?.area_themes || {}), [area]: p };
       await base44.auth.updateMe({ area_themes: next });
       await checkUserAuth();
-      toast({ title: `${AREAS[area].label} colors saved ✨` });
+      toast({ title: t('toast.saved', { area: t('area.' + area + '.label') }) });
     } catch (e) {
-      toast({ title: 'Could not save', description: e.message, variant: 'destructive' });
+      toast({ title: t('toast.couldNotSave'), description: e.message, variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -89,75 +91,82 @@ export default function Settings() {
 
   return (
     <div className="p-4 md:p-8 max-w-2xl mx-auto animate-fade-in pb-[calc(1rem+env(safe-area-inset-bottom,0px))]">
-      <h1 className="text-2xl md:text-3xl font-bold mb-1">Settings</h1>
-      <p className="text-sm text-muted-foreground mb-6">Manage your color scheme & preferences.</p>
+      <h1 className="text-2xl md:text-3xl font-bold mb-1">{t('settings.title')}</h1>
+      <p className="text-sm text-muted-foreground mb-6">{t('settings.subtitle')}</p>
 
       <Card className="p-5 mb-5">
-        <h2 className="font-semibold text-lg mb-1">Color scheme</h2>
-        <p className="text-sm text-muted-foreground mb-4">Pick the colors that feel like you. Each area keeps its own style — override any of them below. {NOTES[area]}</p>
+        <h2 className="font-semibold text-lg mb-1">{t('settings.colorScheme')}</h2>
+        <p className="text-sm text-muted-foreground mb-4">{t('settings.colorSchemeDesc')} {t('settings.note.' + area)}</p>
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label>Area</Label>
-            <SheetSelect value={area} onValueChange={setArea} placeholder="Area"
-              options={Object.values(AREAS).map((a) => ({ value: a.key, label: a.label }))} />
+            <Label>{t('settings.area')}</Label>
+            <SheetSelect value={area} onValueChange={setArea} placeholder={t('settings.area')}
+              options={Object.values(AREAS).map((a) => ({ value: a.key, label: t('area.' + a.key + '.label') }))} />
           </div>
-          <ColorRow label="Primary / accent" value={p.primary} onChange={(v) => setP({ ...p, primary: v })} />
-          <ColorRow label="Secondary accent" value={p.accent} onChange={(v) => setP({ ...p, accent: v })} />
-          <ColorRow label="Text & titles" value={p.text} onChange={(v) => setP({ ...p, text: v })} />
-          <ColorRow label="Background (optional)" value={p.background || '#fdfcfb'} onChange={(v) => setP({ ...p, background: v })} />
+          <ColorRow label={t('settings.primaryAccent')} value={p.primary} onChange={(v) => setP({ ...p, primary: v })} />
+          <ColorRow label={t('settings.secondaryAccent')} value={p.accent} onChange={(v) => setP({ ...p, accent: v })} />
+          <ColorRow label={t('settings.textTitles')} value={p.text} onChange={(v) => setP({ ...p, text: v })} />
+          <ColorRow label={t('settings.backgroundOptional')} value={p.background || '#fdfcfb'} onChange={(v) => setP({ ...p, background: v })} />
           <div className="space-y-1.5">
-            <Label>Cover image URL (optional)</Label>
+            <Label>{t('settings.coverImage')}</Label>
             <Input value={p.image || ''} onChange={(e) => setP({ ...p, image: e.target.value })} placeholder="https://…" />
           </div>
         </div>
-        <div className="flex justify-end mt-5"><Button onClick={save} disabled={saving}>{saving ? 'Saving…' : `Save ${AREAS[area].label} colors`}</Button></div>
+        <div className="flex justify-end mt-5"><Button onClick={save} disabled={saving}>{saving ? '…' : t('settings.saveArea', { area: t('area.' + area + '.label') })}</Button></div>
       </Card>
 
       <Card className="p-5 mb-5">
-        <h2 className="font-semibold text-lg mb-1">Appearance</h2>
-        <p className="text-sm text-muted-foreground mb-4">Choose how the app looks. The default is a soft cream — pick Light, Dark, or match your system, and personalize the background color.</p>
+        <h2 className="font-semibold text-lg mb-1">{t('settings.appearance')}</h2>
+        <p className="text-sm text-muted-foreground mb-4">{t('settings.appearanceDesc')}</p>
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label>Theme</Label>
+            <Label>{t('settings.theme')}</Label>
             <div className="flex gap-2 flex-wrap">
-              {[{ v: 'light', l: 'Light' }, { v: 'dark', l: 'Dark' }, { v: 'system', l: 'Match system' }].map((o) => (
+              {[{ v: 'light', l: t('settings.light') }, { v: 'dark', l: t('settings.dark') }, { v: 'system', l: t('settings.matchSystem') }].map((o) => (
                 <Button key={o.v} variant={mode === o.v ? 'default' : 'outline'} onClick={() => { setModePref(o.v); setMode(o.v); }}>{o.l}</Button>
               ))}
             </div>
           </div>
-          <ColorRow label="Background color (Light mode)" value={bg || DEFAULT_BG_HEX} onChange={(v) => { setBgPref(v); setBg(v); }} />
-          {bg && <Button variant="ghost" size="sm" onClick={() => { setBgPref(''); setBg(''); }}>Reset to default</Button>}
+          <ColorRow label={t('settings.bgColorLight')} value={bg || DEFAULT_BG_HEX} onChange={(v) => { setBgPref(v); setBg(v); }} />
+          {bg && <Button variant="ghost" size="sm" onClick={() => { setBgPref(''); setBg(''); }}>{t('settings.resetDefault')}</Button>}
         </div>
       </Card>
 
       <Card className="p-5 mb-5">
-        <h2 className="font-semibold text-lg mb-1 flex items-center gap-2"><MessageSquare className="w-5 h-5 text-indigo-500" /> Feedback &amp; Suggestions</h2>
-        <p className="text-sm text-muted-foreground mb-4">Tell me how the app is working for you — bug reports, ideas, or anything you'd like to see next.</p>
+        <h2 className="font-semibold text-lg mb-1">{t('settings.language')}</h2>
+        <p className="text-sm text-muted-foreground mb-4">{t('settings.languageDesc')}</p>
+        <SheetSelect value={lang} onValueChange={setLang} placeholder={t('settings.language')}
+          options={languages.map((l) => ({ value: l.code, label: l.label }))} />
+      </Card>
+
+      <Card className="p-5 mb-5">
+        <h2 className="font-semibold text-lg mb-1 flex items-center gap-2"><MessageSquare className="w-5 h-5 text-indigo-500" /> {t('settings.feedback')}</h2>
+        <p className="text-sm text-muted-foreground mb-4">{t('settings.feedbackDesc')}</p>
         <div className="space-y-3">
           <div className="space-y-1.5">
-            <Label>Category</Label>
-            <SheetSelect value={fbCat} onValueChange={setFbCat} placeholder="Category"
+            <Label>{t('settings.category')}</Label>
+            <SheetSelect value={fbCat} onValueChange={setFbCat} placeholder={t('settings.category')}
               options={[
-                { value: 'general', label: 'General' },
-                { value: 'bug', label: 'Bug report' },
-                { value: 'suggestion', label: 'Suggestion' },
-                { value: 'other', label: 'Other' }
+                { value: 'general', label: t('settings.general') },
+                { value: 'bug', label: t('settings.bug') },
+                { value: 'suggestion', label: t('settings.suggestion') },
+                { value: 'other', label: t('settings.other') }
               ]} />
           </div>
           <div className="space-y-1.5">
-            <Label>Your message</Label>
-            <Textarea value={fbMsg} onChange={(e) => setFbMsg(e.target.value)} rows={4} placeholder="What's on your mind?" />
+            <Label>{t('settings.yourMessage')}</Label>
+            <Textarea value={fbMsg} onChange={(e) => setFbMsg(e.target.value)} rows={4} placeholder={t('settings.yourMessage')} />
           </div>
-          <div className="flex justify-end"><Button onClick={submitFeedback} disabled={fbSending || !fbMsg.trim()}><Send className="w-4 h-4 mr-1.5" /> {fbSending ? 'Sending…' : 'Send feedback'}</Button></div>
+          <div className="flex justify-end"><Button onClick={submitFeedback} disabled={fbSending || !fbMsg.trim()}><Send className="w-4 h-4 mr-1.5" /> {fbSending ? t('settings.sending') : t('settings.sendFeedback')}</Button></div>
         </div>
         {isAdmin && feedbackList.length > 0 && (
           <div className="mt-5 border-t border-border/60 pt-4">
-            <h3 className="font-semibold text-sm mb-2">Received ({feedbackList.length})</h3>
+            <h3 className="font-semibold text-sm mb-2">{t('settings.received', { count: feedbackList.length })}</h3>
             <div className="space-y-2 max-h-60 overflow-y-auto">
               {feedbackList.map((f) => (
                 <div key={f.id} className="rounded-lg border border-border/60 p-2.5 text-sm">
                   <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-1">
-                    <span className="font-medium">{f.from_name || f.from_email || 'Anonymous'}</span>
+                    <span className="font-medium">{f.from_name || f.from_email || t('settings.anonymous')}</span>
                     <span>{new Date(f.created_date).toLocaleDateString()}</span>
                   </div>
                   <span className="inline-block text-[10px] px-1.5 py-0.5 rounded bg-accent text-accent-foreground mb-1.5 capitalize">{f.category}</span>
@@ -170,33 +179,33 @@ export default function Settings() {
       </Card>
 
       <Card className="p-5">
-        <h2 className="font-semibold text-lg mb-2">Your areas</h2>
+        <h2 className="font-semibold text-lg mb-2">{t('settings.yourAreas')}</h2>
         <div className="space-y-2 text-sm">
           {Object.values(AREAS).map((a) => (
             <div key={a.key} className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: a.accent }} />
-              <span className="font-medium">{a.label}</span>
-              <span className="text-muted-foreground">— {a.tagline}</span>
+              <span className="font-medium">{t('area.' + a.key + '.label')}</span>
+              <span className="text-muted-foreground">— {t('area.' + a.key + '.tagline')}</span>
             </div>
           ))}
         </div>
       </Card>
 
       <Card className="p-5 mt-5 border-rose-200">
-        <h2 className="font-semibold text-lg mb-1 text-rose-700">Delete account</h2>
-        <p className="text-sm text-muted-foreground mb-4">This will permanently delete your account and wipe all of your data, including tasks, events, courses, and contacts. This action is permanent and cannot be undone.</p>
-        <Button variant="destructive" onClick={() => setDelOpen(true)}><Trash2 className="w-4 h-4 mr-1.5" /> Delete account</Button>
+        <h2 className="font-semibold text-lg mb-1 text-rose-700">{t('settings.deleteAccount')}</h2>
+        <p className="text-sm text-muted-foreground mb-4">{t('settings.deleteAccountDesc')}</p>
+        <Button variant="destructive" onClick={() => setDelOpen(true)}><Trash2 className="w-4 h-4 mr-1.5" /> {t('settings.deleteAccount')}</Button>
       </Card>
 
       <AlertDialog open={delOpen} onOpenChange={setDelOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete account?</AlertDialogTitle>
-            <AlertDialogDescription>You'll be signed out immediately. This can't be undone.</AlertDialogDescription>
+            <AlertDialogTitle>{t('settings.deleteConfirmTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('settings.deleteConfirmDesc')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={deleteAccount} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Yes, delete</AlertDialogAction>
+            <AlertDialogAction onClick={deleteAccount} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{t('settings.yesDelete')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

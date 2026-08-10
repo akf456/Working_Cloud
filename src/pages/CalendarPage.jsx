@@ -22,6 +22,7 @@ import { useSearchParams } from 'react-router-dom';
 import SyllabusImporter from '@/components/SyllabusImporter';
 import CalendarYearView from '@/components/CalendarYearView';
 import CalendarTimeGrid from '@/components/CalendarTimeGrid';
+import { useI18n } from '@/lib/I18nContext';
 
 export default function CalendarPage() {
   const [cursor, setCursor] = useState(new Date());
@@ -35,6 +36,7 @@ export default function CalendarPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { area } = useArea();
   const { toast } = useToast();
+  const { t } = useI18n();
   const modalEvent = searchParams.get('modal') === 'event';
   const eventIdParam = searchParams.get('id');
   const editEvent = (modalEvent && eventIdParam && eventIdParam !== 'new') ? events.find((e) => e.id === eventIdParam) || null : null;
@@ -221,18 +223,18 @@ export default function CalendarPage() {
     <PullToRefresh onRefresh={load} className="p-4 md:p-8 max-w-6xl mx-auto animate-fade-in">
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold">Calendar</h1>
-          <p className="text-sm text-muted-foreground mt-1">Exams, deadlines, classes & events in one view.</p>
+          <h1 className="text-2xl md:text-3xl font-bold">{t('cal.title')}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t('cal.subtitle')}</p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <Button variant={view === 'day' ? 'default' : 'outline'} size="sm" onClick={() => setView('day')} className="rounded-xl">Day</Button>
-          <Button variant={view === 'week' ? 'default' : 'outline'} size="sm" onClick={() => setView('week')} className="rounded-xl">Week</Button>
-          <Button variant={view === 'month' ? 'default' : 'outline'} size="sm" onClick={() => setView('month')} className="rounded-xl">Month</Button>
-          <Button variant={view === 'year' ? 'default' : 'outline'} size="sm" onClick={() => setView('year')} className="rounded-xl">Year</Button>
-          <Button variant="outline" onClick={() => window.print()} className="rounded-xl"><Printer className="w-4 h-4 mr-1.5" /> Print</Button>
-          <Button variant="outline" onClick={() => setCalImport(true)} className="rounded-xl"><Upload className="w-4 h-4 mr-1.5" /> Import calendar</Button>
-          <Button variant="outline" onClick={() => openTaskModal(null)} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> New task</Button>
-          <Button onClick={() => openEventModal(null)} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> Add event</Button>
+          <Button variant={view === 'day' ? 'default' : 'outline'} size="sm" onClick={() => setView('day')} className="rounded-xl">{t('cal.day')}</Button>
+          <Button variant={view === 'week' ? 'default' : 'outline'} size="sm" onClick={() => setView('week')} className="rounded-xl">{t('cal.week')}</Button>
+          <Button variant={view === 'month' ? 'default' : 'outline'} size="sm" onClick={() => setView('month')} className="rounded-xl">{t('cal.month')}</Button>
+          <Button variant={view === 'year' ? 'default' : 'outline'} size="sm" onClick={() => setView('year')} className="rounded-xl">{t('cal.year')}</Button>
+          <Button variant="outline" onClick={() => window.print()} className="rounded-xl"><Printer className="w-4 h-4 mr-1.5" /> {t('cal.print')}</Button>
+          <Button variant="outline" onClick={() => setCalImport(true)} className="rounded-xl"><Upload className="w-4 h-4 mr-1.5" /> {t('cal.importCalendar')}</Button>
+          <Button variant="outline" onClick={() => openTaskModal(null)} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> {t('cal.newTask')}</Button>
+          <Button onClick={() => openEventModal(null)} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> {t('cal.addEvent')}</Button>
         </div>
       </div>
 
@@ -242,7 +244,7 @@ export default function CalendarPage() {
               <h2 className="text-lg font-semibold">{view === 'day' ? format(selected, 'EEEE, MMM d, yyyy') : `${format(startOfWeek(cursor, { weekStartsOn: 0 }), 'MMM d')} – ${format(endOfWeek(cursor, { weekStartsOn: 0 }), 'MMM d, yyyy')}`}</h2>
               <div className="flex items-center gap-1">
                 <Button variant="ghost" size="icon" onClick={() => view === 'day' ? stepDay(-1) : setCursor(subDays(cursor, 7))}><ChevronLeft className="w-4 h-4" /></Button>
-                <Button variant="ghost" size="sm" onClick={() => { setCursor(new Date()); setSelected(new Date()); }}>Today</Button>
+                <Button variant="ghost" size="sm" onClick={() => { setCursor(new Date()); setSelected(new Date()); }}>{t('cal.today')}</Button>
                 <Button variant="ghost" size="icon" onClick={() => view === 'day' ? stepDay(1) : setCursor(addDays(cursor, 7))}><ChevronRight className="w-4 h-4" /></Button>
               </div>
             </div>
@@ -279,12 +281,12 @@ export default function CalendarPage() {
             <h2 className="text-lg font-semibold">{format(cursor, 'MMMM yyyy')}</h2>
             <div className="flex items-center gap-1">
               <Button variant="ghost" size="icon" onClick={() => setCursor(subMonths(cursor, 1))}><ChevronLeft className="w-4 h-4" /></Button>
-              <Button variant="ghost" size="sm" onClick={() => { setCursor(new Date()); setSelected(new Date()); }}>Today</Button>
+              <Button variant="ghost" size="sm" onClick={() => { setCursor(new Date()); setSelected(new Date()); }}>{t('cal.today')}</Button>
               <Button variant="ghost" size="icon" onClick={() => setCursor(addMonths(cursor, 1))}><ChevronRight className="w-4 h-4" /></Button>
             </div>
           </div>
           <div className="flex flex-wrap gap-x-3 gap-y-1 mb-3">
-            {courses.length > 0 && <span className="text-[11px] font-semibold text-muted-foreground mr-1">Key:</span>}
+            {courses.length > 0 &&             <span className="text-[11px] font-semibold text-muted-foreground mr-1">{t('cal.key')}</span>}
             {courses.map((c) => (
               <span key={c.id} className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
                 <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: c.color || '#6366f1' }} />
@@ -292,7 +294,7 @@ export default function CalendarPage() {
               </span>
             ))}
             <span className="inline-flex items-center gap-1.5 text-[11px] text-rose-600">
-              <span className="w-2.5 h-2.5 rounded-full bg-rose-600" /> Overdue
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-600" /> {t('cal.overdue')}
             </span>
           </div>
           <div className="grid grid-cols-7 text-center text-xs font-medium text-muted-foreground mb-1">

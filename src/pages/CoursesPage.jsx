@@ -13,6 +13,7 @@ import PullToRefresh from '@/components/PullToRefresh';
 import { trashItem } from '@/lib/trash';
 import { useArea } from '@/lib/AreaContext';
 import { AREAS } from '@/lib/areas';
+import { useI18n } from '@/lib/I18nContext';
 
 export default function CoursesPage() {
   const [courses, setCourses] = useState([]);
@@ -24,6 +25,7 @@ export default function CoursesPage() {
   const [edit, setEdit] = useState(null);
   const { area } = useArea();
   const a = AREAS[area];
+  const { t } = useI18n();
 
   async function load() {
     setLoading(true);
@@ -50,12 +52,12 @@ export default function CoursesPage() {
     <PullToRefresh onRefresh={load} className="p-4 md:p-8 max-w-6xl mx-auto animate-fade-in">
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold">{a.groupingLabel}</h1>
-          <p className="text-sm text-muted-foreground mt-1">{area === 'school' ? 'Your semester at a glance. Drop in a syllabus to auto-fill everything.' : 'Group and track everything in this space.'}</p>
+          <h1 className="text-2xl md:text-3xl font-bold">{t('area.' + area + '.grouping')}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{area === 'school' ? t('courses.subtitleSchool') : t('courses.subtitleOther')}</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setImporter(true)} className="rounded-xl"><Sparkles className="w-4 h-4 mr-1.5 text-indigo-600" /> {area === 'school' ? 'Import syllabus' : 'Import document'}</Button>
-          <Button onClick={() => { setEdit(null); setModal(true); }} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> Add {a.singular.toLowerCase()}</Button>
+          <Button variant="outline" onClick={() => setImporter(true)} className="rounded-xl"><Sparkles className="w-4 h-4 mr-1.5 text-indigo-600" /> {area === 'school' ? t('courses.importSyllabus') : t('courses.importDoc')}</Button>
+          <Button onClick={() => { setEdit(null); setModal(true); }} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> {t('courses.add', { singular: t('area.' + area + '.singular') })}</Button>
         </div>
       </div>
 
@@ -67,8 +69,8 @@ export default function CoursesPage() {
           <p className="font-semibold text-lg">No {a.groupingLabel.toLowerCase()} yet</p>
           <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">{area === 'school' ? 'Add a course manually, or import a syllabus to create one with all deadlines auto-filled.' : 'Add one manually, or import a document to auto-fill tasks, deadlines & contacts.'}</p>
           <div className="flex gap-2 justify-center mt-5">
-            <Button onClick={() => setImporter(true)}><Sparkles className="w-4 h-4 mr-1.5" /> {area === 'school' ? 'Import syllabus' : 'Import document'}</Button>
-            <Button variant="outline" onClick={() => { setEdit(null); setModal(true); }}>Add manually</Button>
+            <Button onClick={() => setImporter(true)}><Sparkles className="w-4 h-4 mr-1.5" /> {area === 'school' ? t('courses.importSyllabus') : t('courses.importDoc')}</Button>
+            <Button variant="outline" onClick={() => { setEdit(null); setModal(true); }}>{t('courses.addManually')}</Button>
           </div>
         </Card>
       ) : (

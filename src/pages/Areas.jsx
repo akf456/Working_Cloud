@@ -7,6 +7,7 @@ import WorkingCloudLogo from '@/components/WorkingCloudLogo';
 import AreaDistribution from '@/components/AreaDistribution';
 import ManageAreas from '@/components/ManageAreas';
 import { base44 } from '@/api/base44Client';
+import { useI18n } from '@/lib/I18nContext';
 
 const HIDE_KEY = 'wc_hide_time_goes';
 const HIDDEN_AREAS_KEY = 'wc_hidden_areas';
@@ -14,6 +15,7 @@ const HIDDEN_AREAS_KEY = 'wc_hidden_areas';
 export default function Areas() {
   const { area, enter } = useArea();
   const nav = useNavigate();
+  const { t } = useI18n();
   const [tasks, setTasks] = useState([]);
   const [hidden, setHidden] = useState(() => localStorage.getItem(HIDE_KEY) === '1');
   const [hiddenAreas, setHiddenAreas] = useState(() => new Set(JSON.parse(localStorage.getItem(HIDDEN_AREAS_KEY) || '[]')));
@@ -47,10 +49,10 @@ export default function Areas() {
       <div className="flex-1 flex flex-col items-center justify-center p-6">
         <div className="text-center mb-10 animate-fade-in">
           <h1 className="text-3xl md:text-5xl font-bold"><WorkingCloudLogo className="text-3xl md:text-5xl" /></h1>
-          <p className="text-muted-foreground mt-2 text-sm md:text-base">Pick a space to focus on. Everything stays neatly in its own lane.</p>
+          <p className="text-muted-foreground mt-2 text-sm md:text-base">{t('areas.subtitle')}</p>
         </div>
         {visible.length === 0 ? (
-          <p className="text-center text-sm text-muted-foreground">All areas are hidden. Use “Manage areas” to bring one back.</p>
+          <p className="text-center text-sm text-muted-foreground">{t('areas.allHidden')}</p>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-4xl w-full">
             {visible.map((a) => (
@@ -62,10 +64,10 @@ export default function Areas() {
                 <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-sm mb-4" style={{ backgroundColor: a.monoBg }}>
                   <a.Icon className="w-7 h-7" />
                 </div>
-                <h2 className="text-xl font-bold mb-1">{a.label}</h2>
-                <p className="text-sm text-muted-foreground mb-4">{a.tagline}</p>
+                <h2 className="text-xl font-bold mb-1">{t('area.' + a.key + '.label')}</h2>
+                <p className="text-sm text-muted-foreground mb-4">{t('area.' + a.key + '.tagline')}</p>
                 <span className="inline-flex items-center gap-1 text-sm font-semibold text-primary group-hover:gap-2 transition-all">
-                  Open {a.label} <ArrowRight className="w-4 h-4" />
+                  {t('areas.open', { area: t('area.' + a.key + '.label') })} <ArrowRight className="w-4 h-4" />
                 </span>
               </button>
             ))}
@@ -76,7 +78,7 @@ export default function Areas() {
           <div className="max-w-4xl w-full mt-8 animate-fade-in">
             {hidden ? (
               <button onClick={show} className="w-full rounded-2xl border border-dashed border-border bg-card/50 px-4 py-3 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/40 transition inline-flex items-center justify-center gap-2">
-                <BarChart3 className="w-4 h-4" /> Show “Where your time goes”
+                <BarChart3 className="w-4 h-4" /> {t('areas.showTime')}
               </button>
             ) : (
               <AreaDistribution tasks={tasks} onDismiss={dismiss} hiddenAreas={[...hiddenAreas]} />

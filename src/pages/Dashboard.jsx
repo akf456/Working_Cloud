@@ -16,6 +16,7 @@ import { DASHBOARD_WIDGETS, DEFAULT_DASHBOARD_ORDER } from '@/lib/dashboardWidge
 import { useArea } from '@/lib/AreaContext';
 import { useAuth } from '@/lib/AuthContext';
 import { AREAS } from '@/lib/areas';
+import { useI18n } from '@/lib/I18nContext';
 
 export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
@@ -26,6 +27,8 @@ export default function Dashboard() {
   const [customize, setCustomize] = useState(false);
   const { area } = useArea();
   const { user, checkUserAuth } = useAuth();
+  const { t } = useI18n();
+  const hour = new Date().getHours();
 
   async function load() {
     setLoading(true);
@@ -94,10 +97,10 @@ export default function Dashboard() {
       return (
         <div key={key} className={span}>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-            <StatCard icon={GraduationCap} tint="indigo" label={AREAS[area]?.groupingLabel || 'Courses'} value={courses.length} link="/courses" />
-            <StatCard icon={ListTodo} tint="violet" label="Open tasks" value={openCount} link="/tasks" />
-            <StatCard icon={CalendarClock} tint="amber" label="Due this week" value={dueThisWeek.length} link="/tasks" />
-            <StatCard icon={Award} tint="rose" label="Upcoming events" value={upcomingEvents.length} link="/calendar" />
+            <StatCard icon={GraduationCap} tint="indigo" label={t('area.' + area + '.grouping')} value={courses.length} link="/courses" />
+            <StatCard icon={ListTodo} tint="violet" label={t('dash.openTasks')} value={openCount} link="/tasks" />
+            <StatCard icon={CalendarClock} tint="amber" label={t('dash.dueThisWeek')} value={dueThisWeek.length} link="/tasks" />
+            <StatCard icon={Award} tint="rose" label={t('dash.upcomingEvents')} value={upcomingEvents.length} link="/calendar" />
           </div>
         </div>
       );
@@ -107,14 +110,14 @@ export default function Dashboard() {
         <div key={key} className={span}>
           <div className="grid md:grid-cols-2 gap-6">
             <Card className="p-5">
-              <h2 className="font-semibold text-lg mb-3">Today’s focus</h2>
-              {todayTasks.length === 0 ? <Empty icon={CheckCircle2} text="No tasks due today." /> : (
+              <h2 className="font-semibold text-lg mb-3">{t('dash.todayFocus')}</h2>
+              {todayTasks.length === 0 ? <Empty icon={CheckCircle2} text={t('dash.noTasksToday')} /> : (
                 <ul className="space-y-2">{todayTasks.map((t) => <TodayTask key={t.id} task={t} courses={courseMap} />)}</ul>
               )}
             </Card>
             <Card className="p-5">
-              <h2 className="font-semibold text-lg mb-3">Today’s events</h2>
-              {todayEvents.length === 0 ? <Empty icon={CalendarClock} text="No events scheduled today." /> : (
+              <h2 className="font-semibold text-lg mb-3">{t('dash.todayEvents')}</h2>
+              {todayEvents.length === 0 ? <Empty icon={CalendarClock} text={t('dash.noEventsToday')} /> : (
                 <ul className="space-y-2">
                   {todayEvents.map((e) => {
                     const E = EVENT_TYPE[e.type] || EVENT_TYPE.event;
@@ -138,11 +141,11 @@ export default function Dashboard() {
         <div key={key} className={span}>
           <Card className="p-5 h-full">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-lg">Upcoming deadlines</h2>
-              <Link to="/tasks" className="text-sm text-indigo-600 hover:text-indigo-800 inline-flex items-center gap-1">All tasks <ArrowRight className="w-3.5 h-3.5" /></Link>
+              <h2 className="font-semibold text-lg">{t('dash.upcomingDeadlines')}</h2>
+              <Link to="/tasks" className="text-sm text-indigo-600 hover:text-indigo-800 inline-flex items-center gap-1">{t('dash.allTasks')} <ArrowRight className="w-3.5 h-3.5" /></Link>
             </div>
             {loading ? <SkeletonRows /> : upcoming.length === 0 ? (
-              <Empty icon={CheckCircle2} text="Nothing due soon. Enjoy the calm — or plan ahead." />
+              <Empty icon={CheckCircle2} text={t('dash.nothingDue')} />
             ) : (
               <div className="space-y-2">
                 {upcoming.map((t) => {
@@ -174,8 +177,8 @@ export default function Dashboard() {
       return (
         <div key={key} className={span}>
           <Card className="p-5 flex flex-col h-full">
-            <h2 className="font-semibold text-lg mb-1">Weekly progress</h2>
-            <p className="text-sm text-muted-foreground mb-4">{doneCount} of {total} tasks done</p>
+            <h2 className="font-semibold text-lg mb-1">{t('dash.weeklyProgress')}</h2>
+            <p className="text-sm text-muted-foreground mb-4">{t('dash.tasksDone', { done: doneCount, total })}</p>
             <div className="flex-1 flex flex-col items-center justify-center">
               <div className="relative w-40 h-40">
                 <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
@@ -190,7 +193,7 @@ export default function Dashboard() {
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                   <span className="text-3xl font-bold gradient-text">{pct}%</span>
-                  <span className="text-xs text-muted-foreground">complete</span>
+                  <span className="text-xs text-muted-foreground">{t('dash.complete')}</span>
                 </div>
               </div>
             </div>
@@ -210,10 +213,10 @@ export default function Dashboard() {
       return (
         <div key={key} className={span}>
           <Card className="p-5 h-full">
-            <h2 className="font-semibold text-lg mb-4">Daily & monthly</h2>
+            <h2 className="font-semibold text-lg mb-4">{t('dash.dailyMonthly')}</h2>
             <div className="grid grid-cols-2 gap-4">
-              <MiniRing label="Today" done={dayDone} total={dayTotal} color="#6366f1" />
-              <MiniRing label="This month" done={monthDone} total={monthTotal} color="#d946ef" />
+              <MiniRing label={t('dash.today')} done={dayDone} total={dayTotal} color="#6366f1" />
+              <MiniRing label={t('dash.thisMonth')} done={monthDone} total={monthTotal} color="#d946ef" />
             </div>
           </Card>
         </div>
@@ -228,12 +231,12 @@ export default function Dashboard() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
         <div>
           <p className="text-sm text-muted-foreground">{new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}</p>
-          <h1 className="text-3xl md:text-4xl font-bold mt-1">{greeting()} 👋</h1>
+          <h1 className="text-3xl md:text-4xl font-bold mt-1">{t('dash.greeting' + (hour < 12 ? 'Morning' : hour < 18 ? 'Afternoon' : 'Evening'))} 👋</h1>
           <p className="text-muted-foreground mt-2 max-w-md italic">“{quote.q}” <span className="not-italic text-xs">— {quote.a}</span></p>
         </div>
         <div className="flex gap-2 self-start md:self-auto">
-          <Button variant="outline" onClick={() => setCustomize(true)} className="rounded-xl"><SlidersHorizontal className="w-4 h-4 mr-1.5" /> Customize</Button>
-          <Button onClick={() => setTaskModal(true)} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> Quick add task</Button>
+          <Button variant="outline" onClick={() => setCustomize(true)} className="rounded-xl"><SlidersHorizontal className="w-4 h-4 mr-1.5" /> {t('dash.customize')}</Button>
+          <Button onClick={() => setTaskModal(true)} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> {t('dash.quickAdd')}</Button>
         </div>
       </div>
 

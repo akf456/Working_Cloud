@@ -7,6 +7,7 @@ import ContactModal, { CONTACT_ROLE } from '@/components/ContactModal';
 import { trashItem } from '@/lib/trash';
 import { downloadCSV } from '@/lib/exportCsv';
 import { useArea } from '@/lib/AreaContext';
+import { useI18n } from '@/lib/I18nContext';
 
 export default function ContactsPage() {
   const [contacts, setContacts] = useState([]);
@@ -15,6 +16,7 @@ export default function ContactsPage() {
   const [modal, setModal] = useState(false);
   const [edit, setEdit] = useState(null);
   const { area } = useArea();
+  const { t } = useI18n();
 
   async function load() {
     setLoading(true);
@@ -44,12 +46,12 @@ export default function ContactsPage() {
     <div className="p-4 md:p-8 max-w-6xl mx-auto animate-fade-in">
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold">Contacts</h1>
-          <p className="text-sm text-muted-foreground mt-1">Keep everyone's details handy — hours, notes & contact info in one place.</p>
+          <h1 className="text-2xl md:text-3xl font-bold">{t('contacts.title')}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t('contacts.subtitle')}</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={exportContacts} className="rounded-xl"><Download className="w-4 h-4 mr-1.5" /> Export</Button>
-          <Button onClick={() => { setEdit(null); setModal(true); }} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> New contact</Button>
+          <Button variant="outline" onClick={exportContacts} className="rounded-xl"><Download className="w-4 h-4 mr-1.5" /> {t('contacts.export')}</Button>
+          <Button onClick={() => { setEdit(null); setModal(true); }} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> {t('contacts.newContact')}</Button>
         </div>
       </div>
 

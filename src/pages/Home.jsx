@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/button';
 import { GraduationCap, Briefcase, Heart, Share2, Sparkles, CalendarDays, ListTodo, ShieldCheck, ArrowRight } from 'lucide-react';
 import WorkingCloudLogo from '@/components/WorkingCloudLogo';
 import { AREA_LIST } from '@/lib/areas';
+import { useI18n } from '@/lib/I18nContext';
 
 export default function Home() {
   const { isAuthenticated } = useAuth();
+  const { t } = useI18n();
   if (isAuthenticated) return <Navigate to="/areas" replace />;
 
   const areaIcons = { school: GraduationCap, work: Briefcase, personal: Heart, shareable: Share2 };
@@ -19,8 +21,8 @@ export default function Home() {
         <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
           <WorkingCloudLogo className="text-lg" />
           <div className="flex items-center gap-2">
-            <Link to="/login"><Button variant="ghost" size="sm">Log in</Button></Link>
-            <Link to="/register"><Button size="sm" className="rounded-xl">Get started</Button></Link>
+            <Link to="/login"><Button variant="ghost" size="sm">{t('home.logIn')}</Button></Link>
+            <Link to="/register"><Button size="sm" className="rounded-xl">{t('home.getStarted')}</Button></Link>
           </div>
         </div>
       </header>
@@ -28,20 +30,19 @@ export default function Home() {
       {/* Hero */}
       <section className="max-w-5xl mx-auto px-4 pt-16 pb-12 text-center">
         <div className="inline-flex items-center gap-2 rounded-full bg-accent/60 border border-border px-3 py-1 text-xs font-semibold text-accent-foreground mb-5 animate-fade-in">
-          <Sparkles className="w-3.5 h-3.5" /> Your life, organized into calm little clouds
+          <Sparkles className="w-3.5 h-3.5" /> {t('home.badge')}
         </div>
         <h1 className="text-4xl md:text-6xl font-bold font-heading leading-tight animate-fade-in">
-          One planner for <span className="gradient-text">school, work & life</span>
+          {t('home.heroTitlePre')}<span className="gradient-text">{t('home.heroTitleHi')}</span>
         </h1>
         <p className="text-muted-foreground mt-5 max-w-xl mx-auto text-base md:text-lg animate-fade-in">
-          Working Cloud keeps every part of your day in its own lane — tasks, deadlines, contacts and calendars —
-          with AI that turns a syllabus into a schedule in seconds.
+          {t('home.heroDesc')}
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center mt-8 animate-fade-in">
-          <Link to="/register"><Button size="lg" className="rounded-xl text-base h-12 px-8">Create your free account <ArrowRight className="w-4 h-4 ml-1.5" /></Button></Link>
-          <Link to="/login"><Button size="lg" variant="outline" className="rounded-xl text-base h-12 px-8">I already have one</Button></Link>
+          <Link to="/register"><Button size="lg" className="rounded-xl text-base h-12 px-8">{t('home.createFree')} <ArrowRight className="w-4 h-4 ml-1.5" /></Button></Link>
+          <Link to="/login"><Button size="lg" variant="outline" className="rounded-xl text-base h-12 px-8">{t('home.alreadyHave')}</Button></Link>
         </div>
-        <p className="text-xs text-muted-foreground mt-4">Free to start · Your data is private to you</p>
+        <p className="text-xs text-muted-foreground mt-4">{t('home.freeNote')}</p>
       </section>
 
       {/* Areas */}
@@ -54,8 +55,8 @@ export default function Home() {
                 <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white mb-3" style={{ backgroundColor: a.monoBg }}>
                   <Icon className="w-5 h-5" />
                 </div>
-                <h3 className="font-semibold text-lg">{a.label}</h3>
-                <p className="text-sm text-muted-foreground mt-1">{a.tagline}</p>
+                <h3 className="font-semibold text-lg">{t('area.' + a.key + '.label')}</h3>
+                <p className="text-sm text-muted-foreground mt-1">{t('area.' + a.key + '.tagline')}</p>
               </div>
             );
           })}
@@ -64,30 +65,30 @@ export default function Home() {
 
       {/* Features */}
       <section className="max-w-5xl mx-auto px-4 py-12">
-        <h2 className="text-2xl md:text-3xl font-bold text-center mb-2">Everything you need to stay ahead</h2>
-        <p className="text-center text-muted-foreground mb-8">Built for students, professionals and anyone juggling a lot.</p>
+        <h2 className="text-2xl md:text-3xl font-bold text-center mb-2">{t('home.featuresTitle')}</h2>
+        <p className="text-center text-muted-foreground mb-8">{t('home.featuresDesc')}</p>
         <div className="grid md:grid-cols-3 gap-5">
-          <Feature icon={Sparkles} title="AI syllabus import" text="Upload a syllabus and let AI pull every deadline, exam date and contact — recurring schedule included." />
-          <Feature icon={CalendarDays} title="Smart calendar" text="Tasks and events sit on the right day. Overdue work flags itself so nothing slips through." />
-          <Feature icon={ListTodo} title="Recurring tasks" text="Daily, weekly or monthly repeats with priorities, subtasks and a priority plan that ranks your day." />
-          <Feature icon={Share2} title="Shareable links" text="Send a read-only view of an organizer to anyone — no account needed to view." />
-          <Feature icon={GraduationCap} title="Make it yours" text="Customize colors and layout per area. Rearrange dashboard widgets to match how you work." />
-          <Feature icon={ShieldCheck} title="Private by default" text="Your data is yours alone — no one else can see it, not even other members." />
+          <Feature icon={Sparkles} title={t('home.feat1.title')} text={t('home.feat1.text')} />
+          <Feature icon={CalendarDays} title={t('home.feat2.title')} text={t('home.feat2.text')} />
+          <Feature icon={ListTodo} title={t('home.feat3.title')} text={t('home.feat3.text')} />
+          <Feature icon={Share2} title={t('home.feat4.title')} text={t('home.feat4.text')} />
+          <Feature icon={GraduationCap} title={t('home.feat5.title')} text={t('home.feat5.text')} />
+          <Feature icon={ShieldCheck} title={t('home.feat6.title')} text={t('home.feat6.text')} />
         </div>
       </section>
 
       {/* CTA */}
       <section className="max-w-3xl mx-auto px-4 py-16 text-center">
         <div className="rounded-3xl bg-gradient-to-br from-indigo-50 via-violet-50 to-rose-50 border border-border/70 p-10">
-          <h2 className="text-2xl md:text-3xl font-bold">Ready to clear the fog?</h2>
-          <p className="text-muted-foreground mt-3">Create your account in seconds and start planning your day.</p>
-          <Link to="/register"><Button size="lg" className="rounded-xl text-base h-12 px-8 mt-6">Get started — it's free</Button></Link>
+          <h2 className="text-2xl md:text-3xl font-bold">{t('home.ctaTitle')}</h2>
+          <p className="text-muted-foreground mt-3">{t('home.ctaDesc')}</p>
+          <Link to="/register"><Button size="lg" className="rounded-xl text-base h-12 px-8 mt-6">{t('home.ctaBtn')}</Button></Link>
         </div>
       </section>
 
       <footer className="border-t border-border/60 py-8 text-center text-sm text-muted-foreground">
         <WorkingCloudLogo className="text-sm justify-center" />
-        <p className="mt-2">© {new Date().getFullYear()} Working Cloud. Made for focused minds.</p>
+        <p className="mt-2">{t('home.footer', { year: new Date().getFullYear() })}</p>
       </footer>
     </div>
   );

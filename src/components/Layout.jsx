@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import MobileTabOutlet from '@/components/MobileTabOutlet';
 import { LayoutDashboard, CalendarDays, ListTodo, GraduationCap, Sparkles, Users, Trash2, LayoutGrid, Palette, Share2, Check, Settings as SettingsIcon, Bell, MessageCircle, ChevronLeft, Menu } from 'lucide-react';
 import { useArea } from '@/lib/AreaContext';
+import { useI18n } from '@/lib/I18nContext';
 import { AREAS } from '@/lib/areas';
 import { areaThemeVars, areaImage } from '@/lib/areaTheme';
 import { useAuth } from '@/lib/AuthContext';
@@ -22,6 +23,7 @@ export default function Layout() {
   const nav = useNavigate();
   const { area, exit } = useArea();
   const { user, checkUserAuth } = useAuth();
+  const { t } = useI18n();
   const { toast } = useToast();
   const [personalize, setPersonalize] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
@@ -36,21 +38,21 @@ export default function Layout() {
   const image = areaImage(area, areaPrefs);
 
   const NAV = [
-    { to: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
-    { to: '/calendar', label: 'Calendar', Icon: CalendarDays },
-    { to: '/tasks', label: 'Tasks', Icon: ListTodo },
-    { to: '/courses', label: a.groupingLabel, Icon: GraduationCap },
-    { to: '/contacts', label: 'Contacts', Icon: Users },
-    { to: '/trash', label: 'Trash', Icon: Trash2 },
-    { kind: 'button', label: 'Share', Icon: Share2, onClick: openShare },
-    { to: '/settings', label: 'Settings', Icon: SettingsIcon }
+    { to: '/dashboard', label: t('nav.dashboard'), Icon: LayoutDashboard },
+    { to: '/calendar', label: t('nav.calendar'), Icon: CalendarDays },
+    { to: '/tasks', label: t('nav.tasks'), Icon: ListTodo },
+    { to: '/courses', label: t('area.' + area + '.grouping'), Icon: GraduationCap },
+    { to: '/contacts', label: t('nav.contacts'), Icon: Users },
+    { to: '/trash', label: t('nav.trash'), Icon: Trash2 },
+    { kind: 'button', label: t('nav.share'), Icon: Share2, onClick: openShare },
+    { to: '/settings', label: t('nav.settings'), Icon: SettingsIcon }
   ];
-  if (area === 'shareable') NAV.splice(5, 0, { to: '/encourage', label: 'Encouragement', Icon: MessageCircle });
+  if (area === 'shareable') NAV.splice(5, 0, { to: '/encourage', label: t('nav.encourage'), Icon: MessageCircle });
   const bottomNav = [
-    { to: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
-    { to: '/calendar', label: 'Calendar', Icon: CalendarDays },
-    { to: '/tasks', label: 'Tasks', Icon: ListTodo },
-    { to: '/courses', label: a.groupingLabel, Icon: GraduationCap },
+    { to: '/dashboard', label: t('nav.dashboard'), Icon: LayoutDashboard },
+    { to: '/calendar', label: t('nav.calendar'), Icon: CalendarDays },
+    { to: '/tasks', label: t('nav.tasks'), Icon: ListTodo },
+    { to: '/courses', label: t('area.' + area + '.grouping'), Icon: GraduationCap },
   ];
   const isActive = (to) => pathname === to || pathname.startsWith(to + '/');
   function switchArea() { exit(); nav('/areas'); }
@@ -76,16 +78,16 @@ export default function Layout() {
           <div className="flex items-center justify-between">
             <WorkingCloudLogo className="text-lg" />
             <div className="flex items-center gap-1">
-              <button onClick={() => setWhatNew(true)} className="relative p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-accent" title="What's New">
+              <button onClick={() => setWhatNew(true)} className="relative p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-accent" title={t('nav.whatsNew')}>
                 <Bell className="w-4 h-4" />
                 {getUnseenChangelog().length > 0 && <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-500" />}
               </button>
             </div>
           </div>
-          <p className="text-[11px] text-muted-foreground mt-1">{a.label}</p>
+          <p className="text-[11px] text-muted-foreground mt-1">{t('area.' + area + '.label')}</p>
         </div>
         <button onClick={switchArea} className="nav-link mb-3 text-muted-foreground hover:text-primary">
-          <LayoutGrid className="w-[18px] h-[18px]" /> All areas
+          <LayoutGrid className="w-[18px] h-[18px]" /> {t('nav.allAreas')}
         </button>
         <nav className="flex flex-col gap-1">
           {NAV.map((item) => item.kind === 'button' ? (
@@ -102,25 +104,25 @@ export default function Layout() {
           <button onClick={() => setPersonalize(true)} className="w-full text-left rounded-2xl bg-accent/50 border border-border p-3 hover:shadow-sm transition flex items-center gap-2">
             <Palette className="w-4 h-4 text-primary shrink-0" />
             <div className="min-w-0">
-              <p className="text-sm font-semibold">Customize {a.label}</p>
-              <p className="text-[11px] text-muted-foreground">Colors & cover photo</p>
+              <p className="text-sm font-semibold">{t('layout.customizeArea', { area: t('area.' + area + '.label') })}</p>
+              <p className="text-[11px] text-muted-foreground">{t('layout.colorsCover')}</p>
             </div>
           </button>
           {area === 'school' && (
             <div className="rounded-2xl bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100 p-4">
               <Sparkles className="w-5 h-5 text-indigo-600 mb-2" />
-              <p className="text-sm font-semibold text-indigo-900">Upload a syllabus</p>
-              <p className="text-xs text-indigo-700/80 mt-1">Let AI pull every deadline & exam date for you.</p>
-              <Link to="/courses" className="mt-3 inline-block text-xs font-semibold text-indigo-600 hover:text-indigo-800">Go to {a.groupingLabel} →</Link>
+              <p className="text-sm font-semibold text-indigo-900">{t('layout.uploadSyllabus')}</p>
+              <p className="text-xs text-indigo-700/80 mt-1">{t('layout.syllabusPromo')}</p>
+              <Link to="/courses" className="mt-3 inline-block text-xs font-semibold text-indigo-600 hover:text-indigo-800">{t('layout.goTo', { grouping: t('area.' + area + '.grouping') })}</Link>
             </div>
           )}
           {area === 'shareable' && (
             <div className="rounded-2xl bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-100 p-4">
               <Share2 className="w-5 h-5 text-orange-600 mb-2" />
-              <p className="text-sm font-semibold text-orange-900">Share this organizer</p>
-              <p className="text-xs text-orange-700/80 mt-1">A read-only link anyone can open. Only this area is shared.</p>
+              <p className="text-sm font-semibold text-orange-900">{t('layout.shareOrganizer')}</p>
+              <p className="text-xs text-orange-700/80 mt-1">{t('layout.sharePromo')}</p>
               <button onClick={openShare} className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-orange-600 hover:text-orange-800">
-                <Share2 className="w-3.5 h-3.5" /> {user?.share_tokens?.[area] ? 'Manage sharing' : 'Create link'}
+                <Share2 className="w-3.5 h-3.5" /> {user?.share_tokens?.[area] ? t('layout.manageSharing') : t('layout.createLink')}
               </button>
             </div>
           )}
@@ -131,19 +133,19 @@ export default function Layout() {
       <header className="md:hidden fixed top-0 inset-x-0 z-30 h-[calc(3.5rem+env(safe-area-inset-top,0px))] pt-[env(safe-area-inset-top,0px)] flex items-center justify-between px-4 bg-card/80 backdrop-blur border-b border-border/60">
         {isChildScreen ? (
           <button onClick={handleBack} className="flex items-center gap-1 text-sm font-semibold text-muted-foreground hover:text-primary">
-            <ChevronLeft className="w-5 h-5" /> Back
+            <ChevronLeft className="w-5 h-5" /> {t('nav.back')}
           </button>
         ) : (
           <>
             <WorkingCloudLogo className="text-base" />
             <div className="flex items-center gap-3">
-              <button onClick={() => setWhatNew(true)} className="relative text-muted-foreground hover:text-primary" title="What's New">
+              <button onClick={() => setWhatNew(true)} className="relative text-muted-foreground hover:text-primary" title={t('nav.whatsNew')}>
                 <Bell className="w-5 h-5" />
                 {getUnseenChangelog().length > 0 && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-rose-500" />}
               </button>
-              <button onClick={() => setPersonalize(true)} className="text-muted-foreground hover:text-primary" title="Customize"><Palette className="w-5 h-5" /></button>
-              <button onClick={openShare} className="text-muted-foreground hover:text-primary" title="Share"><Share2 className="w-5 h-5" /></button>
-              <button onClick={() => setMoreOpen(true)} className="text-muted-foreground hover:text-primary" title="More"><Menu className="w-5 h-5" /></button>
+              <button onClick={() => setPersonalize(true)} className="text-muted-foreground hover:text-primary" title={t('nav.customize')}><Palette className="w-5 h-5" /></button>
+              <button onClick={openShare} className="text-muted-foreground hover:text-primary" title={t('nav.share')}><Share2 className="w-5 h-5" /></button>
+              <button onClick={() => setMoreOpen(true)} className="text-muted-foreground hover:text-primary" title={t('nav.more')}><Menu className="w-5 h-5" /></button>
             </div>
           </>
         )}

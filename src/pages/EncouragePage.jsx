@@ -5,9 +5,11 @@ import { useToast } from '@/components/ui/use-toast';
 import { Heart, Trash2, Sparkles, Users, Lock } from 'lucide-react';
 import EncourageComposer from '@/components/EncourageComposer';
 import EncourageMembers from '@/components/EncourageMembers';
+import { useI18n } from '@/lib/I18nContext';
 
 export default function EncouragePage() {
   const { user } = useAuth();
+  const { t } = useI18n();
   const [roster, setRoster] = useState(null);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,14 +33,14 @@ export default function EncouragePage() {
   return (
     <div className="p-4 md:p-8 max-w-5xl mx-auto animate-fade-in">
       <div className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2"><Heart className="w-6 h-6 text-rose-500" /> Encouragement Board</h1>
-        <p className="text-sm text-muted-foreground mt-1">Send kind notes privately or to your Shareable group. Keep it clean — emojis welcome! ✨</p>
+        <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2"><Heart className="w-6 h-6 text-rose-500" /> {t('encourage.title')}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t('encourage.subtitle')}</p>
       </div>
 
       <EncourageMembers roster={roster} onChange={load} />
       <EncourageComposer roster={roster} user={user} onSent={load} />
 
-      <h2 className="font-semibold mb-3 flex items-center gap-2"><Sparkles className="w-4 h-4 text-primary" /> Messages</h2>
+      <h2 className="font-semibold mb-3 flex items-center gap-2"><Sparkles className="w-4 h-4 text-primary" /> {t('encourage.messages')}</h2>
       {loading ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">{[...Array(3)].map((_, i) => <div key={i} className="h-32 rounded-2xl bg-muted/60 animate-pulse" />)}</div>
       ) : messages.length === 0 ? (

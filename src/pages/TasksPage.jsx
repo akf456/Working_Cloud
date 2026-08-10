@@ -22,6 +22,7 @@ import { downloadCSV } from '@/lib/exportCsv';
 import OverdueBanner from '@/components/OverdueBanner';
 import SubtaskList from '@/components/SubtaskList';
 import { useArea } from '@/lib/AreaContext';
+import { useI18n } from '@/lib/I18nContext';
 
 export default function TasksPage() {
   const [tasks, setTasks] = useState([]);
@@ -50,6 +51,7 @@ export default function TasksPage() {
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState(new Set());
   const { area } = useArea();
+  const { t } = useI18n();
 
   async function load() {
     setLoading(true);
@@ -223,28 +225,28 @@ export default function TasksPage() {
     <PullToRefresh onRefresh={load} className="p-4 md:p-8 max-w-5xl mx-auto animate-fade-in">
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold">Tasks</h1>
-          <p className="text-sm text-muted-foreground mt-1">Your to-dos, sorted the way you like.</p>
+          <h1 className="text-2xl md:text-3xl font-bold">{t('tasks.title')}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{t('tasks.subtitle')}</p>
         </div>
         <div className="flex gap-2">
-          <Button variant={selectMode ? 'default' : 'outline'} onClick={() => { setSelectMode((m) => !m); setSelected(new Set()); }} className="rounded-xl"><CheckSquare className="w-4 h-4 mr-1.5" /> {selectMode ? 'Done' : 'Select'}</Button>
-          <Button variant="outline" onClick={exportTasks} className="rounded-xl"><Download className="w-4 h-4 mr-1.5" /> Export</Button>
-          <Button onClick={() => openTaskModal(null)} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> New task</Button>
+          <Button variant={selectMode ? 'default' : 'outline'} onClick={() => { setSelectMode((m) => !m); setSelected(new Set()); }} className="rounded-xl"><CheckSquare className="w-4 h-4 mr-1.5" /> {selectMode ? t('tasks.done') : t('tasks.select')}</Button>
+          <Button variant="outline" onClick={exportTasks} className="rounded-xl"><Download className="w-4 h-4 mr-1.5" /> {t('tasks.export')}</Button>
+          <Button onClick={() => openTaskModal(null)} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> {t('tasks.newTask')}</Button>
         </div>
       </div>
 
       <OverdueBanner tasks={tasks} courses={courses} onDone={load} />
 
       <div className="inline-flex rounded-xl bg-muted p-1 mb-5 self-start">
-        <button onClick={() => setView('status')} className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition ${view === 'status' ? 'bg-background shadow-sm text-indigo-600' : 'text-muted-foreground hover:text-foreground'}`}>By status</button>
-        <button onClick={() => setView('priority')} className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition ${view === 'priority' ? 'bg-background shadow-sm text-indigo-600' : 'text-muted-foreground hover:text-foreground'}`}>Priority</button>
+        <button onClick={() => setView('status')} className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition ${view === 'status' ? 'bg-background shadow-sm text-indigo-600' : 'text-muted-foreground hover:text-foreground'}`}>{t('tasks.byStatus')}</button>
+        <button onClick={() => setView('priority')} className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition ${view === 'priority' ? 'bg-background shadow-sm text-indigo-600' : 'text-muted-foreground hover:text-foreground'}`}>{t('tasks.priority')}</button>
       </div>
 
       {/* Filters */}
       <Card className="p-3 mb-5 flex flex-wrap gap-2">
         <div className="relative w-full md:flex-1 min-w-[180px]">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search…" className="pl-9" />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('tasks.search')} className="pl-9" />
         </div>
         {area === 'school' && (
           <div className="w-full md:w-36">

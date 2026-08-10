@@ -6,6 +6,7 @@ import { Trash2, RotateCcw, FileText, CalendarClock, GraduationCap, Users, Trash
 import { restoreItem, purgeItem } from '@/lib/trash';
 import { useArea } from '@/lib/AreaContext';
 import { fmt } from '@/lib/planner';
+import { useI18n } from '@/lib/I18nContext';
 
 const ICONS = { Task: FileText, Event: CalendarClock, Course: GraduationCap, Contact: Users };
 const TINTS = { Task: 'text-indigo-600 bg-indigo-50', Event: 'text-violet-600 bg-violet-50', Course: 'text-teal-600 bg-teal-50', Contact: 'text-pink-600 bg-pink-50' };
@@ -14,6 +15,7 @@ export default function TrashPage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const { area } = useArea();
+  const { t } = useI18n();
 
   async function load() {
     setLoading(true);
@@ -29,8 +31,8 @@ export default function TrashPage() {
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto animate-fade-in">
       <div className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2"><Trash className="w-7 h-7 text-muted-foreground" /> Trash</h1>
-        <p className="text-sm text-muted-foreground mt-1">Restore anything you deleted by accident, or remove it for good.</p>
+        <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2"><Trash className="w-7 h-7 text-muted-foreground" /> {t('trash.title')}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t('trash.subtitle')}</p>
       </div>
 
       {loading ? <div className="space-y-2">{[...Array(4)].map((_, i) => <div key={i} className="h-16 rounded-xl bg-muted/60 animate-pulse" />)}</div>
@@ -52,7 +54,7 @@ export default function TrashPage() {
                     <p className="font-medium text-sm truncate">{it.name}</p>
                     <p className="text-xs text-muted-foreground">{it.entity_type} · deleted {fmt(it.deleted_date, 'MMM d, h:mm a')}</p>
                   </div>
-                  <Button variant="outline" size="sm" className="shrink-0" onClick={() => restore(it)}><RotateCcw className="w-3.5 h-3.5 mr-1.5" /> Restore</Button>
+                  <Button variant="outline" size="sm" className="shrink-0" onClick={() => restore(it)}><RotateCcw className="w-3.5 h-3.5 mr-1.5" /> {t('trash.restore')}</Button>
                   <Button variant="ghost" size="sm" className="shrink-0 text-rose-600 hover:text-rose-700" onClick={() => purge(it)}><Trash2 className="w-3.5 h-3.5" /></Button>
                 </Card>
               );

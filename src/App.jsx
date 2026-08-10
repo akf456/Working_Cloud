@@ -16,6 +16,7 @@ import Layout from '@/components/Layout';
 import Areas from '@/pages/Areas';
 import Home from '@/pages/Home';
 import { AreaProvider } from '@/lib/AreaContext';
+import { I18nProvider } from '@/lib/I18nContext';
 import Dashboard from '@/pages/Dashboard';
 import CalendarPage from '@/pages/CalendarPage';
 import TasksPage from '@/pages/TasksPage';
@@ -105,6 +106,7 @@ function App() {
     <>
       <AnimatePresence>{showSplash && <SplashOverlay onClose={() => setShowSplash(false)} />}</AnimatePresence>
       <AuthProvider>
+      <I18nProvider>
       <AreaProvider>
       <QueryClientProvider client={queryClientInstance}>
         <Router>
@@ -114,6 +116,7 @@ function App() {
         <Toaster />
       </QueryClientProvider>
       </AreaProvider>
+      </I18nProvider>
     </AuthProvider>
     </>
   )
