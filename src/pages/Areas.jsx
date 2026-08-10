@@ -5,6 +5,7 @@ import { AREA_LIST } from '@/lib/areas';
 import { ArrowRight, BarChart3 } from 'lucide-react';
 import WorkingCloudLogo from '@/components/WorkingCloudLogo';
 import AreaDistribution from '@/components/AreaDistribution';
+import AllAreasCalendar from '@/components/AllAreasCalendar';
 import ManageAreas from '@/components/ManageAreas';
 import { base44 } from '@/api/base44Client';
 import { useI18n } from '@/lib/I18nContext';
@@ -17,12 +18,14 @@ export default function Areas() {
   const nav = useNavigate();
   const { t } = useI18n();
   const [tasks, setTasks] = useState([]);
+  const [events, setEvents] = useState([]);
   const [hidden, setHidden] = useState(() => localStorage.getItem(HIDE_KEY) === '1');
   const [hiddenAreas, setHiddenAreas] = useState(() => new Set(JSON.parse(localStorage.getItem(HIDDEN_AREAS_KEY) || '[]')));
 
   useEffect(() => {
     if (area) return;
     base44.entities.Task.list('-due_date', 500).then(setTasks).catch(() => {});
+    base44.entities.Event.list('-start_date', 500).then(setEvents).catch(() => {});
   }, [area]);
 
   if (area) return <Navigate to="/dashboard" replace />;
@@ -81,7 +84,10 @@ export default function Areas() {
                 <BarChart3 className="w-4 h-4" /> {t('areas.showTime')}
               </button>
             ) : (
-              <AreaDistribution tasks={tasks} onDismiss={dismiss} hiddenAreas={[...hiddenAreas]} />
+              <>
+                <AreaDistribution tasks={tasks} onDismiss={dismiss} hiddenAreas={[...hiddenAreas]} />
+                <AllAreasCalendar tasks={tasks} events={events} hiddenAreas={[...hiddenAreas]} />
+              </>
             )}
           </div>
         )}
