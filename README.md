@@ -1,4 +1,14 @@
-# Base44 Project
+# Base44 Project- Working Cloud
+
+Hi everyone! I personally have struggled finding an app that acts as a calendar, to-do list, and tracker all in one. I have so much to do, between school, work, my personal life, and across family and friends that I am always forgetting something. To combat this issue of mine, I have created a free AI driven app that does all these things that I never was able to find in other apps. Here is a list of some of the features that I've included in my app (but there are plenty more!):
+-4 areas: personal, school, work, and sharables to keep track of everything in your life, while also keeping it separate
+-sharables: allows you to share calendars, notes, and tasks with others
+-document upload (syllabus, calendar, etc) and AI will extract information for tasks, events, and contacts so you do less work, just a few manual changes if needed
+-customization of widgets, color themes, task prioritization, etc
+-calendar and tasks to do list built in one to keep everything in one place
+-progress trackers giving daily, weekly, and monthly progress on task completion
+- & more!
+Feel free to check out my free web app! : https://working-cloud.base44.app/
 
 Use this repository to run and edit the app locally, then publish changes back through Base44.
 
