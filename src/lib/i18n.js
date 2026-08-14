@@ -31,6 +31,7 @@ export const STRINGS = {
   'nav.logout': { en: 'Log out', es: 'Cerrar sesión', fr: 'Se déconnecter', zh: '退出登录' },
   'nav.whatsNew': { en: "What's New", es: 'Novedades', fr: 'Nouveautés', zh: '新功能' },
   'nav.customize': { en: 'Customize', es: 'Personalizar', fr: 'Personnaliser', zh: '自定义' },
+  'areas.showCalendar': { en: 'Show all areas calendar', es: 'Mostrar calendario de todas las áreas', fr: 'Afficher le calendrier tous espaces', zh: '显示全部区域日历' },
 
   'area.school.label': { en: 'School', es: 'Escuela', fr: 'École', zh: '学校' },
   'area.school.tagline': { en: 'Assignments, exams & syllabi', es: 'Tareas, exámenes y programas', fr: 'Devoirs, examens et programmes', zh: '作业、考试与教学大纲' },

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useArea } from '@/lib/AreaContext';
 import { AREA_LIST } from '@/lib/areas';
-import { ArrowRight, BarChart3 } from 'lucide-react';
+import { ArrowRight, BarChart3, CalendarDays } from 'lucide-react';
 import WorkingCloudLogo from '@/components/WorkingCloudLogo';
 import AreaDistribution from '@/components/AreaDistribution';
 import AllAreasCalendar from '@/components/AllAreasCalendar';
@@ -12,6 +12,7 @@ import { useI18n } from '@/lib/I18nContext';
 import { useAuth } from '@/lib/AuthContext';
 
 const HIDE_KEY = 'wc_hide_time_goes';
+const HIDE_CAL_KEY = 'wc_hide_all_areas_calendar';
 const HIDDEN_AREAS_KEY = 'wc_hidden_areas';
 
 export default function Areas() {
@@ -21,7 +22,8 @@ export default function Areas() {
   const { user } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [events, setEvents] = useState([]);
-  const [hidden, setHidden] = useState(() => localStorage.getItem(HIDE_KEY) === '1');
+  const [hideTimeGoes, setHideTimeGoes] = useState(() => localStorage.getItem(HIDE_KEY) === '1');
+  const [hideCalendar, setHideCalendar] = useState(() => localStorage.getItem(HIDE_CAL_KEY) === '1');
   const [hiddenAreas, setHiddenAreas] = useState(() => new Set(JSON.parse(localStorage.getItem(HIDDEN_AREAS_KEY) || '[]')));
 
   useEffect(() => {
@@ -30,17 +32,20 @@ export default function Areas() {
     base44.entities.Event.list('-start_date', 500).then(setEvents).catch(() => {});
   }, [area]);
 
-  // Adopt hidden-areas / time-goes preferences from the profile (cross-device sync).
+  // Adopt widget + hidden-areas preferences from the profile (cross-device sync).
   useEffect(() => {
     if (!user) return;
     if (Array.isArray(user.hidden_areas)) setHiddenAreas(new Set(user.hidden_areas));
-    if (typeof user.hide_time_goes === 'boolean') setHidden(user.hide_time_goes);
+    if (typeof user.hide_time_goes === 'boolean') setHideTimeGoes(user.hide_time_goes);
+    if (typeof user.hide_all_areas_calendar === 'boolean') setHideCalendar(user.hide_all_areas_calendar);
   }, [user]);
 
   if (area) return <Navigate to="/dashboard" replace />;
 
-  const dismiss = () => { setHidden(true); localStorage.setItem(HIDE_KEY, '1'); if (user) base44.auth.updateMe({ hide_time_goes: true }).catch(() => {}); };
-  const show = () => { setHidden(false); localStorage.removeItem(HIDE_KEY); if (user) base44.auth.updateMe({ hide_time_goes: false }).catch(() => {}); };
+  const dismissTimeGoes = () => { setHideTimeGoes(true); localStorage.setItem(HIDE_KEY, '1'); if (user) base44.auth.updateMe({ hide_time_goes: true }).catch(() => {}); };
+  const showTimeGoes = () => { setHideTimeGoes(false); localStorage.removeItem(HIDE_KEY); if (user) base44.auth.updateMe({ hide_time_goes: false }).catch(() => {}); };
+  const dismissCalendar = () => { setHideCalendar(true); localStorage.setItem(HIDE_CAL_KEY, '1'); if (user) base44.auth.updateMe({ hide_all_areas_calendar: true }).catch(() => {}); };
+  const showCalendar = () => { setHideCalendar(false); localStorage.removeItem(HIDE_CAL_KEY); if (user) base44.auth.updateMe({ hide_all_areas_calendar: false }).catch(() => {}); };
 
   const toggleArea = (key) => {
     setHiddenAreas((prev) => {
@@ -54,6 +59,11 @@ export default function Areas() {
   };
 
   const visible = AREA_LIST.filter((a) => !hiddenAreas.has(a.key));
+  const n = visible.length;
+  const gridCls = n === 1 ? 'grid grid-cols-1 sm:grid-cols-1 gap-5 w-full max-w-sm'
+    : n === 2 ? 'grid grid-cols-1 sm:grid-cols-2 gap-5 w-full max-w-xl'
+    : n === 3 ? 'grid grid-cols-1 sm:grid-cols-3 gap-5 w-full max-w-3xl'
+    : 'grid grid-cols-1 sm:grid-cols-2 gap-5 w-full max-w-xl';
 
   return (
     <div className="relative min-h-screen bg-background flex flex-col pt-[env(safe-area-inset-top,0px)] pb-[env(safe-area-inset-bottom,0px)]">
@@ -68,7 +78,7 @@ export default function Areas() {
         {visible.length === 0 ? (
           <p className="text-center text-sm text-muted-foreground">{t('areas.allHidden')}</p>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-4xl w-full">
+          <div className={gridCls}>
             {visible.map((a) => (
               <button
                 key={a.key}
@@ -89,16 +99,20 @@ export default function Areas() {
         )}
 
         {visible.length > 0 && (
-          <div className="max-w-4xl w-full mt-8 animate-fade-in">
-            {hidden ? (
-              <button onClick={show} className="w-full rounded-2xl border border-dashed border-border bg-card/50 px-4 py-3 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/40 transition inline-flex items-center justify-center gap-2">
+          <div className="max-w-4xl w-full mt-8 animate-fade-in space-y-4">
+            {hideTimeGoes ? (
+              <button onClick={showTimeGoes} className="w-full rounded-2xl border border-dashed border-border bg-card/50 px-4 py-3 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/40 transition inline-flex items-center justify-center gap-2">
                 <BarChart3 className="w-4 h-4" /> {t('areas.showTime')}
               </button>
             ) : (
-              <>
-                <AreaDistribution tasks={tasks} onDismiss={dismiss} hiddenAreas={[...hiddenAreas]} />
-                <AllAreasCalendar tasks={tasks} events={events} hiddenAreas={[...hiddenAreas]} />
-              </>
+              <AreaDistribution tasks={tasks} onDismiss={dismissTimeGoes} hiddenAreas={[...hiddenAreas]} />
+            )}
+            {hideCalendar ? (
+              <button onClick={showCalendar} className="w-full rounded-2xl border border-dashed border-border bg-card/50 px-4 py-3 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/40 transition inline-flex items-center justify-center gap-2">
+                <CalendarDays className="w-4 h-4" /> {t('areas.showCalendar')}
+              </button>
+            ) : (
+              <AllAreasCalendar tasks={tasks} events={events} hiddenAreas={[...hiddenAreas]} onDismiss={dismissCalendar} />
             )}
           </div>
         )}

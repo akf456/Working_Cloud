@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { AREAS, AREA_LIST } from '@/lib/areas';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -14,7 +14,7 @@ function textColor(areaKey) {
   return areaKey === 'school' ? '#1f2937' : '#ffffff';
 }
 
-export default function AllAreasCalendar({ tasks = [], events = [], hiddenAreas = [] }) {
+export default function AllAreasCalendar({ tasks = [], events = [], hiddenAreas = [], onDismiss }) {
   const [cursor, setCursor] = useState(new Date());
 
   const byDay = useMemo(() => {
@@ -60,6 +60,9 @@ export default function AllAreasCalendar({ tasks = [], events = [], hiddenAreas 
           <p className="text-xs text-muted-foreground">{monthLabel}</p>
         </div>
         <div className="flex items-center gap-1">
+          {onDismiss && (
+            <button onClick={onDismiss} className="text-muted-foreground hover:text-foreground transition p-1.5 rounded-lg" title="Hide calendar" aria-label="Hide calendar"><EyeOff className="w-4 h-4" /></button>
+          )}
           <Button variant="outline" size="icon" onClick={() => setCursor(new Date(year, month - 1, 1))}><ChevronLeft className="w-4 h-4" /></Button>
           <Button variant="outline" size="sm" onClick={() => setCursor(new Date())}>Today</Button>
           <Button variant="outline" size="icon" onClick={() => setCursor(new Date(year, month + 1, 1))}><ChevronRight className="w-4 h-4" /></Button>
