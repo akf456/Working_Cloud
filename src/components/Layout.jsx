@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import MobileTabOutlet from '@/components/MobileTabOutlet';
-import { LayoutDashboard, CalendarDays, ListTodo, GraduationCap, Sparkles, Users, Trash2, LayoutGrid, Palette, Share2, Check, Settings as SettingsIcon, Bell, MessageCircle, ChevronLeft, Menu } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, ListTodo, GraduationCap, Sparkles, Wand2, Users, Trash2, LayoutGrid, Palette, Share2, Check, Settings as SettingsIcon, Bell, MessageCircle, ChevronLeft, Menu } from 'lucide-react';
 import { useArea } from '@/lib/AreaContext';
 import { useI18n } from '@/lib/I18nContext';
 import { AREAS } from '@/lib/areas';
@@ -13,10 +13,11 @@ import PersonalizeModal from '@/components/PersonalizeModal';
 import WorkingCloudLogo from '@/components/WorkingCloudLogo';
 import ShareModal from '@/components/ShareModal';
 import WhatNewModal from '@/components/WhatNewModal';
+import AiTaskBreakdown from '@/components/AiTaskBreakdown';
 import RefreshBanner from '@/components/RefreshBanner';
 import MoreSheet from '@/components/MoreSheet';
 import { useAppUpdate } from '@/hooks/useAppUpdate';
-import { getUnseenChangelog } from '@/lib/changelog';
+import { CHANGELOG, getUnseenChangelog } from '@/lib/changelog';
 
 export default function Layout() {
   const { pathname } = useLocation();
@@ -28,9 +29,13 @@ export default function Layout() {
   const [personalize, setPersonalize] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [whatNew, setWhatNew] = useState(false);
+  const [whatNewEntries, setWhatNewEntries] = useState(CHANGELOG);
+  const [aiOpen, setAiOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const { needsRefresh } = useAppUpdate();
-  useEffect(() => { if (getUnseenChangelog().length) setWhatNew(true); }, []);
+  useEffect(() => { const u = getUnseenChangelog(); if (u.length) { setWhatNewEntries(u); setWhatNew(true); } }, []);
+
+  function openWhatNew() { setWhatNewEntries(CHANGELOG); setWhatNew(true); }
   if (!area) return <Navigate to="/" replace />;
   const a = AREAS[area];
   const areaPrefs = user?.area_themes?.[area] || (area === 'personal' ? user?.personal_theme : null);
@@ -78,7 +83,7 @@ export default function Layout() {
           <div className="flex items-center justify-between">
             <WorkingCloudLogo className="text-lg" />
             <div className="flex items-center gap-1">
-              <button onClick={() => setWhatNew(true)} className="relative p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-accent" title={t('nav.whatsNew')}>
+              <button onClick={openWhatNew} className="relative p-1.5 rounded-lg text-muted-foreground hover:text-primary hover:bg-accent" title={t('nav.whatsNew')}>
                 <Bell className="w-4 h-4" />
                 {getUnseenChangelog().length > 0 && <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-500" />}
               </button>
@@ -116,6 +121,14 @@ export default function Layout() {
               <Link to="/courses" className="mt-3 inline-block text-xs font-semibold text-indigo-600 hover:text-indigo-800">{t('layout.goTo', { grouping: t('area.' + area + '.grouping') })}</Link>
             </div>
           )}
+          <div className="rounded-2xl bg-gradient-to-br from-violet-50 to-fuchsia-50 border border-violet-100 p-4">
+            <Wand2 className="w-5 h-5 text-violet-600 mb-2" />
+            <p className="text-sm font-semibold text-violet-900">AI task breakdown</p>
+            <p className="text-xs text-violet-700/80 mt-1">Turn any task into small, motivating steps spread across your days.</p>
+            <button onClick={() => setAiOpen(true)} className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-violet-600 hover:text-violet-800">
+              <Sparkles className="w-3.5 h-3.5" /> Break down a task
+            </button>
+          </div>
           {area === 'shareable' && (
             <div className="rounded-2xl bg-gradient-to-br from-orange-50 to-amber-50 border border-orange-100 p-4">
               <Share2 className="w-5 h-5 text-orange-600 mb-2" />
@@ -139,7 +152,7 @@ export default function Layout() {
           <>
             <WorkingCloudLogo className="text-base" />
             <div className="flex items-center gap-3">
-              <button onClick={() => setWhatNew(true)} className="relative text-muted-foreground hover:text-primary" title={t('nav.whatsNew')}>
+              <button onClick={openWhatNew} className="relative text-muted-foreground hover:text-primary" title={t('nav.whatsNew')}>
                 <Bell className="w-5 h-5" />
                 {getUnseenChangelog().length > 0 && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-rose-500" />}
               </button>
@@ -169,7 +182,8 @@ export default function Layout() {
 
       {personalize && <PersonalizeModal open area={area} onClose={() => setPersonalize(false)} />}
       <ShareModal open={shareOpen} area={area} onClose={() => setShareOpen(false)} />
-      <WhatNewModal open={whatNew} onClose={() => setWhatNew(false)} />
+      <WhatNewModal open={whatNew} entries={whatNewEntries} onClose={() => setWhatNew(false)} />
+      <AiTaskBreakdown open={aiOpen} onClose={() => setAiOpen(false)} area={area} onDone={checkUserAuth} />
       <MoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} area={area} onNavigate={(to) => nav(to)} onAreas={switchArea} onLogout={() => base44.auth.logout('/')} />
     </div>
   );

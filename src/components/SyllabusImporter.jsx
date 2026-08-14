@@ -194,7 +194,7 @@ export default function SyllabusImporter({ open, onClose, courses = [], area = '
     ? 'Upload a school district calendar, schedule PDF, screenshot, or fax copy — AI extracts holidays, breaks, events, and key dates. Duplicates are automatically skipped.'
     : (isSchool
       ? (courseId !== 'new' ? 'AI compares this to the existing course — new items are added, and items no longer in the syllabus are flagged, never deleted.' : 'Upload a syllabus — AI pulls out deadlines, exam dates, contacts & topics for you to review.')
-      : 'Upload a document — AI pulls out tasks, deadlines & contacts for this space. Adjust anything anytime.');
+      : 'Upload a document — a syllabus, a previous calendar, a schedule PDF, a screenshot, or any file — and AI pulls out tasks, deadlines & contacts for this space. Adjust anything anytime.');
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>

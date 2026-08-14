@@ -20,14 +20,24 @@ export default function AllAreasCalendar({ tasks = [], events = [], hiddenAreas 
   const byDay = useMemo(() => {
     const hidden = new Set(hiddenAreas);
     const map = {};
-    const add = (d, area, title) => {
+    const add = (d, area, title, done) => {
       if (!area || hidden.has(area)) return;
       const k = ymd(d);
       if (!k) return;
-      (map[k] = map[k] || []).push({ area, title: title || '' });
+      (map[k] = map[k] || []).push({ area, title: title || '', done: !!done });
     };
-    tasks.forEach((t) => { if (t.due_date) add(t.due_date, t.area, t.title); });
-    events.forEach((e) => { if (e.start_date) add(e.start_date, e.area, e.title); });
+    tasks.forEach((t) => {
+      if (!t.due_date) return;
+      const k = ymd(t.due_date);
+      const done = t.status === 'done' || (Array.isArray(t.completed_dates) && t.completed_dates.includes(k));
+      add(t.due_date, t.area, t.title, done);
+    });
+    events.forEach((e) => {
+      if (!e.start_date) return;
+      const k = ymd(e.start_date);
+      const done = Array.isArray(e.completed_dates) && e.completed_dates.includes(k);
+      add(e.start_date, e.area, e.title, done);
+    });
     return map;
   }, [tasks, events, hiddenAreas]);
 
@@ -73,21 +83,34 @@ export default function AllAreasCalendar({ tasks = [], events = [], hiddenAreas 
           {cells.map((c, i) => {
             if (!c) return <div key={i} className="bg-card min-h-[112px]" />;
             const k = ymd(c);
-            const items = (byDay[k] || []).slice().sort((a, b) => (a.area < b.area ? -1 : a.area > b.area ? 1 : 0));
+            const items = (byDay[k] || []).slice().sort((a, b) => {
+              if (a.done !== b.done) return a.done ? 1 : -1;
+              return a.area < b.area ? -1 : a.area > b.area ? 1 : 0;
+            });
             const isToday = k === todayKey;
             return (
               <div key={i} className="bg-card p-1.5 min-h-[112px]">
                 <div className={`text-xs font-semibold mb-1 inline-flex items-center justify-center rounded-full w-6 h-6 ${isToday ? 'bg-primary text-primary-foreground' : 'text-foreground'}`}>{c.getDate()}</div>
                 <div className="space-y-1">
                   {items.slice(0, 4).map((it, idx) => (
-                    <div
-                      key={idx}
-                      className="text-[10px] leading-tight truncate rounded px-1 py-0.5 font-medium"
-                      style={{ backgroundColor: AREAS[it.area]?.monoBg, color: textColor(it.area) }}
-                      title={it.title}
-                    >
-                      {it.title}
-                    </div>
+                    it.done ? (
+                      <div
+                        key={idx}
+                        className="text-[10px] leading-tight truncate rounded px-1 py-0.5 font-medium line-through border border-dashed border-border/70 text-muted-foreground/70 bg-transparent"
+                        title={it.title}
+                      >
+                        {it.title}
+                      </div>
+                    ) : (
+                      <div
+                        key={idx}
+                        className="text-[10px] leading-tight truncate rounded px-1 py-0.5 font-medium"
+                        style={{ backgroundColor: AREAS[it.area]?.monoBg, color: textColor(it.area) }}
+                        title={it.title}
+                      >
+                        {it.title}
+                      </div>
+                    )
                   ))}
                   {items.length > 4 && <div className="text-[10px] text-muted-foreground">+{items.length - 4} more</div>}
                 </div>

@@ -89,11 +89,6 @@ export default function TasksPage() {
     });
   }, [tasks, q, course, status, type, priority, due]);
 
-  const groups = [
-    { key: 'todo', label: 'To Do' },
-    { key: 'in_progress', label: 'In Progress' },
-    { key: 'done', label: 'Done' }
-  ];
   const overdueItems = filtered.filter((t) => { const n = daysUntil(t.due_date); return n !== null && n < 0 && t.status !== 'done'; })
     .sort((a, b) => (parseDate(a.due_date)?.getTime() || 0) - (parseDate(b.due_date)?.getTime() || 0));
   const overdueIds = new Set(overdueItems.map((t) => t.id));
@@ -221,6 +216,23 @@ export default function TasksPage() {
 
   const row = (t) => <TaskRow key={t.id} task={t} course={courseMap[t.course_id]} selectMode={selectMode} selected={selected.has(t.id)} onSelect={() => toggleSelect(t.id)} onToggle={() => toggle(t)} onEdit={() => openTaskModal(t)} onDelete={() => remove(t)} onDuplicate={() => duplicate(t)} />;
 
+  function renderGroup(key, label) {
+    const items = filtered.filter((t) => t.status === key && !overdueIds.has(t.id)).sort((a, b) => {
+      if (key === 'done') return new Date(b.updated_date) - new Date(a.updated_date);
+      const da = parseDate(a.due_date)?.getTime() || Infinity;
+      const db = parseDate(b.due_date)?.getTime() || Infinity;
+      return da - db;
+    });
+    if (items.length === 0) return null;
+    return (
+      <CollapsibleGroup key={key} area={area} groupKey={key}
+        badge={<span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS[key].chip}`}>{label}</span>}
+        count={items.length}>
+        {items.map(row)}
+      </CollapsibleGroup>
+    );
+  }
+
   return (
     <PullToRefresh onRefresh={load} className="p-4 md:p-8 max-w-5xl mx-auto animate-fade-in">
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
@@ -303,6 +315,8 @@ export default function TasksPage() {
                 {overdueItems.map(row)}
               </CollapsibleGroup>
             )}
+            {renderGroup('todo', 'To Do')}
+            {renderGroup('in_progress', 'In Progress')}
             {filteredEvents.length > 0 && (
               <CollapsibleGroup area={area} groupKey="events"
                 badge={<span className="text-xs font-semibold px-2 py-0.5 rounded-full text-violet-700 bg-violet-50 ring-1 ring-violet-200">Events &amp; deadlines</span>}
@@ -310,22 +324,7 @@ export default function TasksPage() {
                 {filteredEvents.map((e) => <EventRow key={e.id} event={e} course={courseMap[e.course_id]} onToggle={() => toggleEvent(e)} onEdit={() => openEventModal(e)} />)}
               </CollapsibleGroup>
             )}
-            {groups.map(({ key, label }) => {
-              const items = filtered.filter((t) => t.status === key && !overdueIds.has(t.id)).sort((a, b) => {
-                if (key === 'done') return new Date(b.updated_date) - new Date(a.updated_date);
-                const da = parseDate(a.due_date)?.getTime() || Infinity;
-                const db = parseDate(b.due_date)?.getTime() || Infinity;
-                return da - db;
-              });
-              if (items.length === 0) return null;
-              return (
-                <CollapsibleGroup key={key} area={area} groupKey={key}
-                  badge={<span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS[key].chip}`}>{label}</span>}
-                  count={items.length}>
-                  {items.map(row)}
-                </CollapsibleGroup>
-              );
-            })}
+            {renderGroup('done', 'Done')}
           </div>
         )}
 

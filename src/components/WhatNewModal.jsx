@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Sparkles } from 'lucide-react';
 import { CHANGELOG, APP_VERSION, setLastSeenVersion } from '@/lib/changelog';
 
-export default function WhatNewModal({ open, onClose }) {
+export default function WhatNewModal({ open, onClose, entries }) {
+  const list = entries && entries.length ? entries : CHANGELOG;
   function close() {
     setLastSeenVersion(APP_VERSION);
     onClose();
@@ -19,7 +20,7 @@ export default function WhatNewModal({ open, onClose }) {
           <DialogDescription>The latest improvements to Working Cloud.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
-          {CHANGELOG.map((entry) => (
+          {list.map((entry) => (
             <div key={entry.version}>
               <div className="flex items-center justify-between gap-2">
                 <p className="font-semibold text-sm">{entry.title}</p>
