@@ -12,7 +12,10 @@ export default async function(req) {
     const links = await base44.asServiceRole.entities.ShareLink.filter({ token });
     const link = links && links[0];
     if (!link) return Response.json({ error: 'Not found' }, { status: 404 });
-    const owner = link.owner_id;
+    if (!link.created_by_id || link.owner_id !== link.created_by_id) {
+      return Response.json({ error: 'Invalid share link' }, { status: 404 });
+    }
+    const owner = link.created_by_id;
     const area = link.area || 'shareable';
     const mode = link.mode || 'view';
 
