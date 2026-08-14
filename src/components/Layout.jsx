@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import MobileTabOutlet from '@/components/MobileTabOutlet';
-import { LayoutDashboard, CalendarDays, ListTodo, GraduationCap, Sparkles, Wand2, Users, Trash2, LayoutGrid, Palette, Share2, Check, Settings as SettingsIcon, Bell, MessageCircle, ChevronLeft, Menu } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, ListTodo, GraduationCap, Sparkles, Wand2, Users, Trash2, LayoutGrid, Palette, Share2, Check, Settings as SettingsIcon, Bell, MessageCircle, ChevronLeft, Menu, Timer } from 'lucide-react';
 import { useArea } from '@/lib/AreaContext';
 import { useI18n } from '@/lib/I18nContext';
 import { AREAS } from '@/lib/areas';
@@ -48,6 +48,7 @@ export default function Layout() {
     { to: '/tasks', label: t('nav.tasks'), Icon: ListTodo },
     { to: '/courses', label: t('area.' + area + '.grouping'), Icon: GraduationCap },
     { to: '/contacts', label: t('nav.contacts'), Icon: Users },
+    { to: '/pomodoro', label: t('nav.pomodoro'), Icon: Timer },
     { to: '/trash', label: t('nav.trash'), Icon: Trash2 },
     { kind: 'button', label: t('nav.share'), Icon: Share2, onClick: openShare },
     { to: '/settings', label: t('nav.settings'), Icon: SettingsIcon }

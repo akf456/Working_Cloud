@@ -1,11 +1,12 @@
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
-import { Users, Trash2, MessageCircle, Settings as SettingsIcon, LayoutGrid, LogOut } from 'lucide-react';
+import { Users, Trash2, MessageCircle, Settings as SettingsIcon, LayoutGrid, LogOut, Timer } from 'lucide-react';
 import { useI18n } from '@/lib/I18nContext';
 
 export default function MoreSheet({ open, onClose, area, onNavigate, onAreas, onLogout }) {
   const { t } = useI18n();
   const items = [
     { label: t('nav.contacts'), Icon: Users, onClick: () => { onClose(); onNavigate('/contacts'); } },
+    { label: t('nav.pomodoro'), Icon: Timer, onClick: () => { onClose(); onNavigate('/pomodoro'); } },
     { label: t('nav.trash'), Icon: Trash2, onClick: () => { onClose(); onNavigate('/trash'); } },
   ];
   if (area === 'shareable') {

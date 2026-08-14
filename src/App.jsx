@@ -22,6 +22,7 @@ import CalendarPage from '@/pages/CalendarPage';
 import TasksPage from '@/pages/TasksPage';
 import CoursesPage from '@/pages/CoursesPage';
 import ContactsPage from '@/pages/ContactsPage';
+import PomodoroPage from '@/pages/PomodoroPage';
 import TrashPage from '@/pages/TrashPage';
 import ShareBoard from '@/pages/ShareBoard';
 import Settings from '@/pages/Settings';
@@ -70,6 +71,7 @@ const AuthenticatedApp = () => {
           <Route path="/tasks" element={<TasksPage />} />
           <Route path="/courses" element={<CoursesPage />} />
           <Route path="/contacts" element={<ContactsPage />} />
+          <Route path="/pomodoro" element={<PomodoroPage />} />
           <Route path="/trash" element={<TrashPage />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/encourage" element={<EncouragePage />} />
