@@ -80,7 +80,7 @@ export default function SubtaskList({ parent }) {
               <Checkbox checked={isDone} onCheckedChange={() => toggle(st)} className="shrink-0" />
               <span className={`text-sm flex-1 truncate ${isDone ? 'line-through text-muted-foreground' : ''}`}>{st.title}</span>
               {st.due_date && <span className={`text-[11px] font-semibold shrink-0 ${overdue ? 'text-rose-600' : 'text-muted-foreground'}`}>{dueLabel(st.due_date)}</span>}
-              <button onClick={() => remove(st.id)} className="opacity-0 group-hover:opacity-100 p-1 rounded-lg text-muted-foreground hover:text-rose-600 transition"><Trash2 className="w-3.5 h-3.5" /></button>
+              <button onClick={() => remove(st.id)} className="opacity-100 md:opacity-0 md:group-hover:opacity-100 p-1 rounded-lg text-muted-foreground hover:text-rose-600 transition"><Trash2 className="w-3.5 h-3.5" /></button>
             </div>
           );
         })}

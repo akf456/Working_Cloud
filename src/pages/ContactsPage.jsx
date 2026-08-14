@@ -49,7 +49,7 @@ export default function ContactsPage() {
           <h1 className="text-2xl md:text-3xl font-bold">{t('contacts.title')}</h1>
           <p className="text-sm text-muted-foreground mt-1">{t('contacts.subtitle')}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button variant="outline" onClick={exportContacts} className="rounded-xl"><Download className="w-4 h-4 mr-1.5" /> {t('contacts.export')}</Button>
           <Button onClick={() => { setEdit(null); setModal(true); }} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> {t('contacts.newContact')}</Button>
         </div>
@@ -78,7 +78,7 @@ export default function ContactsPage() {
                     <p className="font-semibold truncate">{c.name}</p>
                     <p className="text-xs text-muted-foreground truncate">{area === 'school' ? `${role.label}${course ? ` · ${course.code || course.name}` : ''}` : (c.office_location || c.notes || '')}</p>
                   </div>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition">
+                  <div className="flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition">
                     <button onClick={() => { setEdit(c); setModal(true); }} className="p-1.5 rounded-lg hover:bg-background text-muted-foreground hover:text-indigo-600"><Pencil className="w-3.5 h-3.5" /></button>
                     <button onClick={() => remove(c)} className="p-1.5 rounded-lg hover:bg-background text-muted-foreground hover:text-rose-600"><Trash2 className="w-3.5 h-3.5" /></button>
                   </div>

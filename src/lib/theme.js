@@ -43,3 +43,17 @@ export function applyTheme() {
   // The custom background is a light-mode personalization.
   document.body.style.backgroundColor = custom && !isDark ? custom : '';
 }
+
+// Pull theme preferences from the user profile into localStorage and re-apply.
+// Called after auth loads so light/dark mode + background sync across devices.
+export function syncThemeFromProfile(prefs) {
+  if (!prefs) return;
+  try {
+    if (prefs.theme_mode) localStorage.setItem(MODE_KEY, prefs.theme_mode);
+    if (prefs.bg_color != null) {
+      if (prefs.bg_color) localStorage.setItem(BG_KEY, prefs.bg_color);
+      else localStorage.removeItem(BG_KEY);
+    }
+  } catch { /* ignore */ }
+  applyTheme();
+}

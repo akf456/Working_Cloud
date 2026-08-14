@@ -58,6 +58,7 @@ export default function Layout() {
     { to: '/calendar', label: t('nav.calendar'), Icon: CalendarDays },
     { to: '/tasks', label: t('nav.tasks'), Icon: ListTodo },
     { to: '/courses', label: t('area.' + area + '.grouping'), Icon: GraduationCap },
+    { more: true, label: t('nav.more'), Icon: Menu }
   ];
   const isActive = (to) => pathname === to || pathname.startsWith(to + '/');
   function switchArea() { exit(); nav('/areas'); }
@@ -172,9 +173,13 @@ export default function Layout() {
       {/* Mobile bottom nav */}
       {!isChildScreen && (
         <nav className="md:hidden fixed bottom-0 inset-x-0 z-30 grid bg-card/90 backdrop-blur border-t border-border/60 pb-[env(safe-area-inset-bottom,0px)]" style={{ gridTemplateColumns: `repeat(${bottomNav.length}, minmax(0, 1fr))` }}>
-          {bottomNav.map(({ to, label, Icon }) => (
-            <Link key={to} to={to} onClick={(e) => { if (isActive(to)) { e.preventDefault(); window.scrollTo({ top: 0 }); } }} className={`flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-medium ${isActive(to) ? 'text-primary' : 'text-muted-foreground'}`}>
-              <Icon className="w-5 h-5" /> {label}
+          {bottomNav.map((item) => item.more ? (
+            <button key="more" type="button" onClick={() => setMoreOpen(true)} className="flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-medium text-muted-foreground">
+              <item.Icon className="w-5 h-5" /> {item.label}
+            </button>
+          ) : (
+            <Link key={item.to} to={item.to} onClick={(e) => { if (isActive(item.to)) { e.preventDefault(); window.scrollTo({ top: 0 }); } }} className={`flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-medium ${isActive(item.to) ? 'text-primary' : 'text-muted-foreground'}`}>
+              <item.Icon className="w-5 h-5" /> {item.label}
             </Link>
           ))}
         </nav>

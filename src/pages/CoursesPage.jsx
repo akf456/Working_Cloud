@@ -55,7 +55,7 @@ export default function CoursesPage() {
           <h1 className="text-2xl md:text-3xl font-bold">{t('area.' + area + '.grouping')}</h1>
           <p className="text-sm text-muted-foreground mt-1">{area === 'school' ? t('courses.subtitleSchool') : t('courses.subtitleOther')}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button variant="outline" onClick={() => setImporter(true)} className="rounded-xl"><Sparkles className="w-4 h-4 mr-1.5 text-indigo-600" /> {area === 'school' ? t('courses.importSyllabus') : t('courses.importDoc')}</Button>
           <Button onClick={() => { setEdit(null); setModal(true); }} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> {t('courses.add', { singular: t('area.' + area + '.singular') })}</Button>
         </div>
@@ -92,7 +92,7 @@ export default function CoursesPage() {
                       <p className="text-xs text-muted-foreground truncate">{area === 'school' ? `${c.code || ''}${c.instructor ? ` · ${c.instructor}` : ''}` : (c.notes || '')}</p>
                     </div>
                   </div>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition">
+                  <div className="flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition">
                     <button onClick={() => { setEdit(c); setModal(true); }} className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-indigo-600"><Pencil className="w-3.5 h-3.5" /></button>
                     <button onClick={() => remove(c)} className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-rose-600"><Trash2 className="w-3.5 h-3.5" /></button>
                   </div>

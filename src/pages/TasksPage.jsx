@@ -240,7 +240,7 @@ export default function TasksPage() {
           <h1 className="text-2xl md:text-3xl font-bold">{t('tasks.title')}</h1>
           <p className="text-sm text-muted-foreground mt-1">{t('tasks.subtitle')}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button variant={selectMode ? 'default' : 'outline'} onClick={() => { setSelectMode((m) => !m); setSelected(new Set()); }} className="rounded-xl"><CheckSquare className="w-4 h-4 mr-1.5" /> {selectMode ? t('tasks.done') : t('tasks.select')}</Button>
           <Button variant="outline" onClick={exportTasks} className="rounded-xl"><Download className="w-4 h-4 mr-1.5" /> {t('tasks.export')}</Button>
           <Button onClick={() => openTaskModal(null)} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> {t('tasks.newTask')}</Button>
@@ -378,7 +378,7 @@ function EventRow({ event, course, onToggle, onEdit }) {
         </div>
       </div>
       <span className={`text-xs font-semibold shrink-0 ${overdue ? 'text-rose-600' : 'text-muted-foreground'}`}>{fmt(event.start_date, 'MMM d')}{!event.all_day ? ` · ${fmtTime(event.start_date)}` : ''}</span>
-      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition shrink-0">
+      <div className="flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition shrink-0">
         <button onClick={onEdit} className="p-1.5 rounded-lg hover:bg-background text-muted-foreground hover:text-indigo-600" title="Edit"><Pencil className="w-3.5 h-3.5" /></button>
       </div>
     </div>
@@ -414,7 +414,7 @@ function TaskRow({ task, course, onToggle, onEdit, onDelete, onDuplicate, select
       <button onClick={() => setOpen((o) => !o)} className="p-1.5 rounded-lg hover:bg-background text-muted-foreground hover:text-primary transition shrink-0" title="Subtasks">
         <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
-      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition shrink-0">
+      <div className="flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition shrink-0">
         <button onClick={onEdit} className="p-1.5 rounded-lg hover:bg-background text-muted-foreground hover:text-indigo-600" title="Edit"><Pencil className="w-3.5 h-3.5" /></button>
         <button onClick={onDuplicate} className="p-1.5 rounded-lg hover:bg-background text-muted-foreground hover:text-emerald-600" title="Duplicate"><Copy className="w-3.5 h-3.5" /></button>
         <button onClick={onDelete} className="p-1.5 rounded-lg hover:bg-background text-muted-foreground hover:text-rose-600" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>

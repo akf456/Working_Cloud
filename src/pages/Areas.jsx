@@ -9,6 +9,7 @@ import AllAreasCalendar from '@/components/AllAreasCalendar';
 import ManageAreas from '@/components/ManageAreas';
 import { base44 } from '@/api/base44Client';
 import { useI18n } from '@/lib/I18nContext';
+import { useAuth } from '@/lib/AuthContext';
 
 const HIDE_KEY = 'wc_hide_time_goes';
 const HIDDEN_AREAS_KEY = 'wc_hidden_areas';
@@ -17,6 +18,7 @@ export default function Areas() {
   const { area, enter } = useArea();
   const nav = useNavigate();
   const { t } = useI18n();
+  const { user } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [events, setEvents] = useState([]);
   const [hidden, setHidden] = useState(() => localStorage.getItem(HIDE_KEY) === '1');
@@ -28,16 +30,25 @@ export default function Areas() {
     base44.entities.Event.list('-start_date', 500).then(setEvents).catch(() => {});
   }, [area]);
 
+  // Adopt hidden-areas / time-goes preferences from the profile (cross-device sync).
+  useEffect(() => {
+    if (!user) return;
+    if (Array.isArray(user.hidden_areas)) setHiddenAreas(new Set(user.hidden_areas));
+    if (typeof user.hide_time_goes === 'boolean') setHidden(user.hide_time_goes);
+  }, [user]);
+
   if (area) return <Navigate to="/dashboard" replace />;
 
-  const dismiss = () => { setHidden(true); localStorage.setItem(HIDE_KEY, '1'); };
-  const show = () => { setHidden(false); localStorage.removeItem(HIDE_KEY); };
+  const dismiss = () => { setHidden(true); localStorage.setItem(HIDE_KEY, '1'); if (user) base44.auth.updateMe({ hide_time_goes: true }).catch(() => {}); };
+  const show = () => { setHidden(false); localStorage.removeItem(HIDE_KEY); if (user) base44.auth.updateMe({ hide_time_goes: false }).catch(() => {}); };
 
   const toggleArea = (key) => {
     setHiddenAreas((prev) => {
       const next = new Set(prev);
       if (next.has(key)) next.delete(key); else next.add(key);
-      localStorage.setItem(HIDDEN_AREAS_KEY, JSON.stringify([...next]));
+      const arr = [...next];
+      localStorage.setItem(HIDDEN_AREAS_KEY, JSON.stringify(arr));
+      if (user) base44.auth.updateMe({ hidden_areas: arr }).catch(() => {});
       return next;
     });
   };

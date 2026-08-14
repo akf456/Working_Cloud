@@ -123,12 +123,12 @@ export default function Settings() {
             <Label>{t('settings.theme')}</Label>
             <div className="flex gap-2 flex-wrap">
               {[{ v: 'light', l: t('settings.light') }, { v: 'dark', l: t('settings.dark') }, { v: 'system', l: t('settings.matchSystem') }].map((o) => (
-                <Button key={o.v} variant={mode === o.v ? 'default' : 'outline'} onClick={() => { setModePref(o.v); setMode(o.v); }}>{o.l}</Button>
+                <Button key={o.v} variant={mode === o.v ? 'default' : 'outline'} onClick={() => { setModePref(o.v); setMode(o.v); if (user) base44.auth.updateMe({ theme_mode: o.v }).catch(() => {}); }}>{o.l}</Button>
               ))}
             </div>
           </div>
-          <ColorRow label={t('settings.bgColorLight')} value={bg || DEFAULT_BG_HEX} onChange={(v) => { setBgPref(v); setBg(v); }} />
-          {bg && <Button variant="ghost" size="sm" onClick={() => { setBgPref(''); setBg(''); }}>{t('settings.resetDefault')}</Button>}
+          <ColorRow label={t('settings.bgColorLight')} value={bg || DEFAULT_BG_HEX} onChange={(v) => { setBgPref(v); setBg(v); if (user) base44.auth.updateMe({ bg_color: v || null }).catch(() => {}); }} />
+          {bg && <Button variant="ghost" size="sm" onClick={() => { setBgPref(''); setBg(''); if (user) base44.auth.updateMe({ bg_color: null }).catch(() => {}); }}>{t('settings.resetDefault')}</Button>}
         </div>
       </Card>
 
