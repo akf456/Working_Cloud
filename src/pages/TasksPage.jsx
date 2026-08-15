@@ -214,7 +214,6 @@ export default function TasksPage() {
     }).sort((a, b) => (parseDate(a.start_date)?.getTime() || 0) - (parseDate(b.start_date)?.getTime() || 0));
   }, [events, q, course, type, due]);
 
-  const todayStr = format(startOfDay(new Date()), 'yyyy-MM-dd');
   const todoTasks = filtered.filter((tk) => (tk.status === 'todo' || tk.status === 'in_progress') && !overdueIds.has(tk.id));
   const flaggedTasks = todoTasks.filter((tk) => tk.flag || tk.priority === 'high')
     .sort((a, b) => (parseDate(a.due_date)?.getTime() || Infinity) - (parseDate(b.due_date)?.getTime() || Infinity));
@@ -222,8 +221,13 @@ export default function TasksPage() {
   const restToDo = todoTasks.filter((tk) => !flaggedTaskIds.has(tk.id))
     .sort((a, b) => (parseDate(a.due_date)?.getTime() || Infinity) - (parseDate(b.due_date)?.getTime() || Infinity));
   const flaggedEvents = filteredEvents.filter((e) => e.flag || e.type === 'exam' || e.type === 'deadline');
-  const flaggedEventsActive = flaggedEvents.filter((e) => !(isEventCompletable(e) && isEventDoneOnDay(e, todayStr)));
-  const flaggedEventsDone = flaggedEvents.filter((e) => isEventCompletable(e) && isEventDoneOnDay(e, todayStr));
+  const eventIsDone = (e) => {
+    if (!isEventCompletable(e)) return false;
+    const d = parseDate(e.start_date) || new Date();
+    return isEventDoneOnDay(e, format(startOfDay(d), 'yyyy-MM-dd'));
+  };
+  const flaggedEventsActive = flaggedEvents.filter((e) => !eventIsDone(e));
+  const flaggedEventsDone = flaggedEvents.filter((e) => eventIsDone(e));
   const flaggedCount = flaggedTasks.length + flaggedEventsActive.length;
   const doneTasks = filtered.filter((t) => t.status === 'done' && !overdueIds.has(t.id))
     .sort((a, b) => new Date(b.updated_date) - new Date(a.updated_date));
