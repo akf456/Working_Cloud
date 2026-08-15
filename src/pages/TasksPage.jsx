@@ -214,6 +214,7 @@ export default function TasksPage() {
     }).sort((a, b) => (parseDate(a.start_date)?.getTime() || 0) - (parseDate(b.start_date)?.getTime() || 0));
   }, [events, q, course, type, due]);
 
+  const todayStr = format(startOfDay(new Date()), 'yyyy-MM-dd');
   const todoTasks = filtered.filter((tk) => (tk.status === 'todo' || tk.status === 'in_progress') && !overdueIds.has(tk.id));
   const flaggedTasks = todoTasks.filter((tk) => tk.flag || tk.priority === 'high')
     .sort((a, b) => (parseDate(a.due_date)?.getTime() || Infinity) - (parseDate(b.due_date)?.getTime() || Infinity));
@@ -221,7 +222,11 @@ export default function TasksPage() {
   const restToDo = todoTasks.filter((tk) => !flaggedTaskIds.has(tk.id))
     .sort((a, b) => (parseDate(a.due_date)?.getTime() || Infinity) - (parseDate(b.due_date)?.getTime() || Infinity));
   const flaggedEvents = filteredEvents.filter((e) => e.flag || e.type === 'exam' || e.type === 'deadline');
-  const flaggedCount = flaggedTasks.length + flaggedEvents.length;
+  const flaggedEventsActive = flaggedEvents.filter((e) => !(isEventCompletable(e) && isEventDoneOnDay(e, todayStr)));
+  const flaggedEventsDone = flaggedEvents.filter((e) => isEventCompletable(e) && isEventDoneOnDay(e, todayStr));
+  const flaggedCount = flaggedTasks.length + flaggedEventsActive.length;
+  const doneTasks = filtered.filter((t) => t.status === 'done' && !overdueIds.has(t.id))
+    .sort((a, b) => new Date(b.updated_date) - new Date(a.updated_date));
 
   const row = (t) => <TaskRow key={t.id} task={t} course={courseMap[t.course_id]} selectMode={selectMode} selected={selected.has(t.id)} onSelect={() => toggleSelect(t.id)} onToggle={() => toggle(t)} onEdit={() => openTaskModal(t)} onDelete={() => remove(t)} onDuplicate={() => duplicate(t)} />;
 
@@ -335,13 +340,20 @@ export default function TasksPage() {
                   </div>
                   <div className="space-y-2">
                     {flaggedTasks.map(row)}
-                    {flaggedEvents.map((e) => <EventRow key={e.id} event={e} course={courseMap[e.course_id]} onToggle={() => toggleEvent(e)} onEdit={() => openEventModal(e)} />)}
+                    {flaggedEventsActive.map((e) => <EventRow key={e.id} event={e} course={courseMap[e.course_id]} onToggle={() => toggleEvent(e)} onEdit={() => openEventModal(e)} />)}
                   </div>
                 </div>
               )}
               {restToDo.map(row)}
             </CollapsibleGroup>
-            {renderGroup('done', 'Done')}
+            {(doneTasks.length + flaggedEventsDone.length) > 0 && (
+              <CollapsibleGroup area={area} groupKey="done"
+                badge={<span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS.done.chip}`}>Done</span>}
+                count={doneTasks.length + flaggedEventsDone.length}>
+                {doneTasks.map(row)}
+                {flaggedEventsDone.map((e) => <EventRow key={e.id} event={e} course={courseMap[e.course_id]} onToggle={() => toggleEvent(e)} onEdit={() => openEventModal(e)} />)}
+              </CollapsibleGroup>
+            )}
           </div>
         )}
 
