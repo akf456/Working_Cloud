@@ -66,12 +66,12 @@ function DayColumn({ day, cell, evColor, tkColor, today, onEditEvent, onEditTask
   const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
 
   return (
-    <div className="border-l border-border first:border-l-0">
+    <div className="border-l border-foreground/50 first:border-l-0">
       {/* All-day strip + day header */}
       <button
         type="button"
         onClick={() => onSelectDay && onSelectDay(day)}
-        className={`block w-full text-left px-1.5 pt-1 sticky top-0 z-20 bg-card border-b border-border ${onSelectDay ? 'hover:bg-accent/40' : ''}`}
+        className={`block w-full text-left px-1.5 pt-1 sticky top-0 z-20 bg-card border-b border-foreground/50 ${onSelectDay ? 'hover:bg-accent/40' : ''}`}
         style={{ height: ALLDAY_H }}
       >
         <div className="flex items-baseline gap-1.5">
@@ -97,7 +97,7 @@ function DayColumn({ day, cell, evColor, tkColor, today, onEditEvent, onEditTask
       {/* 24-hour time grid */}
       <div className="relative" style={{ height: 24 * HOUR_H }}>
         {Array.from({ length: 24 }).map((_, h) => (
-          <div key={h} className="absolute left-0 right-0 border-t border-border" style={{ top: h * HOUR_H }} />
+          <div key={h} className="absolute left-0 right-0 border-t border-foreground/50" style={{ top: h * HOUR_H }} />
         ))}
         {laid.map((it) => {
           const top = (it.startMin / 60) * HOUR_H;
@@ -156,7 +156,7 @@ export default function CalendarTimeGrid({ days, itemsForDay, evColor, tkColor, 
       <div ref={scrollRef} className={`overflow-y-auto ${compact ? 'overflow-x-auto' : ''}`} style={{ maxHeight: '72vh' }}>
         <div className="flex" style={compact ? { minWidth: 720 } : undefined}>
           {/* hour gutter */}
-          <div className="w-12 shrink-0 border-r border-border">
+          <div className="w-12 shrink-0 border-r border-foreground/50">
             <div className="sticky top-0 z-20 bg-card" style={{ height: ALLDAY_H }} />
             <div className="relative" style={{ height: 24 * HOUR_H }}>
               {hours.map((_, h) => (
