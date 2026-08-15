@@ -21,19 +21,29 @@ export default function PomodoroSettings({ open, onClose, settings, onSave }) {
           <DialogDescription>Set durations, pick a color, and choose auto-start for breaks and focus.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <Label className="text-xs">Focus (min)</Label>
-              <Input type="number" min={1} max={90} value={s.focus} onChange={(e) => set('focus', clamp(e.target.value, 1, 90))} />
-            </div>
-            <div>
-              <Label className="text-xs">Short break</Label>
-              <Input type="number" min={1} max={30} value={s.short} onChange={(e) => set('short', clamp(e.target.value, 1, 30))} />
-            </div>
-            <div>
-              <Label className="text-xs">Long break</Label>
-              <Input type="number" min={1} max={60} value={s.long} onChange={(e) => set('long', clamp(e.target.value, 1, 60))} />
-            </div>
+          <div className="space-y-3">
+            {[
+              { key: 'focus', label: 'Focus' },
+              { key: 'short', label: 'Short break' },
+              { key: 'long', label: 'Long break' },
+            ].map((p) => {
+              const total = s[p.key];
+              const h = Math.floor(total / 60);
+              const m = total % 60;
+              return (
+                <div key={p.key} className="grid grid-cols-[1fr_auto_auto] items-end gap-2">
+                  <Label className="text-xs self-center">{p.label}</Label>
+                  <div>
+                    <Label className="text-[10px] text-muted-foreground">Hours</Label>
+                    <Input type="number" min={0} max={23} value={h} onChange={(e) => set(p.key, Math.max(1, clamp(e.target.value, 0, 23) * 60 + m))} className="w-20" />
+                  </div>
+                  <div>
+                    <Label className="text-[10px] text-muted-foreground">Min</Label>
+                    <Input type="number" min={0} max={59} value={m} onChange={(e) => set(p.key, Math.max(1, h * 60 + clamp(e.target.value, 0, 59)))} className="w-20" />
+                  </div>
+                </div>
+              );
+            })}
           </div>
           <div>
             <Label className="text-xs">Long break every (focus sessions)</Label>

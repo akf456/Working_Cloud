@@ -122,8 +122,10 @@ export default function PomodoroPage() {
   const total = phaseMinutes(phase) * 60;
   const circ = 2 * Math.PI * 54;
   const frac = total ? (total - secondsLeft) / total : 0;
-  const mm = String(Math.floor(secondsLeft / 60)).padStart(2, '0');
+  const hLeft = Math.floor(secondsLeft / 3600);
+  const mm = hLeft ? String(Math.floor((secondsLeft % 3600) / 60)).padStart(2, '0') : String(Math.floor(secondsLeft / 60)).padStart(2, '0');
   const ss = String(secondsLeft % 60).padStart(2, '0');
+  const timeText = hLeft > 0 ? `${hLeft}:${mm}:${ss}` : `${mm}:${ss}`;
   const phaseLabel = phase === 'focus' ? t('pomo.focus') : phase === 'short' ? t('pomo.shortBreak') : t('pomo.longBreak');
   const PhaseIcon = phase === 'focus' ? Brain : Coffee;
   const tabs = [
@@ -156,7 +158,7 @@ export default function PomodoroPage() {
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: settings.color }}><PhaseIcon className="w-4 h-4" />{phaseLabel}</div>
-            <span className="text-5xl md:text-6xl font-bold tabular-nums">{mm}:{ss}</span>
+            <span className="text-5xl md:text-6xl font-bold tabular-nums">{timeText}</span>
             <span className="text-xs text-muted-foreground mt-1">{running ? 'Running' : 'Paused'}</span>
           </div>
         </div>

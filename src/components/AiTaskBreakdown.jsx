@@ -3,19 +3,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import SheetSelect from '@/components/SheetSelect';
 import { Sparkles, Loader2, Wand2, CheckCircle2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { fmt } from '@/lib/planner';
-
-const DAY_OPTIONS = [
-  { value: '2', label: '2 days' },
-  { value: '3', label: '3 days' },
-  { value: '5', label: '5 days' },
-  { value: '7', label: '7 days' },
-  { value: '10', label: '10 days' },
-  { value: '14', label: '14 days' }
-];
 
 export default function AiTaskBreakdown({ open, onClose, area, onDone }) {
   const [tasks, setTasks] = useState([]);
@@ -27,6 +20,7 @@ export default function AiTaskBreakdown({ open, onClose, area, onDone }) {
   const [result, setResult] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [sel, setSel] = useState(new Set());
 
   useEffect(() => {
     if (!open) return;
@@ -67,7 +61,7 @@ Return JSON: { "subtasks": [ { "title": string, "due_date": ISO string }, ... ] 
       });
       const subs = Array.isArray(res?.subtasks) ? res.subtasks.filter((s) => s.title) : [];
       if (!subs.length) setError('AI could not break this down — try adding a bit more detail.');
-      else setResult(subs);
+      else { setResult(subs); setSel(new Set(subs.map((_, i) => i))); }
     } catch (e) {
       setError(e?.message || 'Could not generate subtasks.');
     } finally {
@@ -79,7 +73,9 @@ Return JSON: { "subtasks": [ { "title": string, "due_date": ISO string }, ... ] 
     if (!result || !task) return;
     setSaving(true); setError('');
     try {
-      await base44.entities.Subtask.bulkCreate(result.map((s) => ({
+      const chosen = result.filter((_, i) => sel.has(i));
+      if (!chosen.length) { setError('Select at least one subtask to add.'); setSaving(false); return; }
+      await base44.entities.Subtask.bulkCreate(chosen.map((s) => ({
         parent_task_id: task.id,
         title: s.title,
         due_date: s.due_date || null,
@@ -106,7 +102,7 @@ Return JSON: { "subtasks": [ { "title": string, "due_date": ISO string }, ... ] 
           <div className="py-8 text-center">
             <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-3" />
             <p className="font-semibold text-lg">Subtasks added!</p>
-            <p className="text-sm text-muted-foreground mt-1">{result.length} steps were added to “{task?.title}”. Open the task to see them.</p>
+            <p className="text-sm text-muted-foreground mt-1">{sel.size} step{sel.size === 1 ? '' : 's'} added to “{task?.title}”. Open the task to see them.</p>
             <Button className="mt-5" onClick={onClose}>Done</Button>
           </div>
         ) : (
@@ -127,7 +123,7 @@ Return JSON: { "subtasks": [ { "title": string, "due_date": ISO string }, ... ] 
             {task && (
               <div className="space-y-1.5">
                 <Label>Over how many days would you like to break this into?</Label>
-                <SheetSelect value={days} onValueChange={setDays} placeholder="Spread across…" options={DAY_OPTIONS} />
+                <Input type="number" min={1} max={60} value={days} onChange={(e) => setDays(String(Math.max(1, Math.min(60, Number(e.target.value) || 1))))} className="w-28" />
                 <p className="text-xs text-muted-foreground">Smaller milestones keep momentum going even when motivation dips.</p>
               </div>
             )}
@@ -137,12 +133,14 @@ Return JSON: { "subtasks": [ { "title": string, "due_date": ISO string }, ... ] 
             {result && (
               <div className="space-y-2 rounded-xl border border-border bg-muted/30 p-4">
                 <p className="text-sm font-semibold flex items-center gap-2"><Sparkles className="w-4 h-4 text-primary" /> Suggested subtasks</p>
+                <p className="text-xs text-muted-foreground">Uncheck any you don't want to add.</p>
                 <div className="space-y-1.5">
                   {result.map((s, i) => (
-                    <div key={i} className="flex items-center justify-between gap-2 bg-card rounded-lg px-3 py-2">
-                      <span className="text-sm truncate">{s.title}</span>
+                    <label key={i} className="flex items-center gap-3 bg-card rounded-lg px-3 py-2 cursor-pointer">
+                      <Checkbox checked={sel.has(i)} onCheckedChange={() => setSel((p) => { const n = new Set(p); n.has(i) ? n.delete(i) : n.add(i); return n; })} />
+                      <span className={`text-sm truncate flex-1 ${sel.has(i) ? '' : 'text-muted-foreground line-through'}`}>{s.title}</span>
                       <span className="text-xs text-muted-foreground shrink-0">{s.due_date ? fmt(s.due_date, 'MMM d') : ''}</span>
-                    </div>
+                    </label>
                   ))}
                 </div>
                 <p className="text-xs text-muted-foreground">These will be added as subtasks on “{task?.title}”. You can edit them anytime.</p>
@@ -156,8 +154,8 @@ Return JSON: { "subtasks": [ { "title": string, "due_date": ISO string }, ... ] 
                   {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Breaking down…</> : <><Sparkles className="w-4 h-4 mr-2" /> Break it down</>}
                 </Button>
               ) : (
-                <Button onClick={save} disabled={saving}>
-                  {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving…</> : <>Add {result.length} subtasks</>}
+                <Button onClick={save} disabled={saving || sel.size === 0}>
+                  {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving…</> : <>Add {sel.size} subtask{sel.size === 1 ? '' : 's'}</>}
                 </Button>
               )}
             </DialogFooter>

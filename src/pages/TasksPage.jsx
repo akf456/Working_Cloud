@@ -7,7 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import SheetSelect from '@/components/SheetSelect';
 import PullToRefresh from '@/components/PullToRefresh';
-import { Plus, Search, Pencil, Trash2, Inbox, Download, CheckSquare, ChevronDown, Copy, CalendarClock } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, Inbox, Download, CheckSquare, ChevronDown, Copy, CalendarClock, Flag } from 'lucide-react';
 import { toggleTaskStatus, isTaskDoneOnDay, isRecurring } from '@/lib/tasks';
 import { taskTypeMeta, PRIORITY, STATUS, dueLabel, daysUntil, parseDate, fmt, fmtTime, EVENT_TYPE } from '@/lib/planner';
 import { format, startOfDay } from 'date-fns';
@@ -214,6 +214,15 @@ export default function TasksPage() {
     }).sort((a, b) => (parseDate(a.start_date)?.getTime() || 0) - (parseDate(b.start_date)?.getTime() || 0));
   }, [events, q, course, type, due]);
 
+  const todoTasks = filtered.filter((tk) => (tk.status === 'todo' || tk.status === 'in_progress') && !overdueIds.has(tk.id));
+  const flaggedTasks = todoTasks.filter((tk) => tk.flag || tk.priority === 'high')
+    .sort((a, b) => (parseDate(a.due_date)?.getTime() || Infinity) - (parseDate(b.due_date)?.getTime() || Infinity));
+  const flaggedTaskIds = new Set(flaggedTasks.map((tk) => tk.id));
+  const restToDo = todoTasks.filter((tk) => !flaggedTaskIds.has(tk.id))
+    .sort((a, b) => (parseDate(a.due_date)?.getTime() || Infinity) - (parseDate(b.due_date)?.getTime() || Infinity));
+  const flaggedEvents = filteredEvents.filter((e) => e.flag || e.type === 'exam' || e.type === 'deadline');
+  const flaggedCount = flaggedTasks.length + flaggedEvents.length;
+
   const row = (t) => <TaskRow key={t.id} task={t} course={courseMap[t.course_id]} selectMode={selectMode} selected={selected.has(t.id)} onSelect={() => toggleSelect(t.id)} onToggle={() => toggle(t)} onEdit={() => openTaskModal(t)} onDelete={() => remove(t)} onDuplicate={() => duplicate(t)} />;
 
   function renderGroup(key, label) {
@@ -315,15 +324,23 @@ export default function TasksPage() {
                 {overdueItems.map(row)}
               </CollapsibleGroup>
             )}
-            {renderGroup('todo', 'To Do')}
-            {renderGroup('in_progress', 'In Progress')}
-            {filteredEvents.length > 0 && (
-              <CollapsibleGroup area={area} groupKey="events"
-                badge={<span className="text-xs font-semibold px-2 py-0.5 rounded-full text-violet-700 bg-violet-50 ring-1 ring-violet-200">Events &amp; deadlines</span>}
-                count={filteredEvents.length}>
-                {filteredEvents.map((e) => <EventRow key={e.id} event={e} course={courseMap[e.course_id]} onToggle={() => toggleEvent(e)} onEdit={() => openEventModal(e)} />)}
-              </CollapsibleGroup>
-            )}
+            <CollapsibleGroup area={area} groupKey="todo"
+              badge={<span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${STATUS.todo.chip}`}>To Do</span>}
+              count={todoTasks.length}>
+              {flaggedCount > 0 && (
+                <div className="mb-3 rounded-xl border border-rose-200 bg-rose-50/40 p-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full text-rose-700 bg-rose-50 ring-1 ring-rose-200"><Flag className="w-3 h-3" /> Flagged / High Priority</span>
+                    <span className="text-xs text-muted-foreground">{flaggedCount}</span>
+                  </div>
+                  <div className="space-y-2">
+                    {flaggedTasks.map(row)}
+                    {flaggedEvents.map((e) => <EventRow key={e.id} event={e} course={courseMap[e.course_id]} onToggle={() => toggleEvent(e)} onEdit={() => openEventModal(e)} />)}
+                  </div>
+                </div>
+              )}
+              {restToDo.map(row)}
+            </CollapsibleGroup>
             {renderGroup('done', 'Done')}
           </div>
         )}
