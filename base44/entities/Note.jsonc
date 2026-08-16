@@ -23,8 +23,19 @@
     },
     "color": {
       "type": "string",
-      "default": "#fef9c3",
+      "default": "#fde68a",
       "title": "Color"
+    },
+    "area": {
+      "type": "string",
+      "enum": [
+        "school",
+        "work",
+        "personal",
+        "shareable"
+      ],
+      "default": "school",
+      "title": "Area"
     }
   },
   "required": [

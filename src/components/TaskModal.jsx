@@ -13,7 +13,7 @@ import ApplyColorPanel from '@/components/ApplyColorPanel';
 const WDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const PALETTE = ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b', '#8b5cf6', '#ef4444', '#0ea5e9', '#84cc16'];
 
-export default function TaskModal({ open, onClose, onSave, task, courses = [], area = 'school', tasks = [], onApplyColor }) {
+export default function TaskModal({ open, onClose, onSave, task, courses = [], area = 'school', tasks = [], onApplyColor, listType = 'task' }) {
   const [title, setTitle] = useState(task?.title || '');
   const [description, setDescription] = useState(task?.description || '');
   const [dueDate, setDueDate] = useState(task?.due_date ? toInputDateTime(task.due_date) : '');
@@ -52,7 +52,7 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
   function toggleRecolor(id) { setRecolorIds((p) => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; }); }
 
   function submit() {
-    if (!title.trim() || !dueDate) return;
+    if (!title.trim() || (listType !== 'todo' && !dueDate)) return;
     const due = fromInputDateTime(dueDate);
     const flag = flagged ? 'manual' : (task?.flag === 'manual' ? null : (task?.flag || null));
     onSave({
@@ -60,6 +60,7 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
       title: title.trim(),
       description: description.trim(),
       due_date: due,
+      list_type: listType,
       priority, status, type, repeat,
       repeat_days: repeat !== 'none' ? repeatDays : [],
       repeat_start_date: repeat !== 'none' ? (repeatStart ? fromInputDate(repeatStart) : due) : null,
@@ -76,7 +77,7 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{task ? 'Edit task' : 'New task'}</DialogTitle>
+          <DialogTitle>{task ? (listType === 'todo' ? 'Edit list' : 'Edit task') : (listType === 'todo' ? 'New list' : 'New task')}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="space-y-1.5">
@@ -107,9 +108,9 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Deadline <span className="text-rose-500">*</span></Label>
+              <Label>Deadline {listType !== 'todo' && <span className="text-rose-500">*</span>}</Label>
               <Input type="datetime-local" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
-              <p className="text-[11px] text-muted-foreground">A deadline is required.</p>
+              <p className="text-[11px] text-muted-foreground">{listType === 'todo' ? 'Optional — add a date to show this list on the calendar.' : 'A deadline is required.'}</p>
             </div>
             <div className="space-y-1.5">
               <Label>Status</Label>
@@ -202,7 +203,7 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button onClick={submit} disabled={!title.trim() || !dueDate}>{task ? 'Save changes' : 'Add task'}</Button>
+          <Button onClick={submit} disabled={!title.trim() || (listType !== 'todo' && !dueDate)}>{task ? 'Save changes' : (listType === 'todo' ? 'Add list' : 'Add task')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

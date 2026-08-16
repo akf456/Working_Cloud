@@ -61,6 +61,15 @@
       "type": "string",
       "title": "Flag"
     },
+    "list_type": {
+      "type": "string",
+      "enum": [
+        "task",
+        "todo"
+      ],
+      "default": "task",
+      "title": "List Type"
+    },
     "repeat": {
       "type": "string",
       "enum": [

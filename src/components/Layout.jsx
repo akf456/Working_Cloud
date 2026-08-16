@@ -45,7 +45,7 @@ export default function Layout() {
   const NAV = [
     { to: '/dashboard', label: t('nav.dashboard'), Icon: LayoutDashboard },
     { to: '/calendar', label: t('nav.calendar'), Icon: CalendarDays },
-    { to: '/tasks', label: t('nav.tasks'), Icon: ListTodo },
+    { to: '/tasks', label: t('nav.lists'), Icon: ListTodo },
     { to: '/courses', label: t('area.' + area + '.grouping'), Icon: GraduationCap },
     { to: '/contacts', label: t('nav.contacts'), Icon: Users },
     { to: '/pomodoro', label: t('nav.pomodoro'), Icon: Timer },
@@ -57,7 +57,7 @@ export default function Layout() {
   const bottomNav = [
     { to: '/dashboard', label: t('nav.dashboard'), Icon: LayoutDashboard },
     { to: '/calendar', label: t('nav.calendar'), Icon: CalendarDays },
-    { to: '/tasks', label: t('nav.tasks'), Icon: ListTodo },
+    { to: '/tasks', label: t('nav.lists'), Icon: ListTodo },
     { to: '/courses', label: t('area.' + area + '.grouping'), Icon: GraduationCap },
     { more: true, label: t('nav.more'), Icon: Menu }
   ];
