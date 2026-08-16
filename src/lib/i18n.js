@@ -207,6 +207,11 @@ export const STRINGS = {
   'lists.noTodo': { en: 'No lists yet.', es: 'Sin listas.', fr: 'Aucune liste.', zh: '暂无清单。' },
   'lists.noNotes': { en: 'No notes yet.', es: 'Sin notas.', fr: 'Aucune note.', zh: '暂无笔记。' },
   'lists.addFirst': { en: 'Add one to get started.', es: 'Añade una para empezar.', fr: 'Ajoutez-en une pour commencer.', zh: '添加一个开始吧。' },
+  'lists.tasksTagline': { en: 'Events & deadlines', es: 'Eventos y fechas', fr: 'Événements et échéances', zh: '事件与截止日期' },
+  'lists.todoTagline': { en: 'Checklists like grocery runs', es: 'Listas como compras', fr: 'Listes comme les courses', zh: '如购物清单' },
+  'lists.notesTagline': { en: 'Ideas & reminders', es: 'Ideas y recordatorios', fr: 'Idées et rappels', zh: '想法与提醒' },
+  'lists.back': { en: 'Back to Lists', es: 'Volver a Listas', fr: 'Retour aux Listes', zh: '返回列表' },
+  'lists.open': { en: 'Open {name}', es: 'Abrir {name}', fr: 'Ouvrir {name}', zh: '打开{name}' },
 
   'courses.subtitleSchool': { en: 'Your semester at a glance. Drop in a syllabus to auto-fill everything.', es: 'Tu semestre de un vistazo. Sube un programa para rellenar todo.', fr: 'Votre semestre en un coup d’œil. Importez un programme pour tout remplir.', zh: '学期一览。上传大纲自动填充一切。' },
   'courses.subtitleOther': { en: 'Group and track everything in this space.', es: 'Agrupa y rastrea todo en este espacio.', fr: 'Regroupe et suivez tout dans cet espace.', zh: '在此空间分组并追踪一切。' },

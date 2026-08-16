@@ -2,13 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, ChevronLeft } from 'lucide-react';
 import { format, startOfDay } from 'date-fns';
 import PullToRefresh from '@/components/PullToRefresh';
 import TaskModal from '@/components/TaskModal';
 import EventModal from '@/components/EventModal';
 import NoteModal from '@/components/NoteModal';
 import OverdueBanner from '@/components/OverdueBanner';
+import ListsOverview from '@/components/lists/ListsOverview';
 import TasksSection from '@/components/lists/TasksSection';
 import TodoSection from '@/components/lists/TodoSection';
 import NotesSection from '@/components/lists/NotesSection';
@@ -27,7 +28,7 @@ export default function TasksPage() {
   const [courses, setCourses] = useState([]);
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState('tasks');
+  const [view, setView] = useState('overview');
   const [modalEvent, setModalEvent] = useState(false);
   const [editEvent, setEditEvent] = useState(null);
   const [noteModal, setNoteModal] = useState({ open: false, note: null });
@@ -179,18 +180,13 @@ export default function TasksPage() {
     load();
   }
 
-  const newLabel = tab === 'tasks' ? t('lists.newTask') : tab === 'todo' ? t('lists.newList') : t('lists.newNote');
+  const subsectionLabel = view === 'tasks' ? t('lists.tab.tasks') : view === 'todo' ? t('lists.tab.todo') : view === 'notes' ? t('lists.tab.notes') : '';
+  const newLabel = view === 'tasks' ? t('lists.newTask') : view === 'todo' ? t('lists.newList') : view === 'notes' ? t('lists.newNote') : '';
   function handleNew() {
-    if (tab === 'tasks') openTaskModal(null, 'task');
-    else if (tab === 'todo') openTaskModal(null, 'todo');
-    else openNoteModal(null);
+    if (view === 'tasks') openTaskModal(null, 'task');
+    else if (view === 'todo') openTaskModal(null, 'todo');
+    else if (view === 'notes') openNoteModal(null);
   }
-
-  const TABS = [
-    { key: 'tasks', label: t('lists.tab.tasks') },
-    { key: 'todo', label: t('lists.tab.todo') },
-    { key: 'notes', label: t('lists.tab.notes') },
-  ];
 
   return (
     <PullToRefresh onRefresh={load} className="p-4 md:p-8 max-w-5xl mx-auto animate-fade-in">
@@ -199,30 +195,39 @@ export default function TasksPage() {
           <h1 className="text-2xl md:text-3xl font-bold">{t('lists.title')}</h1>
           <p className="text-sm text-muted-foreground mt-1">{t('lists.subtitle')}</p>
         </div>
-        <Button onClick={handleNew} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> {newLabel}</Button>
+        {view !== 'overview' && <Button onClick={handleNew} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> {newLabel}</Button>}
       </div>
 
-      <OverdueBanner tasks={regularTasks} courses={courses} onDone={load} />
-
-      <div className="inline-flex rounded-xl bg-muted p-1 mb-5 self-start gap-1">
-        {TABS.map((tb) => (
-          <button key={tb.key} onClick={() => setTab(tb.key)} className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition ${tab === tb.key ? 'bg-background shadow-sm text-indigo-600' : 'text-muted-foreground hover:text-foreground'}`}>{tb.label}</button>
-        ))}
-      </div>
-
-      {loading ? <div className="space-y-2">{[...Array(5)].map((_, i) => <div key={i} className="h-16 rounded-xl bg-muted/60 animate-pulse" />)}</div> : (
+      {view === 'overview' ? (
+        <ListsOverview regularTasks={regularTasks} todoLists={todoLists} events={events} notes={notes} loading={loading} onPick={(k) => setView(k)} />
+      ) : loading ? (
+        <div className="space-y-2">{[...Array(5)].map((_, i) => <div key={i} className="h-16 rounded-xl bg-muted/60 animate-pulse" />)}</div>
+      ) : (
         <>
-          {tab === 'tasks' && (
-            <TasksSection tasks={regularTasks} events={events} courses={courses} area={area}
-              onToggle={toggle} onRemove={remove} onDuplicate={duplicate} onEditTask={(tk) => openTaskModal(tk, tk.list_type || 'task')} onEditEvent={openEventModal} onToggleEvent={toggleEvent} onBulkStatus={bulkStatus} onBulkTrash={bulkTrash} />
+          {view === 'tasks' && (
+            <>
+              <OverdueBanner tasks={regularTasks} courses={courses} onDone={load} />
+              <h2 className="text-xl font-bold mb-4">{subsectionLabel}</h2>
+              <TasksSection tasks={regularTasks} events={events} courses={courses} area={area}
+                onToggle={toggle} onRemove={remove} onDuplicate={duplicate} onEditTask={(tk) => openTaskModal(tk, tk.list_type || 'task')} onEditEvent={openEventModal} onToggleEvent={toggleEvent} onBulkStatus={bulkStatus} onBulkTrash={bulkTrash} />
+            </>
           )}
-          {tab === 'todo' && (
-            <TodoSection tasks={todoLists} courses={courses} area={area}
-              onToggle={toggleTodo} onRemove={remove} onDuplicate={duplicate} onEdit={(tk) => openTaskModal(tk, 'todo')} />
+          {view === 'todo' && (
+            <>
+              <h2 className="text-xl font-bold mb-4">{subsectionLabel}</h2>
+              <TodoSection tasks={todoLists} courses={courses} area={area}
+                onToggle={toggleTodo} onRemove={remove} onDuplicate={duplicate} onEdit={(tk) => openTaskModal(tk, 'todo')} />
+            </>
           )}
-          {tab === 'notes' && (
-            <NotesSection notes={notes} courses={courses} area={area} onEdit={openNoteModal} onDelete={removeNote} />
+          {view === 'notes' && (
+            <>
+              <h2 className="text-xl font-bold mb-4">{subsectionLabel}</h2>
+              <NotesSection notes={notes} courses={courses} area={area} onEdit={openNoteModal} onDelete={removeNote} />
+            </>
           )}
+          <div className="flex justify-center mt-8">
+            <Button variant="outline" onClick={() => setView('overview')} className="rounded-xl"><ChevronLeft className="w-4 h-4 mr-1.5" /> {t('lists.back')}</Button>
+          </div>
         </>
       )}
 
