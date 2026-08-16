@@ -204,6 +204,7 @@ export default function TasksPage() {
         <div className="space-y-2">{[...Array(5)].map((_, i) => <div key={i} className="h-16 rounded-xl bg-muted/60 animate-pulse" />)}</div>
       ) : (
         <>
+          <Button variant="outline" onClick={() => setView('overview')} className="rounded-xl mb-4"><ChevronLeft className="w-4 h-4 mr-1.5" /> {t('lists.back')}</Button>
           {view === 'tasks' && (
             <>
               <OverdueBanner tasks={regularTasks} courses={courses} onDone={load} />
@@ -225,9 +226,6 @@ export default function TasksPage() {
               <NotesSection notes={notes} courses={courses} area={area} onEdit={openNoteModal} onDelete={removeNote} />
             </>
           )}
-          <div className="flex justify-center mt-8">
-            <Button variant="outline" onClick={() => setView('overview')} className="rounded-xl"><ChevronLeft className="w-4 h-4 mr-1.5" /> {t('lists.back')}</Button>
-          </div>
         </>
       )}
 
