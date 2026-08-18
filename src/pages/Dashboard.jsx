@@ -22,6 +22,7 @@ export default function Dashboard() {
   const [tasks, setTasks] = useState([]);
   const [events, setEvents] = useState([]);
   const [courses, setCourses] = useState([]);
+  const [subtasks, setSubtasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [taskModal, setTaskModal] = useState(false);
   const [customize, setCustomize] = useState(false);
@@ -32,17 +33,20 @@ export default function Dashboard() {
 
   async function load() {
     setLoading(true);
-    const [t, e, c] = await Promise.all([
+    const [t, e, c, st] = await Promise.all([
       base44.entities.Task.filter({ area }, '-due_date', 200),
       base44.entities.Event.filter({ area }, '-start_date', 200),
-      base44.entities.Course.filter({ area })
+      base44.entities.Course.filter({ area }),
+      base44.entities.Subtask.list(500)
     ]);
-    setTasks(t); setEvents(e); setCourses(c);
+    setTasks(t); setEvents(e); setCourses(c); setSubtasks(st);
     setLoading(false);
   }
   useEffect(() => { load(); }, [area]);
 
   const open = tasks.filter((t) => t.status !== 'done');
+  const areaTaskIds = new Set(tasks.map((t) => t.id));
+  const openSubtasks = subtasks.filter((s) => s.status !== 'done' && areaTaskIds.has(s.parent_task_id));
   const upcomingEvents = events.filter((e) => parseDate(e.start_date) && isAfter(parseDate(e.start_date), new Date()));
   const todayTasks = open.filter((t) => parseDate(t.due_date) && isToday(parseDate(t.due_date)));
   const todayEvents = events.filter((e) => parseDate(e.start_date) && isToday(parseDate(e.start_date)));
@@ -57,7 +61,7 @@ export default function Dashboard() {
   const total = occurrences.length;
   const doneCount = occurrences.filter((o) => o.done).length;
   const pct = total ? Math.round((doneCount / total) * 100) : 0;
-  const openCount = total - doneCount;
+  const openCount = open.length;
   const dueThisWeek = occurrences.filter((o) => !o.done && o.date && (isThisWeek(o.date, { weekStartsOn: 1 }) || daysUntil(o.date) <= 7));
   const todayOcc = occurrences.filter((o) => o.date && isToday(o.date));
   const dayDone = todayOcc.filter((o) => o.done).length;
@@ -98,7 +102,7 @@ export default function Dashboard() {
         <div key={key} className={span}>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
             <StatCard icon={GraduationCap} tint="indigo" label={t('area.' + area + '.grouping')} value={courses.length} link="/courses" />
-            <StatCard icon={ListTodo} tint="violet" label={t('dash.openTasks')} value={openCount} link="/tasks" />
+            <StatCard icon={ListTodo} tint="violet" label={t('dash.openTasks')} value={openCount} link="/tasks" sub={openSubtasks.length ? t('dash.subtasks', { n: openSubtasks.length }) : ''} />
             <StatCard icon={CalendarClock} tint="amber" label={t('dash.dueThisWeek')} value={dueThisWeek.length} link="/tasks" />
             <StatCard icon={Award} tint="rose" label={t('dash.upcomingEvents')} value={upcomingEvents.length} link="/calendar" />
           </div>
@@ -252,7 +256,7 @@ export default function Dashboard() {
   );
 }
 
-function StatCard({ icon: Icon, tint, label, value, link }) {
+function StatCard({ icon: Icon, tint, label, value, link, sub }) {
   const tints = {
     indigo: 'bg-indigo-50 text-indigo-600', violet: 'bg-violet-50 text-violet-600',
     amber: 'bg-amber-50 text-amber-600', rose: 'bg-rose-50 text-rose-600'
@@ -263,6 +267,7 @@ function StatCard({ icon: Icon, tint, label, value, link }) {
         <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${tints[tint]} mb-3`}><Icon className="w-5 h-5" /></div>
         <p className="text-2xl font-bold leading-none">{value}</p>
         <p className="text-xs text-muted-foreground mt-1">{label}</p>
+        {sub && <p className="text-[11px] text-muted-foreground/80 -mt-0.5">{sub}</p>}
       </Card>
     </Link>
   );

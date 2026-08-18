@@ -312,13 +312,13 @@ export default function CalendarPage() {
                     ${isSel ? 'border-indigo-400 bg-indigo-50/50' : 'border-transparent hover:bg-accent/50'}
                     ${!inMonth ? 'opacity-35' : ''}`}>
                   <span className={`text-xs font-semibold w-6 h-6 flex items-center justify-center rounded-full ${isToday ? 'bg-indigo-600 text-white' : ''}`}>{format(day, 'd')}</span>
-                  <div className="mt-1 space-y-0.5 overflow-hidden">
-                    {evs.slice(0, 2).map((e, i) => {
+                  <div className="mt-1 space-y-0.5">
+                    {evs.map((e, i) => {
                       const col = evColor(e);
                       const done = !!e._done;
                       return <div key={e.id + (done ? '-d' : '') + i} className={`text-[10px] truncate rounded px-1 py-0.5 ${done ? 'line-through opacity-60' : ''}`} style={{ backgroundColor: col + '22', color: col }}>{done ? '✓ ' : ''}{e.title}</div>;
                     })}
-                    {tks.slice(0, 2).map((t, i) => {
+                    {tks.map((t, i) => {
                       const done = !!t._done;
                       const overdue = !done && !!t._overdue;
                       const flagged = t.flag === 'manual';
@@ -326,7 +326,6 @@ export default function CalendarPage() {
                       const sym = done ? '✓ ' : overdue ? '⚠ ' : flagged ? '⚑ ' : '';
                       return <div key={t.id + (done ? '-d' : overdue ? '-o' : '') + i} className={`text-[10px] truncate rounded px-1 py-0.5 font-medium ${done ? 'line-through opacity-60' : ''}`} style={{ backgroundColor: col + '22', color: col }}>{sym}{t.title}</div>;
                     })}
-                    {(evs.length + tks.length) > 4 && <div className="text-[10px] text-muted-foreground px-1">+{evs.length + tks.length - 4} more</div>}
                   </div>
                 </button>
               );

@@ -22,14 +22,18 @@ export default function ScrollDatePicker({ value, onChange, withTime = true, pla
   const attachNav = useCallback((el) => {
     if (!el || el._wcNav) return;
     el._wcNav = true;
-    let lock = false;
-    const step = (dir) => {
-      if (lock) return;
-      lock = true;
-      setTimeout(() => { lock = false; }, 200);
-      setMonth((m) => addMonths(m, dir));
-    };
-    el.addEventListener('wheel', (e) => { e.preventDefault(); step(e.deltaY > 0 ? 1 : -1); }, { passive: false });
+    let accum = 0;
+    let last = 0;
+    const step = (dir) => setMonth((m) => addMonths(m, dir));
+    el.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      accum += e.deltaY;
+      const now = Date.now();
+      if (now - last < 60 || Math.abs(accum) < 24) return;
+      last = now;
+      step(accum > 0 ? 1 : -1);
+      accum = 0;
+    }, { passive: false });
     let touchY = null;
     el.addEventListener('touchstart', (e) => { touchY = e.touches[0].clientY; }, { passive: true });
     el.addEventListener('touchend', (e) => {

@@ -56,7 +56,10 @@ function DayColumn({ day, cell, evColor, tkColor, today, onEditEvent, onEditTask
       tm.push({ kind: 'event', id: e.id, title: e.title, color: evColor(e), startMin, endMin, done: !!e._done, raw: e, completable: isEventCompletable(e) });
     });
     cell.tks.forEach((t) => {
-      all.push({ kind: 'task', id: t.id, title: t.title, color: tkColor(t), done: !!t._done, raw: t });
+      const s = parseDate(t.due_date);
+      if (!s) { all.push({ kind: 'task', id: t.id, title: t.title, color: tkColor(t), done: !!t._done, raw: t }); return; }
+      const startMin = s.getHours() * 60 + s.getMinutes();
+      tm.push({ kind: 'task', id: t.id, title: t.title, color: tkColor(t), startMin, endMin: Math.min(startMin + 30, 1440), done: !!t._done, raw: t, completable: false });
     });
     return { allDay: all, timed: tm };
   }, [cell, evColor, tkColor]);
@@ -66,12 +69,12 @@ function DayColumn({ day, cell, evColor, tkColor, today, onEditEvent, onEditTask
   const nowMin = new Date().getHours() * 60 + new Date().getMinutes();
 
   return (
-    <div className="border-l border-foreground/50 first:border-l-0">
+    <div className="border-l-2 border-foreground/30 first:border-l-0">
       {/* All-day strip + day header */}
       <button
         type="button"
         onClick={() => onSelectDay && onSelectDay(day)}
-        className={`block w-full text-left px-1.5 pt-1 sticky top-0 z-20 bg-card border-b border-foreground/50 ${onSelectDay ? 'hover:bg-accent/40' : ''}`}
+        className={`block w-full text-left px-1.5 pt-1 sticky top-0 z-20 bg-card border-b-2 border-foreground/30 ${onSelectDay ? 'hover:bg-accent/40' : ''}`}
         style={{ height: ALLDAY_H }}
       >
         <div className="flex items-baseline gap-1.5">
@@ -97,7 +100,7 @@ function DayColumn({ day, cell, evColor, tkColor, today, onEditEvent, onEditTask
       {/* 24-hour time grid */}
       <div className="relative" style={{ height: 24 * HOUR_H }}>
         {Array.from({ length: 24 }).map((_, h) => (
-          <div key={h} className="absolute left-0 right-0 border-t border-foreground/50" style={{ top: h * HOUR_H }} />
+          <div key={h} className="absolute left-0 right-0 border-t-2 border-foreground/30" style={{ top: h * HOUR_H }} />
         ))}
         {laid.map((it) => {
           const top = (it.startMin / 60) * HOUR_H;
@@ -106,18 +109,20 @@ function DayColumn({ day, cell, evColor, tkColor, today, onEditEvent, onEditTask
           return (
             <div
               key={it.id}
-              onClick={() => onEditEvent(it.raw)}
+              onClick={() => it.kind === 'task' ? onEditTask(it.raw) : onEditEvent(it.raw)}
               className="absolute rounded-md px-1.5 py-1 overflow-hidden cursor-pointer hover:brightness-95 transition"
               style={{
                 top, height: h,
                 left: `calc(${it._col * wPct}% + 2px)`,
                 width: `calc(${wPct}% - 4px)`,
                 backgroundColor: it.color + '26',
-                borderLeft: `3px solid ${it.color}`
+                borderLeft: it.kind === 'task' ? `2px dashed ${it.color}` : `3px solid ${it.color}`
               }}
             >
               <div className="flex items-start gap-1">
-                {it.completable && (
+                {it.kind === 'task' ? (
+                  <span className="shrink-0 text-[10px] leading-none mt-0.5" style={{ color: it.color }}>⚑</span>
+                ) : it.completable ? (
                   <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); onToggleEvent(it.raw); }}
@@ -126,10 +131,10 @@ function DayColumn({ day, cell, evColor, tkColor, today, onEditEvent, onEditTask
                   >
                     {it.done && <span className="text-white text-[8px] leading-none">✓</span>}
                   </button>
-                )}
+                ) : null}
                 <div className="min-w-0">
                   <p className={`text-[11px] font-semibold leading-tight truncate ${it.done ? 'line-through opacity-60' : ''}`} style={{ color: it.color }} title={it.title}>{it.title}</p>
-                  <p className="text-[9px] text-muted-foreground leading-tight">{fmtTime(it.startMin)}–{fmtTime(it.endMin)}</p>
+                  <p className="text-[9px] text-muted-foreground leading-tight">{fmtTime(it.startMin)}{it.kind === 'task' ? '' : `–${fmtTime(it.endMin)}`}</p>
                 </div>
               </div>
             </div>
@@ -156,7 +161,7 @@ export default function CalendarTimeGrid({ days, itemsForDay, evColor, tkColor, 
       <div ref={scrollRef} className={`overflow-y-auto ${compact ? 'overflow-x-auto' : ''}`} style={{ maxHeight: '72vh' }}>
         <div className="flex" style={compact ? { minWidth: 720 } : undefined}>
           {/* hour gutter */}
-          <div className="w-12 shrink-0 border-r border-foreground/50">
+          <div className="w-12 shrink-0 border-r-2 border-foreground/30">
             <div className="sticky top-0 z-20 bg-card" style={{ height: ALLDAY_H }} />
             <div className="relative" style={{ height: 24 * HOUR_H }}>
               {hours.map((_, h) => (

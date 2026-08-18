@@ -150,6 +150,7 @@ export const STRINGS = {
   'dash.greetingAfternoon': { en: 'Good afternoon', es: 'Buenas tardes', fr: 'Bon après-midi', zh: '下午好' },
   'dash.greetingEvening': { en: 'Good evening', es: 'Buenas noches', fr: 'Bonsoir', zh: '晚上好' },
   'dash.openTasks': { en: 'Open tasks', es: 'Tareas abiertas', fr: 'Tâches en cours', zh: '待办任务' },
+  'dash.subtasks': { en: '+ {n} subtasks', es: '+ {n} subtareas', fr: '+ {n} sous-tâches', zh: '+ {n} 子任务' },
   'dash.dueThisWeek': { en: 'Due this week', es: 'Vence esta semana', fr: 'Cette semaine', zh: '本周到期' },
   'dash.upcomingEvents': { en: 'Upcoming events', es: 'Próximos eventos', fr: 'Événements à venir', zh: '即将到来的事件' },
   'dash.todayFocus': { en: 'Today’s focus', es: 'Enfoque de hoy', fr: 'Priorité du jour', zh: '今日重点' },

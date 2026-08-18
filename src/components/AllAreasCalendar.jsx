@@ -95,7 +95,7 @@ export default function AllAreasCalendar({ tasks = [], events = [], hiddenAreas 
               <div key={i} className="bg-card p-1.5 min-h-[112px]">
                 <div className={`text-xs font-semibold mb-1 inline-flex items-center justify-center rounded-full w-6 h-6 ${isToday ? 'bg-primary text-primary-foreground' : 'text-foreground'}`}>{c.getDate()}</div>
                 <div className="space-y-1">
-                  {items.slice(0, 4).map((it, idx) => (
+                  {items.map((it, idx) => (
                     it.done ? (
                       <div
                         key={idx}
@@ -115,7 +115,6 @@ export default function AllAreasCalendar({ tasks = [], events = [], hiddenAreas 
                       </div>
                     )
                   ))}
-                  {items.length > 4 && <div className="text-[10px] text-muted-foreground">+{items.length - 4} more</div>}
                 </div>
               </div>
             );
