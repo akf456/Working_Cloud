@@ -8,7 +8,30 @@ import { useI18n } from '@/lib/I18nContext';
 import { useToast } from '@/components/ui/use-toast';
 import PomodoroSettings from '@/components/PomodoroSettings';
 
-const DEFAULTS = { focus: 25, short: 5, long: 15, longEvery: 4, color: '#7c3aed', autoStartBreaks: true, autoStartFocus: false };
+const DEFAULTS = { focus: 25, short: 5, long: 15, longEvery: 4, color: '#7c3aed', autoStartBreaks: true, autoStartFocus: false, sound: true, notify: true };
+
+function playChime() {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const now = ctx.currentTime;
+    [880, 1320].forEach((f, i) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'sine';
+      o.frequency.value = f;
+      const start = now + i * 0.18;
+      g.gain.setValueAtTime(0.0001, start);
+      g.gain.exponentialRampToValueAtTime(0.25, start + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001, start + 0.5);
+      o.start(start);
+      o.stop(start + 0.5);
+    });
+    setTimeout(() => ctx.close(), 1500);
+  } catch {}
+}
 
 const FOCUS_MSGS = [
   "You've got this — one focused block at a time.",
@@ -83,7 +106,8 @@ export default function PomodoroPage() {
       const m = pick(BREAK_MSGS);
       setMessage(m);
       toast({ title: isLong ? t('pomo.longBreak') : t('pomo.shortBreak'), description: m });
-      notify(isLong ? 'Long break time!' : 'Break time!', m);
+      if (settings.sound) playChime();
+      if (settings.notify) notify(isLong ? 'Long break time!' : 'Break time!', m);
       setPhase(next);
       setSecondsLeft(phaseMinutes(next) * 60);
       setRunning(settings.autoStartBreaks);
@@ -91,7 +115,8 @@ export default function PomodoroPage() {
       const m = pick(RESUME_MSGS);
       setMessage(m);
       toast({ title: 'Break over!', description: m });
-      notify('Break over!', m);
+      if (settings.sound) playChime();
+      if (settings.notify) notify('Break over!', m);
       setPhase('focus');
       setSecondsLeft(settings.focus * 60);
       setRunning(settings.autoStartFocus);

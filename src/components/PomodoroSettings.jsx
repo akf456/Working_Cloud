@@ -18,7 +18,7 @@ export default function PomodoroSettings({ open, onClose, settings, onSave }) {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Customize timer</DialogTitle>
-          <DialogDescription>Set durations, pick a color, and choose auto-start for breaks and focus.</DialogDescription>
+          <DialogDescription>Set durations, pick a color, and choose auto-start, sound, and notifications.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="space-y-3">
@@ -68,6 +68,14 @@ export default function PomodoroSettings({ open, onClose, settings, onSave }) {
           <div className="flex items-center justify-between rounded-xl border border-border px-3 py-2.5">
             <span className="text-sm">Auto-start next focus</span>
             <Switch checked={!!s.autoStartFocus} onCheckedChange={(v) => set('autoStartFocus', v)} />
+          </div>
+          <div className="flex items-center justify-between rounded-xl border border-border px-3 py-2.5">
+            <span className="text-sm">Sound when timer ends</span>
+            <Switch checked={!!s.sound} onCheckedChange={(v) => set('sound', v)} />
+          </div>
+          <div className="flex items-center justify-between rounded-xl border border-border px-3 py-2.5">
+            <span className="text-sm">Pop-up notification when timer ends</span>
+            <Switch checked={!!s.notify} onCheckedChange={(v) => set('notify', v)} />
           </div>
         </div>
         <DialogFooter>

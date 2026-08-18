@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import SheetSelect from '@/components/SheetSelect';
 import { Textarea } from '@/components/ui/textarea';
 import { PRIORITY, TASK_TYPE } from '@/lib/planner';
-import { toInputDateTime, fromInputDateTime, toInputDate, fromInputDate } from '@/lib/planner';
+import { toInputDate, fromInputDate } from '@/lib/planner';
+import ScrollDatePicker from '@/components/ScrollDatePicker';
 import { AREAS } from '@/lib/areas';
 import ApplyColorPanel from '@/components/ApplyColorPanel';
 
@@ -16,7 +17,7 @@ const PALETTE = ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b', '#8b5cf6', '#ef4444
 export default function TaskModal({ open, onClose, onSave, task, courses = [], area = 'school', tasks = [], onApplyColor, listType = 'task' }) {
   const [title, setTitle] = useState(task?.title || '');
   const [description, setDescription] = useState(task?.description || '');
-  const [dueDate, setDueDate] = useState(task?.due_date ? toInputDateTime(task.due_date) : '');
+  const [dueDate, setDueDate] = useState(task?.due_date || '');
   const [priority, setPriority] = useState(task?.priority || 'medium');
   const [status, setStatus] = useState(task?.status || 'todo');
   const [type, setType] = useState(task?.type || (area === 'school' ? 'misc' : ''));
@@ -32,7 +33,7 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
   React.useEffect(() => {
     setTitle(task?.title || '');
     setDescription(task?.description || '');
-    setDueDate(task?.due_date ? toInputDateTime(task.due_date) : '');
+    setDueDate(task?.due_date || '');
     setPriority(task?.priority || 'medium');
     setStatus(task?.status || 'todo');
     setType(task?.type || (area === 'school' ? 'misc' : ''));
@@ -53,17 +54,16 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
 
   function submit() {
     if (!title.trim() || (listType !== 'todo' && !dueDate)) return;
-    const due = fromInputDateTime(dueDate);
     const flag = flagged ? 'manual' : (task?.flag === 'manual' ? null : (task?.flag || null));
     onSave({
       ...(task?.id ? { id: task.id } : {}),
       title: title.trim(),
       description: description.trim(),
-      due_date: due,
+      due_date: dueDate || null,
       list_type: listType,
       priority, status, type, repeat,
       repeat_days: repeat !== 'none' ? repeatDays : [],
-      repeat_start_date: repeat !== 'none' ? (repeatStart ? fromInputDate(repeatStart) : due) : null,
+      repeat_start_date: repeat !== 'none' ? (repeatStart ? fromInputDate(repeatStart) : dueDate) : null,
       repeat_end_date: repeat !== 'none' && repeatEnd ? fromInputDate(repeatEnd) : null,
       color: color || null,
       flag,
@@ -109,7 +109,7 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Deadline {listType !== 'todo' && <span className="text-rose-500">*</span>}</Label>
-              <Input type="datetime-local" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+              <ScrollDatePicker value={dueDate} onChange={setDueDate} withTime placeholder={listType === 'todo' ? 'Optional date' : 'Pick a deadline'} />
               <p className="text-[11px] text-muted-foreground">{listType === 'todo' ? 'Optional — add a date to show this list on the calendar.' : 'A deadline is required.'}</p>
             </div>
             <div className="space-y-1.5">
