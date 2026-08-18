@@ -317,3 +317,28 @@ export function expandTasksToOccurrences(tasks) {
   });
   return out;
 }
+
+// One unit per task for "today" — recurring tasks count ONCE (today's
+// occurrence, done when completed today) instead of N per day; non-recurring
+// tasks count once (done when status === 'done'). Recurring tasks that don't
+// occur today are skipped. Used by dashboard widgets so a daily-repeating task
+// reads 1/1, restarts each day, and doesn't inflate totals.
+export function tasksToTodayUnits(tasks) {
+  const today = startOfDay(new Date());
+  const todayStr = format(today, 'yyyy-MM-dd');
+  const out = [];
+  tasks.forEach((task) => {
+    const recurring = !!(task.repeat && task.repeat !== 'none');
+    if (recurring) {
+      const occs = expandTaskOccurrences(task, today);
+      const isToday = occs.some((d) => format(d, 'yyyy-MM-dd') === todayStr);
+      if (!isToday) return;
+      const done = Array.isArray(task.completed_dates) && task.completed_dates.includes(todayStr);
+      out.push({ taskId: task.id, title: task.title, type: task.type || 'misc', color: task.color, date: today, dateStr: todayStr, done, recurring: true });
+    } else {
+      const d = parseDate(task.due_date);
+      out.push({ taskId: task.id, title: task.title, type: task.type || 'misc', color: task.color, date: d, dateStr: d ? format(startOfDay(d), 'yyyy-MM-dd') : null, done: task.status === 'done', recurring: false });
+    }
+  });
+  return out;
+}

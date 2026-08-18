@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Card } from '@/components/ui/card';
-import { taskTypeMeta, taskTypeColor, expandTasksToOccurrences } from '@/lib/planner';
+import { taskTypeMeta, taskTypeColor, tasksToTodayUnits } from '@/lib/planner';
 
 // Polar -> cartesian. 0deg = top, clockwise.
 function polar(cx, cy, r, deg) {
@@ -40,9 +40,10 @@ function shade(hex, alpha) {
 }
 
 export default function WorkloadBreakdown({ tasks }) {
-  // Expand recurring tasks into one occurrence per day so a daily-recurring
-  // task counts as N subtasks (e.g. 17 days = 17), each restartable & done per day.
-  const occurrences = useMemo(() => expandTasksToOccurrences(tasks), [tasks]);
+  // One unit per task for today: recurring tasks count once (today's
+  // occurrence, done when completed today) instead of N per day, so a
+  // daily-repeating task reads 1/1 and restarts each day.
+  const occurrences = useMemo(() => tasksToTodayUnits(tasks), [tasks]);
 
   const byType = {};
   occurrences.forEach((o) => {
@@ -83,7 +84,7 @@ export default function WorkloadBreakdown({ tasks }) {
   return (
     <Card className="p-5">
       <h2 className="font-semibold text-lg mb-1">Workload breakdown</h2>
-      <p className="text-sm text-muted-foreground mb-4">Slices sized by task count (recurring tasks count one per day) — each fills as you complete tasks in that type.</p>
+      <p className="text-sm text-muted-foreground mb-4">Slices sized by task count (recurring tasks count once for today) — each fills as you complete tasks in that type.</p>
       <div className="grid sm:grid-cols-2 gap-4 items-center">
         <div className="relative h-44">
           {grandTotal === 0 ? (

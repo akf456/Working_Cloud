@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { GraduationCap, ListTodo, CalendarClock, Award, Plus, ArrowRight, CheckCircle2, SlidersHorizontal } from 'lucide-react';
-import { greeting, quoteOfDay, fmt, dueLabel, daysUntil, taskTypeMeta, EVENT_TYPE, parseDate, expandTasksToOccurrences } from '@/lib/planner';
+import { greeting, quoteOfDay, fmt, dueLabel, daysUntil, taskTypeMeta, EVENT_TYPE, parseDate, expandTasksToOccurrences, tasksToTodayUnits } from '@/lib/planner';
 import { isToday, isThisWeek, isThisMonth, isAfter } from 'date-fns';
 import TaskModal from '@/components/TaskModal';
 import WorkloadBreakdown from '@/components/WorkloadBreakdown';
@@ -61,7 +61,8 @@ export default function Dashboard() {
   const total = occurrences.length;
   const doneCount = occurrences.filter((o) => o.done).length;
   const pct = total ? Math.round((doneCount / total) * 100) : 0;
-  const openCount = open.length;
+  const todayUnits = tasksToTodayUnits(tasks);
+  const openCount = todayUnits.filter((u) => !u.done).length;
   const dueThisWeek = occurrences.filter((o) => !o.done && o.date && (isThisWeek(o.date, { weekStartsOn: 1 }) || daysUntil(o.date) <= 7));
   const todayOcc = occurrences.filter((o) => o.date && isToday(o.date));
   const dayDone = todayOcc.filter((o) => o.done).length;
