@@ -8,28 +8,33 @@ import { useI18n } from '@/lib/I18nContext';
 import { useToast } from '@/components/ui/use-toast';
 import PomodoroSettings from '@/components/PomodoroSettings';
 
-const DEFAULTS = { focus: 25, short: 5, long: 15, longEvery: 4, color: '#7c3aed', autoStartBreaks: true, autoStartFocus: false, sound: true, notify: true };
+const DEFAULTS = { focus: 25, short: 5, long: 15, longEvery: 4, color: '#7c3aed', autoStartBreaks: true, autoStartFocus: false, sound: true, soundDuration: 5, notify: true };
 
-function playChime() {
+function playChime(duration = 5) {
   try {
     const Ctx = window.AudioContext || window.webkitAudioContext;
     if (!Ctx) return;
     const ctx = new Ctx();
     const now = ctx.currentTime;
-    [880, 1320].forEach((f, i) => {
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.connect(g); g.connect(ctx.destination);
-      o.type = 'sine';
-      o.frequency.value = f;
-      const start = now + i * 0.18;
-      g.gain.setValueAtTime(0.0001, start);
-      g.gain.exponentialRampToValueAtTime(0.25, start + 0.03);
-      g.gain.exponentialRampToValueAtTime(0.0001, start + 0.5);
-      o.start(start);
-      o.stop(start + 0.5);
-    });
-    setTimeout(() => ctx.close(), 1500);
+    const interval = 0.7;
+    const reps = Math.max(1, Math.ceil((Number(duration) || 1) / interval));
+    for (let r = 0; r < reps; r++) {
+      const base = now + r * interval;
+      [880, 1320].forEach((f, i) => {
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'sine';
+        o.frequency.value = f;
+        const start = base + i * 0.18;
+        g.gain.setValueAtTime(0.0001, start);
+        g.gain.exponentialRampToValueAtTime(0.25, start + 0.03);
+        g.gain.exponentialRampToValueAtTime(0.0001, start + 0.5);
+        o.start(start);
+        o.stop(start + 0.5);
+      });
+    }
+    setTimeout(() => ctx.close(), reps * interval * 1000 + 600);
   } catch {}
 }
 
@@ -106,7 +111,7 @@ export default function PomodoroPage() {
       const m = pick(BREAK_MSGS);
       setMessage(m);
       toast({ title: isLong ? t('pomo.longBreak') : t('pomo.shortBreak'), description: m });
-      if (settings.sound) playChime();
+      if (settings.sound) playChime(settings.soundDuration);
       if (settings.notify) notify(isLong ? 'Long break time!' : 'Break time!', m);
       setPhase(next);
       setSecondsLeft(phaseMinutes(next) * 60);
@@ -115,7 +120,7 @@ export default function PomodoroPage() {
       const m = pick(RESUME_MSGS);
       setMessage(m);
       toast({ title: 'Break over!', description: m });
-      if (settings.sound) playChime();
+      if (settings.sound) playChime(settings.soundDuration);
       if (settings.notify) notify('Break over!', m);
       setPhase('focus');
       setSecondsLeft(settings.focus * 60);

@@ -74,6 +74,10 @@ export default function PomodoroSettings({ open, onClose, settings, onSave }) {
             <Switch checked={!!s.sound} onCheckedChange={(v) => set('sound', v)} />
           </div>
           <div className="flex items-center justify-between rounded-xl border border-border px-3 py-2.5">
+            <span className="text-sm">Sound duration (seconds)</span>
+            <Input type="number" min={1} max={60} value={s.soundDuration ?? 5} onChange={(e) => set('soundDuration', clamp(e.target.value, 1, 60))} className="w-20" />
+          </div>
+          <div className="flex items-center justify-between rounded-xl border border-border px-3 py-2.5">
             <span className="text-sm">Pop-up notification when timer ends</span>
             <Switch checked={!!s.notify} onCheckedChange={(v) => set('notify', v)} />
           </div>
