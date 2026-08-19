@@ -13,6 +13,7 @@ import ListsOverview from '@/components/lists/ListsOverview';
 import TasksSection from '@/components/lists/TasksSection';
 import TodoSection from '@/components/lists/TodoSection';
 import NotesSection from '@/components/lists/NotesSection';
+import ChecklistModal from '@/components/ChecklistModal';
 import { toggleTaskStatus, isTaskDoneOnDay, isRecurring } from '@/lib/tasks';
 import { toggleEventDayCompletion, isEventDoneOnDay } from '@/lib/events';
 import { celebrate } from '@/lib/celebrate';
@@ -32,6 +33,7 @@ export default function TasksPage() {
   const [modalEvent, setModalEvent] = useState(false);
   const [editEvent, setEditEvent] = useState(null);
   const [noteModal, setNoteModal] = useState({ open: false, note: null });
+  const [checklistModal, setChecklistModal] = useState({ open: false, list: null });
   const [searchParams, setSearchParams] = useSearchParams();
   const { area } = useArea();
   const { t } = useI18n();
@@ -116,6 +118,29 @@ export default function TasksPage() {
     }
     load();
   }
+  async function saveChecklist({ id, title, items }) {
+    try {
+      if (id) {
+        setTasks((prev) => prev.map((tk) => (tk.id === id ? { ...tk, title } : tk)));
+        await base44.entities.Task.update(id, { title });
+        const existing = await base44.entities.Subtask.filter({ parent_task_id: id });
+        const finalIds = new Set(items.filter((i) => i.id).map((i) => i.id));
+        for (const s of existing) {
+          if (!finalIds.has(s.id)) { try { await base44.entities.Subtask.delete(s.id); } catch (e) {} }
+        }
+        const toCreate = items.filter((i) => !i.id).map((i) => ({ parent_task_id: id, title: i.title, status: i.status || 'todo' }));
+        if (toCreate.length) await base44.entities.Subtask.bulkCreate(toCreate);
+        for (const i of items.filter((x) => x.id)) {
+          const ex = existing.find((s) => s.id === i.id);
+          if (ex && ex.status !== i.status) { try { await base44.entities.Subtask.update(i.id, { status: i.status }); } catch (e) {} }
+        }
+      } else {
+        const created = await base44.entities.Task.create({ title, list_type: 'todo', area, status: 'todo' });
+        if (items.length) await base44.entities.Subtask.bulkCreate(items.map((i) => ({ parent_task_id: created.id, title: i.title, status: i.status || 'todo' })));
+      }
+    } catch (e) { toast({ title: 'Could not save checklist', variant: 'destructive' }); }
+    load();
+  }
   async function applyColorToTasks(ids, color) {
     if (!ids.length) return;
     await base44.entities.Task.bulkUpdate(ids.map((id) => ({ id, color })));
@@ -184,7 +209,7 @@ export default function TasksPage() {
   const newLabel = view === 'tasks' ? t('lists.newTask') : view === 'todo' ? t('lists.newList') : view === 'notes' ? t('lists.newNote') : '';
   function handleNew() {
     if (view === 'tasks') openTaskModal(null, 'task');
-    else if (view === 'todo') openTaskModal(null, 'todo');
+    else if (view === 'todo') setChecklistModal({ open: true, list: null });
     else if (view === 'notes') openNoteModal(null);
   }
 
@@ -217,7 +242,7 @@ export default function TasksPage() {
             <>
               <h2 className="text-xl font-bold mb-4">{subsectionLabel}</h2>
               <TodoSection tasks={todoLists} courses={courses} area={area}
-                onToggle={toggleTodo} onRemove={remove} onDuplicate={duplicate} onEdit={(tk) => openTaskModal(tk, 'todo')} />
+                onToggle={toggleTodo} onRemove={remove} onDuplicate={duplicate} onEdit={(tk) => setChecklistModal({ open: true, list: tk })} />
             </>
           )}
           {view === 'notes' && (
@@ -232,6 +257,7 @@ export default function TasksPage() {
       <TaskModal open={modalTask} onClose={closeTaskModal} onSave={saveTask} task={editTask} courses={courses} area={area} tasks={tasks} onApplyColor={applyColorToTasks} listType={taskListType} />
       <EventModal open={modalEvent} onClose={closeEventModal} onSave={saveEvent} event={editEvent} courses={courses} area={area} defaultStart={editEvent?.start_date} />
       <NoteModal open={noteModal.open} onClose={closeNoteModal} onSave={saveNote} note={noteModal.note} courses={courses} area={area} />
+      <ChecklistModal open={checklistModal.open} onClose={() => setChecklistModal({ open: false, list: null })} onSave={saveChecklist} list={checklistModal.list} />
     </PullToRefresh>
   );
 }
