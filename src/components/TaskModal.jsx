@@ -91,6 +91,28 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
     if (v !== 'none' && !repeatStart) setRepeatStart(new Date().toISOString());
   }
 
+  function timeRangeFields() {
+    return (
+      <>
+        <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+          <Checkbox checked={timeRange} onCheckedChange={(v) => setTimeRange(!!v)} />
+          Add a start &amp; end time
+        </label>
+        {timeRange && (
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Start time</Label>
+              <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">End time</Label>
+              <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
   function submit() {
     if (!title.trim()) return;
     const repeating = repeat !== 'none';
@@ -106,6 +128,9 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
       } else {
         due_date_val = dateOnly(dueDate);
       }
+    } else if (repeating && repeatStart && timeRange && startTime) {
+      due_date_val = combineDateTime(repeatStart, startTime);
+      end_date_val = endTime ? combineDateTime(repeatStart, endTime) : null;
     }
     onSave({
       ...(task?.id ? { id: task.id } : {}),
@@ -165,22 +190,7 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
             <div className="space-y-1.5">
               <Label>Deadline {listType !== 'todo' && <span className="text-rose-500">*</span>}</Label>
               <ScrollDatePicker value={dueDate} onChange={setDueDate} withTime={false} placeholder={listType === 'todo' ? 'Optional date' : 'Pick a deadline'} />
-              <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
-                <Checkbox checked={timeRange} onCheckedChange={(v) => setTimeRange(!!v)} />
-                Add a start &amp; end time
-              </label>
-              {timeRange && (
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Start time</Label>
-                    <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">End time</Label>
-                    <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
-                  </div>
-                </div>
-              )}
+              {timeRangeFields()}
               <p className="text-[11px] text-muted-foreground">{listType === 'todo' ? 'Optional — add a date to show this list on the calendar.' : 'A deadline is required.'}</p>
             </div>
           )}
@@ -222,6 +232,12 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
                 <Label>Ends on (optional)</Label>
                 <ScrollDatePicker value={repeatEnd} onChange={setRepeatEnd} withTime={false} placeholder="Pick an end" />
               </div>
+            </div>
+          )}
+          {repeat !== 'none' && (
+            <div className="space-y-1.5">
+              {timeRangeFields()}
+              <p className="text-[11px] text-muted-foreground">Optional — set a daily time window for each occurrence.</p>
             </div>
           )}
           {area === 'school' && (
