@@ -59,7 +59,19 @@ function DayColumn({ day, cell, evColor, tkColor, today, onEditEvent, onEditTask
       const s = parseDate(t.due_date);
       if (!s) { all.push({ kind: 'task', id: t.id, title: t.title, color: tkColor(t), done: !!t._done, raw: t }); return; }
       const startMin = s.getHours() * 60 + s.getMinutes();
-      tm.push({ kind: 'task', id: t.id, title: t.title, color: tkColor(t), startMin, endMin: Math.min(startMin + 30, 1440), done: !!t._done, raw: t, completable: false });
+      // Use the stored end_date for the block's height when present: same-day
+      // end time shows the real duration; a later end date extends to end of
+      // the start day so the multi-day span is visible on the calendar.
+      const en = parseDate(t.end_date);
+      let endMin;
+      if (en) {
+        const sameDay = format(s, 'yyyy-MM-dd') === format(en, 'yyyy-MM-dd');
+        endMin = sameDay ? en.getHours() * 60 + en.getMinutes() : 1440;
+      } else {
+        endMin = Math.min(startMin + 30, 1440);
+      }
+      if (endMin <= startMin) endMin = Math.min(startMin + 30, 1440);
+      tm.push({ kind: 'task', id: t.id, title: t.title, color: tkColor(t), startMin, endMin, done: !!t._done, raw: t, completable: false });
     });
     return { allDay: all, timed: tm };
   }, [cell, evColor, tkColor]);

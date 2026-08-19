@@ -408,6 +408,12 @@ export default function CalendarPage() {
                     <div className="min-w-0 flex-1">
                       <p className={`font-medium text-sm ${done ? 'line-through opacity-70' : ''}`} style={{ color: done ? '#16a34a' : overdue ? '#be123c' : col }}>{t.title}</p>
                       <p className="text-xs text-muted-foreground">{done ? 'Completed' : overdue ? 'Overdue' : recurring ? 'Recurring task' : 'Task deadline'}{c ? ` · ${c.code || c.name}` : ''}{recurring ? ` · ${t._date}` : ''}{flagged ? ' · Flagged' : ''}</p>
+                      {!recurring && t.end_date && (() => {
+                        const es = parseDate(t.due_date); const ee = parseDate(t.end_date);
+                        if (!ee) return null;
+                        const sameDay = es && format(es, 'yyyy-MM-dd') === format(ee, 'yyyy-MM-dd');
+                        return <p className="text-xs text-muted-foreground">Ends {sameDay ? fmtTime(t.end_date) : fmt(t.end_date, 'MMM d · h:mm a')}</p>;
+                      })()}
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-3 mt-2">

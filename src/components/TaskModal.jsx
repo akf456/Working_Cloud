@@ -41,6 +41,16 @@ function initEndTime(task) {
   const t = task?.due_date ? format(new Date(task.due_date), 'HH:mm') : '';
   return t && t !== '00:00' ? t : '';
 }
+// An end DATE (separate day from the deadline) is only active when the stored
+// end_date falls on a different day than due_date. A same-day end_date is just
+// the time-range end time and should not surface as a separate end date.
+function initUseEndDate(task) {
+  if (!task?.end_date || !task?.due_date) return false;
+  return new Date(task.due_date).toDateString() !== new Date(task.end_date).toDateString();
+}
+function initEndDate(task) {
+  return initUseEndDate(task) ? task.end_date : '';
+}
 
 export default function TaskModal({ open, onClose, onSave, task, courses = [], area = 'school', tasks = [], onApplyColor, listType = 'task' }) {
   const [title, setTitle] = useState(task?.title || '');
@@ -49,6 +59,8 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
   const [timeRange, setTimeRange] = useState(() => initTimeRange(task));
   const [startTime, setStartTime] = useState(() => initStartTime(task));
   const [endTime, setEndTime] = useState(() => initEndTime(task));
+  const [useEndDate, setUseEndDate] = useState(() => initUseEndDate(task));
+  const [endDate, setEndDate] = useState(() => initEndDate(task));
   const [priority, setPriority] = useState(task?.priority || 'medium');
   const [status, setStatus] = useState(task?.status || 'todo');
   const [type, setType] = useState(task?.type || (area === 'school' ? 'misc' : ''));
@@ -68,6 +80,8 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
     setTimeRange(initTimeRange(task));
     setStartTime(initStartTime(task));
     setEndTime(initEndTime(task));
+    setUseEndDate(initUseEndDate(task));
+    setEndDate(initEndDate(task));
     setPriority(task?.priority || 'medium');
     setStatus(task?.status || 'todo');
     setType(task?.type || (area === 'school' ? 'misc' : ''));
@@ -126,9 +140,14 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
       // so a start/end time is preserved even with no deadline or repeat start.
       const base = !repeating ? (dueDate || new Date().toISOString()) : (repeatStart || new Date().toISOString());
       due_date_val = combineDateTime(base, startTime);
-      end_date_val = endTime ? combineDateTime(base, endTime) : null;
+      if (!repeating && useEndDate && endDate) {
+        end_date_val = endTime ? combineDateTime(endDate, endTime) : combineDateTime(endDate, startTime);
+      } else {
+        end_date_val = endTime ? combineDateTime(base, endTime) : null;
+      }
     } else if (!repeating && dueDate) {
       due_date_val = dateOnly(dueDate);
+      if (useEndDate && endDate) end_date_val = dateOnly(endDate);
     }
     onSave({
       ...(task?.id ? { id: task.id } : {}),
@@ -189,6 +208,17 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
               <Label>Deadline {listType !== 'todo' && <span className="text-rose-500">*</span>}</Label>
               <ScrollDatePicker value={dueDate} onChange={setDueDate} withTime={false} placeholder={listType === 'todo' ? 'Optional date' : 'Pick a deadline'} />
               {timeRangeFields()}
+              <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                <Checkbox checked={useEndDate} onCheckedChange={(v) => { setUseEndDate(!!v); if (!v) setEndDate(''); }} />
+                Add an end date
+              </label>
+              {useEndDate && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs">End date</Label>
+                  <ScrollDatePicker value={endDate} onChange={setEndDate} withTime={false} placeholder="Pick an end date" />
+                  <p className="text-[11px] text-muted-foreground">For a task that spans multiple days, like a multi-day exam window.</p>
+                </div>
+              )}
               <p className="text-[11px] text-muted-foreground">{listType === 'todo' ? 'Optional — add a date to show this list on the calendar.' : 'A deadline is required.'}</p>
             </div>
           )}
