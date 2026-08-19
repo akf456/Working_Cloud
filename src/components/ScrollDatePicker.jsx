@@ -6,9 +6,10 @@ import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-// Date (and optional time) picker that lets users scroll or swipe to move
-// between months instead of clicking prev/next buttons. value/onChange use
-// ISO strings ('' when empty).
+// Date (and optional time) picker. The popover mini-calendar shows prev/next
+// arrow buttons AND lets users scroll / swipe to move between months. The date
+// and time stack vertically so they never overlap inside narrow grid cells.
+// value/onChange use ISO strings ('' when empty).
 export default function ScrollDatePicker({ value, onChange, withTime = true, placeholder }) {
   const parsed = value ? new Date(value) : null;
   const valid = parsed && isValid(parsed);
@@ -18,7 +19,7 @@ export default function ScrollDatePicker({ value, onChange, withTime = true, pla
   const [month, setMonth] = useState(() => (valid ? parsed : new Date()));
 
   // Non-passive wheel + touch-swipe handler attached to the popover body so
-  // scrolling changes the displayed month (replacing the click buttons).
+  // scrolling changes the displayed month (alongside the arrow buttons).
   const attachNav = useCallback((el) => {
     if (!el || el._wcNav) return;
     el._wcNav = true;
@@ -59,11 +60,11 @@ export default function ScrollDatePicker({ value, onChange, withTime = true, pla
   const label = valid ? format(parsed, withTime ? 'MMM d, yyyy · h:mm a' : 'MMM d, yyyy') : (placeholder || 'Pick a date');
 
   return (
-    <div className="flex gap-2 items-center">
+    <div className="flex flex-col gap-2">
       <Popover onOpenChange={(o) => { if (o && valid) setMonth(parsed); }}>
         <PopoverTrigger asChild>
-          <Button type="button" variant="outline" className="rounded-xl justify-start text-left font-normal flex-1 h-9">
-            <CalendarIcon className="w-4 h-4 mr-2 opacity-70" />
+          <Button type="button" variant="outline" className="rounded-xl justify-start text-left font-normal w-full h-9">
+            <CalendarIcon className="w-4 h-4 mr-2 opacity-70 shrink-0" />
             <span className="truncate">{label}</span>
           </Button>
         </PopoverTrigger>
@@ -76,14 +77,13 @@ export default function ScrollDatePicker({ value, onChange, withTime = true, pla
               onMonthChange={setMonth}
               onSelect={(d) => emit(d, timeStr)}
               initialFocus
-              classNames={{ nav: 'hidden' }}
             />
-            <p className="text-[11px] text-muted-foreground text-center pb-2 px-3">Scroll or swipe to change months</p>
+            <p className="text-[11px] text-muted-foreground text-center pb-2 px-3">Use the arrows, scroll, or swipe to change months</p>
           </div>
         </PopoverContent>
       </Popover>
       {withTime && (
-        <Input type="time" value={timeStr} disabled={!selected} onChange={(e) => emit(selected || new Date(), e.target.value)} className="w-28" />
+        <Input type="time" value={timeStr} disabled={!selected} onChange={(e) => emit(selected || new Date(), e.target.value)} />
       )}
     </div>
   );

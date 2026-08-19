@@ -15,6 +15,11 @@
       "format": "date-time",
       "title": "Due Date"
     },
+    "end_date": {
+      "type": "string",
+      "format": "date-time",
+      "title": "End Date"
+    },
     "priority": {
       "type": "string",
       "enum": [

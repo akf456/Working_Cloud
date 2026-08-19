@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import SheetSelect from '@/components/SheetSelect';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { EVENT_TYPE, toInputDate, fromInputDate } from '@/lib/planner';
+import { EVENT_TYPE } from '@/lib/planner';
 import ScrollDatePicker from '@/components/ScrollDatePicker';
 
 const WDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -37,8 +37,8 @@ export default function EventModal({ open, onClose, onSave, event, courses = [],
     setLocation(event?.location || '');
     setRepeat(event?.repeat || 'none');
     setRepeatDays(Array.isArray(event?.repeat_days) ? event.repeat_days : []);
-    setRepeatStart(event?.repeat_start_date ? toInputDate(event.repeat_start_date) : (base ? toInputDate(base) : ''));
-    setRepeatEnd(event?.repeat_end_date ? toInputDate(event.repeat_end_date) : '');
+    setRepeatStart(event?.repeat_start_date || (base || ''));
+    setRepeatEnd(event?.repeat_end_date || '');
   }, [event, open, defaultStart]);
 
   function toggleDay(i) {
@@ -47,6 +47,7 @@ export default function EventModal({ open, onClose, onSave, event, courses = [],
 
   function submit() {
     if (!title.trim() || !start) return;
+    const repeating = repeat !== 'none';
     onSave({
       ...(event?.id ? { id: event.id } : {}),
       title: title.trim(),
@@ -58,9 +59,9 @@ export default function EventModal({ open, onClose, onSave, event, courses = [],
       course_id: courseId === 'none' ? null : courseId,
       location: location.trim(),
       repeat,
-      repeat_days: repeat !== 'none' ? repeatDays : [],
-      repeat_start_date: repeat !== 'none' ? (repeatStart ? fromInputDate(repeatStart) : start) : null,
-      repeat_end_date: repeat !== 'none' && repeatEnd ? fromInputDate(repeatEnd) : null
+      repeat_days: repeating ? repeatDays : [],
+      repeat_start_date: repeating ? (repeatStart || start) : null,
+      repeat_end_date: repeating && repeatEnd ? repeatEnd : null
     });
     onClose();
   }
@@ -130,12 +131,12 @@ export default function EventModal({ open, onClose, onSave, event, courses = [],
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Starts on</Label>
-                <Input type="date" value={repeatStart} onChange={(e) => setRepeatStart(e.target.value)} />
+                <ScrollDatePicker value={repeatStart} onChange={setRepeatStart} withTime={false} placeholder="Pick a start" />
                 <p className="text-[11px] text-muted-foreground">Defaults to the start date.</p>
               </div>
               <div className="space-y-1.5">
                 <Label>Ends on (optional)</Label>
-                <Input type="date" value={repeatEnd} onChange={(e) => setRepeatEnd(e.target.value)} />
+                <ScrollDatePicker value={repeatEnd} onChange={setRepeatEnd} withTime={false} placeholder="Pick an end" />
               </div>
             </div>
           )}
