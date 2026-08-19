@@ -23,6 +23,7 @@ import SyllabusImporter from '@/components/SyllabusImporter';
 import CalendarYearView from '@/components/CalendarYearView';
 import CalendarTimeGrid from '@/components/CalendarTimeGrid';
 import { useI18n } from '@/lib/I18nContext';
+import SheetSelect from '@/components/SheetSelect';
 
 export default function CalendarPage() {
   const [cursor, setCursor] = useState(new Date());
@@ -119,6 +120,23 @@ export default function CalendarPage() {
     const yEnd = endOfWeek(new Date(y, 11, 31), { weekStartsOn: 0 });
     return buildDayMap(yStart, yEnd);
   }, [buildDayMap, cursor]);
+
+  // Jump-to-day / jump-to-week options for the dropdown beside the Today button.
+  const navOptions = useMemo(() => {
+    const base = startOfDay(new Date());
+    if (view === 'day') {
+      return Array.from({ length: 61 }, (_, i) => {
+        const d = addDays(base, i - 30);
+        return { value: startOfDay(d).toISOString(), label: format(d, 'EEE, MMM d, yyyy') };
+      });
+    }
+    return Array.from({ length: 25 }, (_, i) => {
+      const ws = startOfWeek(addDays(base, (i - 12) * 7), { weekStartsOn: 0 });
+      const we = endOfWeek(ws, { weekStartsOn: 0 });
+      return { value: ws.toISOString(), label: `${format(ws, 'MMM d')} – ${format(we, 'MMM d, yyyy')}` };
+    });
+  }, [view]);
+  const navValue = view === 'day' ? startOfDay(selected).toISOString() : startOfWeek(cursor, { weekStartsOn: 0 }).toISOString();
 
   function itemsForDay(day) {
     return dayMap.get(format(day, 'yyyy-MM-dd')) || { evs: [], tks: [] };
@@ -245,6 +263,14 @@ export default function CalendarPage() {
               <div className="flex items-center gap-1">
                 <Button variant="ghost" size="icon" onClick={() => view === 'day' ? stepDay(-1) : setCursor(subDays(cursor, 7))}><ChevronLeft className="w-4 h-4" /></Button>
                 <Button variant="ghost" size="sm" onClick={() => { setCursor(new Date()); setSelected(new Date()); }}>{t('cal.today')}</Button>
+                <div className="w-40 sm:w-56">
+                  <SheetSelect
+                    value={navValue}
+                    onValueChange={(v) => { const d = new Date(v); setCursor(d); setSelected(d); }}
+                    options={navOptions}
+                    placeholder={view === 'day' ? 'Jump to day' : 'Jump to week'}
+                  />
+                </div>
                 <Button variant="ghost" size="icon" onClick={() => view === 'day' ? stepDay(1) : setCursor(addDays(cursor, 7))}><ChevronRight className="w-4 h-4" /></Button>
               </div>
             </div>

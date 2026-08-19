@@ -121,16 +121,14 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
     const flag = flagged ? 'manual' : (task?.flag === 'manual' ? null : (task?.flag || null));
     let due_date_val = null;
     let end_date_val = null;
-    if (!repeating && dueDate) {
-      if (timeRange && startTime) {
-        due_date_val = combineDateTime(dueDate, startTime);
-        end_date_val = endTime ? combineDateTime(dueDate, endTime) : null;
-      } else {
-        due_date_val = dateOnly(dueDate);
-      }
-    } else if (repeating && repeatStart && timeRange && startTime) {
-      due_date_val = combineDateTime(repeatStart, startTime);
-      end_date_val = endTime ? combineDateTime(repeatStart, endTime) : null;
+    if (timeRange && startTime) {
+      // Time range is independent of whether a date is set: fall back to today
+      // so a start/end time is preserved even with no deadline or repeat start.
+      const base = !repeating ? (dueDate || new Date().toISOString()) : (repeatStart || new Date().toISOString());
+      due_date_val = combineDateTime(base, startTime);
+      end_date_val = endTime ? combineDateTime(base, endTime) : null;
+    } else if (!repeating && dueDate) {
+      due_date_val = dateOnly(dueDate);
     }
     onSave({
       ...(task?.id ? { id: task.id } : {}),

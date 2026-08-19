@@ -6,15 +6,17 @@ import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-// Date (and optional time) picker. The popover mini-calendar shows prev/next
-// arrow buttons AND lets users scroll / swipe to move between months. The date
-// and time stack vertically so they never overlap inside narrow grid cells.
-// value/onChange use ISO strings ('' when empty).
+// Date (and optional time) picker. Users can TYPE the date/time directly in the
+// inputs OR open the mini-calendar popover. The popover mini-calendar shows
+// prev/next month arrow buttons AND lets users scroll / swipe to move between
+// months. The date and time stack vertically so they never overlap inside
+// narrow grid cells. value/onChange use ISO strings ('' when empty).
 export default function ScrollDatePicker({ value, onChange, withTime = true, placeholder }) {
   const parsed = value ? new Date(value) : null;
   const valid = parsed && isValid(parsed);
   const selected = valid ? parsed : undefined;
   const timeStr = withTime && valid ? format(parsed, 'HH:mm') : '';
+  const dateStr = valid ? format(parsed, 'yyyy-MM-dd') : '';
 
   const [month, setMonth] = useState(() => (valid ? parsed : new Date()));
 
@@ -45,45 +47,61 @@ export default function ScrollDatePicker({ value, onChange, withTime = true, pla
     }, { passive: true });
   }, []);
 
-  function emit(date, time) {
-    if (!date) { onChange(''); return; }
-    const d = new Date(date);
+  function applyDate(d) {
+    if (!d) { onChange(''); return; }
+    const dt = new Date(d);
     if (withTime) {
-      const [hh, mm] = (time || '00:00').split(':').map(Number);
-      d.setHours(hh || 0, mm || 0, 0, 0);
+      const [hh, mm] = (timeStr || '00:00').split(':').map(Number);
+      dt.setHours(hh || 0, mm || 0, 0, 0);
     } else {
-      d.setHours(0, 0, 0, 0);
+      dt.setHours(0, 0, 0, 0);
     }
-    onChange(d.toISOString());
+    onChange(dt.toISOString());
   }
 
-  const label = valid ? format(parsed, withTime ? 'MMM d, yyyy · h:mm a' : 'MMM d, yyyy') : (placeholder || 'Pick a date');
+  function onDateInputChange(e) {
+    const v = e.target.value;
+    if (!v) { onChange(''); return; }
+    const [y, m, d] = v.split('-').map(Number);
+    applyDate(new Date(y, m - 1, d));
+  }
+
+  function onTimeInputChange(e) {
+    const v = e.target.value;
+    if (!v) return;
+    const base = valid ? new Date(parsed) : new Date();
+    const [hh, mm] = v.split(':').map(Number);
+    base.setHours(hh || 0, mm || 0, 0, 0);
+    onChange(base.toISOString());
+  }
 
   return (
     <div className="flex flex-col gap-2">
-      <Popover onOpenChange={(o) => { if (o && valid) setMonth(parsed); }}>
-        <PopoverTrigger asChild>
-          <Button type="button" variant="outline" className="rounded-xl justify-start text-left font-normal w-full h-9">
-            <CalendarIcon className="w-4 h-4 mr-2 opacity-70 shrink-0" />
-            <span className="truncate">{label}</span>
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <div ref={attachNav}>
-            <Calendar
-              mode="single"
-              selected={selected}
-              month={month}
-              onMonthChange={setMonth}
-              onSelect={(d) => emit(d, timeStr)}
-              initialFocus
-            />
-            <p className="text-[11px] text-muted-foreground text-center pb-2 px-3">Use the arrows, scroll, or swipe to change months</p>
-          </div>
-        </PopoverContent>
-      </Popover>
+      <div className="flex gap-2">
+        <Input type="date" value={dateStr} onChange={onDateInputChange} className="flex-1" aria-label={placeholder || 'Date'} />
+        <Popover onOpenChange={(o) => { if (o && valid) setMonth(parsed); }}>
+          <PopoverTrigger asChild>
+            <Button type="button" variant="outline" size="icon" className="shrink-0" title="Pick from calendar">
+              <CalendarIcon className="w-4 h-4 opacity-70" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="end">
+            <div ref={attachNav}>
+              <Calendar
+                mode="single"
+                selected={selected}
+                month={month}
+                onMonthChange={setMonth}
+                onSelect={(d) => applyDate(d)}
+                initialFocus
+              />
+              <p className="text-[11px] text-muted-foreground text-center pb-2 px-3">Use the arrows, scroll, or swipe to change months</p>
+            </div>
+          </PopoverContent>
+        </Popover>
+      </div>
       {withTime && (
-        <Input type="time" value={timeStr} disabled={!selected} onChange={(e) => emit(selected || new Date(), e.target.value)} />
+        <Input type="time" value={timeStr} onChange={onTimeInputChange} />
       )}
     </div>
   );
