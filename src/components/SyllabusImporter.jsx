@@ -198,12 +198,13 @@ export default function SyllabusImporter({ open, onClose, courses = [], area = '
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-2xl max-h-[88vh] overflow-y-auto overflow-x-hidden">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2"><Sparkles className="w-5 h-5 text-indigo-600" /> {title}</DialogTitle>
+      <DialogContent className="sm:max-w-2xl max-h-[88vh] flex flex-col overflow-hidden p-0 gap-0">
+        <DialogHeader className="p-6 pb-2 shrink-0 text-center">
+          <DialogTitle className="flex items-center justify-center gap-2"><Sparkles className="w-5 h-5 text-indigo-600" /> {title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
 
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-6 py-2 min-h-0">
         {done ? (
           <div className="py-10 text-center">
             <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-3" />
@@ -300,19 +301,22 @@ export default function SyllabusImporter({ open, onClose, courses = [], area = '
               </div>
             )}
 
-            <DialogFooter>
-              <Button variant="ghost" onClick={onClose}>Cancel</Button>
-              {!data ? (
-                <Button onClick={handleExtract} disabled={!file || loading}>
-                  {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Reading…</> : <><Sparkles className="w-4 h-4 mr-2" /> Extract</>}
-                </Button>
-              ) : (
-                <Button onClick={handleConfirm} disabled={saving}>
-                  {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving…</> : (isCalendarMode ? 'Import to calendar' : (isSchool && courseId !== 'new' ? 'Update planner' : 'Add to planner'))}
-                </Button>
-              )}
-            </DialogFooter>
           </div>
+        )}
+        </div>
+        {!done && (
+          <DialogFooter className="p-6 pt-3 shrink-0 border-t border-border/60 bg-background sm:flex-row sm:justify-center">
+            <Button variant="ghost" onClick={onClose}>Cancel</Button>
+            {!data ? (
+              <Button onClick={handleExtract} disabled={!file || loading}>
+                {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Reading…</> : <><Sparkles className="w-4 h-4 mr-2" /> Extract</>}
+              </Button>
+            ) : (
+              <Button onClick={handleConfirm} disabled={saving}>
+                {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving…</> : (isCalendarMode ? 'Import to calendar' : (isSchool && courseId !== 'new' ? 'Update planner' : 'Add to planner'))}
+              </Button>
+            )}
+          </DialogFooter>
         )}
       </DialogContent>
     </Dialog>
