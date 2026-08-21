@@ -24,7 +24,7 @@ export default function ApplyColorPanel({ color, tasks, area, courses, selectedI
   const allMatchedSelected = matched.length > 0 && matched.every((t) => selectedIds.has(t.id));
 
   return (
-    <div className="space-y-1.5 rounded-xl border border-border bg-muted/30 p-3">
+    <div className="space-y-1.5 rounded-xl border border-border bg-muted/30 p-3 min-w-0">
       <button type="button" onClick={() => setOpen((o) => !o)} className="flex items-center gap-2 w-full text-left text-sm font-medium">
         <span className="w-3.5 h-3.5 rounded-full border border-border shrink-0" style={{ backgroundColor: color }} />
         Apply this color to other tasks
@@ -58,17 +58,17 @@ export default function ApplyColorPanel({ color, tasks, area, courses, selectedI
             </button>
             {selectedIds.size > 0 && <button type="button" className="text-muted-foreground hover:underline" onClick={onClear}>Clear</button>}
           </div>
-          <div className="max-h-48 overflow-y-auto space-y-1">
+          <div className="max-h-48 overflow-y-auto overflow-x-hidden space-y-1 min-w-0">
             {matched.length === 0 && <p className="text-xs text-muted-foreground py-2 text-center">No matching tasks.</p>}
             {matched.map((t) => {
               const c = courseMap[t.course_id];
               const on = selectedIds.has(t.id);
               return (
-                <label key={t.id} className={`flex items-center gap-2 rounded-lg px-2 py-1.5 cursor-pointer border ${on ? 'border-primary/40 bg-primary/5' : 'border-transparent hover:bg-accent/50'}`}>
+                <label key={t.id} className={`flex items-center gap-2 rounded-lg px-2 py-1.5 cursor-pointer border min-w-0 ${on ? 'border-primary/40 bg-primary/5' : 'border-transparent hover:bg-accent/50'}`}>
                   <Checkbox checked={on} onCheckedChange={() => onToggle(t.id)} className="shrink-0" />
                   <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: t.color || 'transparent', outline: t.color ? 'none' : '1px dashed #cbd5e1', outlineOffset: '-1px' }} />
-                  <span className="text-xs font-medium truncate flex-1">{t.title}</span>
-                  <span className="text-[11px] text-muted-foreground shrink-0">{taskTypeMeta(t.type).label}{c ? ` · ${c.code || c.name}` : ''}</span>
+                  <span className="text-xs font-medium truncate min-w-0 flex-1">{t.title}</span>
+                  <span className="text-[11px] text-muted-foreground shrink-0 truncate max-w-[45%]">{taskTypeMeta(t.type).label}{c ? ` · ${c.code || c.name}` : ''}</span>
                 </label>
               );
             })}

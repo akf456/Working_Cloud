@@ -46,6 +46,10 @@
       "type": "string",
       "title": "Location"
     },
+    "color": {
+      "type": "string",
+      "title": "Color"
+    },
     "source": {
       "type": "string",
       "enum": [

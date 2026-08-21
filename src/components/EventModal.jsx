@@ -10,6 +10,7 @@ import { EVENT_TYPE } from '@/lib/planner';
 import ScrollDatePicker from '@/components/ScrollDatePicker';
 
 const WDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const PALETTE = ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b', '#8b5cf6', '#ef4444', '#0ea5e9', '#84cc16'];
 
 export default function EventModal({ open, onClose, onSave, event, courses = [], defaultStart, area = 'school' }) {
   const [title, setTitle] = useState('');
@@ -24,6 +25,7 @@ export default function EventModal({ open, onClose, onSave, event, courses = [],
   const [repeatDays, setRepeatDays] = useState([]);
   const [repeatStart, setRepeatStart] = useState('');
   const [repeatEnd, setRepeatEnd] = useState('');
+  const [color, setColor] = useState('');
 
   useEffect(() => {
     const base = event?.start_date || defaultStart;
@@ -39,6 +41,7 @@ export default function EventModal({ open, onClose, onSave, event, courses = [],
     setRepeatDays(Array.isArray(event?.repeat_days) ? event.repeat_days : []);
     setRepeatStart(event?.repeat_start_date || (base || ''));
     setRepeatEnd(event?.repeat_end_date || '');
+    setColor(event?.color || '');
   }, [event, open, defaultStart]);
 
   function toggleDay(i) {
@@ -61,18 +64,19 @@ export default function EventModal({ open, onClose, onSave, event, courses = [],
       repeat,
       repeat_days: repeating ? repeatDays : [],
       repeat_start_date: repeating ? (repeatStart || start) : null,
-      repeat_end_date: repeating && repeatEnd ? repeatEnd : null
+      repeat_end_date: repeating && repeatEnd ? repeatEnd : null,
+      color: color || null
     });
     onClose();
   }
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-lg max-h-[88vh] flex flex-col overflow-hidden p-0 gap-0">
+        <DialogHeader className="p-6 pb-2 shrink-0">
           <DialogTitle>{event ? 'Edit event' : 'New event'}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 py-2">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-6 py-2 min-w-0 space-y-4">
           <div className="space-y-1.5">
             <Label>Title</Label>
             <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Midterm Exam" autoFocus />
@@ -145,11 +149,24 @@ export default function EventModal({ open, onClose, onSave, event, courses = [],
             <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Room / link" />
           </div>
           <div className="space-y-1.5">
+            <Label>Event color</Label>
+            <div className="flex items-center gap-2 flex-wrap">
+              <input type="color" value={color || '#6366f1'} onChange={(e) => setColor(e.target.value)} className="w-9 h-9 p-1 rounded-lg cursor-pointer border border-input bg-transparent" />
+              <div className="flex gap-1 flex-wrap items-center min-w-0">
+                {PALETTE.map((c) => (
+                  <button type="button" key={c} onClick={() => setColor(c)} className={`w-6 h-6 rounded-full border-2 transition ${color === c ? 'border-foreground' : 'border-transparent'}`} style={{ backgroundColor: c }} />
+                ))}
+                {color && <button type="button" onClick={() => setColor('')} className="text-xs text-muted-foreground hover:text-foreground ml-1">Clear</button>}
+              </div>
+            </div>
+            <p className="text-[11px] text-muted-foreground">Optional — overrides the type/course color on the calendar.</p>
+          </div>
+          <div className="space-y-1.5">
             <Label>Notes</Label>
             <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
           </div>
         </div>
-        <DialogFooter>
+        <DialogFooter className="p-6 pt-3 shrink-0 border-t border-border/60 bg-background">
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
           <Button onClick={submit} disabled={!title.trim() || !start}>{event ? 'Save changes' : 'Add event'}</Button>
         </DialogFooter>

@@ -143,7 +143,7 @@ export default function CalendarPage() {
   }
 
   const courseMap = Object.fromEntries(courses.map((c) => [c.id, c]));
-  const evColor = (e) => (courseMap[e.course_id]?.color) || (EVENT_TYPE[e.type] || EVENT_TYPE.event).dot;
+  const evColor = (e) => e.color || courseMap[e.course_id]?.color || (EVENT_TYPE[e.type] || EVENT_TYPE.event).dot;
   const tkColor = (t) => t.color || courseMap[t.course_id]?.color || '#f59e0b';
   const selectedItems = itemsForDay(selected);
 
@@ -171,6 +171,7 @@ export default function CalendarPage() {
       repeat_days: Array.isArray(e.repeat_days) ? e.repeat_days : [],
       repeat_start_date: e.repeat_start_date || null,
       repeat_end_date: e.repeat_end_date || null,
+      color: e.color || null,
       source: 'manual',
       area
     };
@@ -376,7 +377,7 @@ export default function CalendarPage() {
                     {completable ? (
                       <Checkbox checked={done} onCheckedChange={() => toggleEventDay(e)} className="mt-1.5 shrink-0" />
                     ) : (
-                      <span className="w-2.5 h-2.5 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: courseMap[e.course_id]?.color || E.dot }} />
+                      <span className="w-2.5 h-2.5 rounded-full mt-1.5 shrink-0" style={{ backgroundColor: evColor(e) }} />
                     )}
                     <div className="min-w-0 flex-1">
                       <p className={`font-medium text-sm ${done ? 'line-through opacity-70' : ''}`}>{e.title}</p>

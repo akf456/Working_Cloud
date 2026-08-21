@@ -172,11 +172,11 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-lg max-h-[88vh] flex flex-col overflow-hidden p-0 gap-0">
+        <DialogHeader className="p-6 pb-2 shrink-0">
           <DialogTitle>{task ? (listType === 'todo' ? 'Edit list' : 'Edit task') : (listType === 'todo' ? 'New list' : 'New task')}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 py-2">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-6 py-2 min-w-0 space-y-4">
           <div className="space-y-1.5">
             <Label htmlFor="t-title">Title</Label>
             <Input id="t-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={AREAS[area]?.titlePlaceholder || 'Task title'} list="task-titles" autoFocus />
@@ -280,7 +280,7 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
               <Label>Task color</Label>
               <div className="flex items-center gap-2">
                 <input type="color" value={color || '#6366f1'} onChange={(e) => setColor(e.target.value)} className="w-9 h-9 p-1 rounded-lg cursor-pointer border border-input bg-transparent" />
-                <div className="flex gap-1 flex-wrap items-center">
+                <div className="flex gap-1 flex-wrap items-center min-w-0">
                   {PALETTE.map((c) => (
                     <button type="button" key={c} onClick={() => setColor(c)} className={`w-6 h-6 rounded-full border-2 transition ${color === c ? 'border-foreground' : 'border-transparent'}`} style={{ backgroundColor: c }} />
                   ))}
@@ -316,7 +316,7 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
             <Textarea id="t-desc" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} placeholder="Details, links, requirements…" />
           </div>
         </div>
-        <DialogFooter>
+        <DialogFooter className="p-6 pt-3 shrink-0 border-t border-border/60 bg-background">
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
           <Button onClick={submit} disabled={!canSave}>{task ? 'Save changes' : (listType === 'todo' ? 'Add list' : 'Add task')}</Button>
         </DialogFooter>
