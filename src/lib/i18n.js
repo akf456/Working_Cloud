@@ -62,8 +62,9 @@ export const STRINGS = {
 
   'layout.customizeArea': { en: 'Customize {area}', es: 'Personalizar {area}', fr: 'Personnaliser {area}', zh: '自定义{area}' },
   'layout.colorsCover': { en: 'Colors & cover photo', es: 'Colores y portada', fr: 'Couleurs et couverture', zh: '颜色与封面' },
-  'layout.uploadSyllabus': { en: 'Upload a syllabus', es: 'Sube un programa', fr: 'Importer un programme', zh: '上传教学大纲' },
-  'layout.syllabusPromo': { en: 'Let AI pull every deadline & exam date for you.', es: 'La IA extrae fechas límite y exámenes por ti.', fr: "L'IA extrait chaque échéance et date d'examen.", zh: '让AI为你提取所有截止日期和考试日期。' },
+  'layout.uploadSyllabus': { en: 'Upload a document', es: 'Sube un documento', fr: 'Importer un document', zh: '上传文档' },
+  'layout.syllabusPromo': { en: 'Let AI pull tasks, deadlines, events & contacts from any file.', es: 'La IA extrae tareas, fechas, eventos y contactos de cualquier archivo.', fr: "L'IA extrait tâches, dates, événements et contacts de tout fichier.", zh: '让AI从任意文件提取任务、日期、事件和联系人。' },
+  'layout.uploadNow': { en: 'Upload now', es: 'Subir ahora', fr: 'Importer maintenant', zh: '立即上传' },
   'layout.goTo': { en: 'Go to {grouping} →', es: 'Ir a {grouping} →', fr: 'Aller à {grouping} →', zh: '前往{grouping} →' },
   'layout.shareOrganizer': { en: 'Share this organizer', es: 'Comparte este organizador', fr: 'Partager cet agenda', zh: '分享此组织器' },
   'layout.sharePromo': { en: 'A read-only link anyone can open. Only this area is shared.', es: 'Un enlace de solo lectura que cualquiera puede abrir. Solo se comparte esta área.', fr: 'Un lien en lecture seule que tout le monde peut ouvrir. Seul cet espace est partagé.', zh: '任何人都能打开的只读链接。仅共享此区域。' },

@@ -56,7 +56,7 @@ export default function CoursesPage() {
           <p className="text-sm text-muted-foreground mt-1">{area === 'school' ? t('courses.subtitleSchool') : t('courses.subtitleOther')}</p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" onClick={() => setImporter(true)} className="rounded-xl"><Sparkles className="w-4 h-4 mr-1.5 text-indigo-600" /> {area === 'school' ? t('courses.importSyllabus') : t('courses.importDoc')}</Button>
+          <Button variant="outline" onClick={() => setImporter(true)} className="rounded-xl"><Sparkles className="w-4 h-4 mr-1.5 text-indigo-600" /> {t('courses.importDoc')}</Button>
           <Button onClick={() => { setEdit(null); setModal(true); }} className="rounded-xl"><Plus className="w-4 h-4 mr-1.5" /> {t('courses.add', { singular: t('area.' + area + '.singular') })}</Button>
         </div>
       </div>
@@ -67,9 +67,9 @@ export default function CoursesPage() {
         <Card className="p-10 text-center">
           <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-4"><GraduationCap className="w-7 h-7 text-indigo-600" /></div>
           <p className="font-semibold text-lg">No {a.groupingLabel.toLowerCase()} yet</p>
-          <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">{area === 'school' ? 'Add a course manually, or import a syllabus to create one with all deadlines auto-filled.' : 'Add one manually, or import a document to auto-fill tasks, deadlines & contacts.'}</p>
+          <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">Add one manually, or import a document to auto-fill tasks, deadlines & contacts.</p>
           <div className="flex gap-2 justify-center mt-5">
-            <Button onClick={() => setImporter(true)}><Sparkles className="w-4 h-4 mr-1.5" /> {area === 'school' ? t('courses.importSyllabus') : t('courses.importDoc')}</Button>
+            <Button onClick={() => setImporter(true)}><Sparkles className="w-4 h-4 mr-1.5" /> {t('courses.importDoc')}</Button>
             <Button variant="outline" onClick={() => { setEdit(null); setModal(true); }}>{t('courses.addManually')}</Button>
           </div>
         </Card>

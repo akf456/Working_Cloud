@@ -189,16 +189,16 @@ export default function SyllabusImporter({ open, onClose, courses = [], area = '
     }
   }
 
-  const title = isCalendarMode ? 'Import calendar' : (isSchool ? 'Syllabus importer' : 'Document importer');
+  const title = isCalendarMode ? 'Import calendar' : 'Upload document';
   const description = isCalendarMode
     ? 'Upload a school district calendar, schedule PDF, screenshot, or fax copy — AI extracts holidays, breaks, events, and key dates. Duplicates are automatically skipped.'
-    : (isSchool
-      ? (courseId !== 'new' ? 'AI compares this to the existing course — new items are added, and items no longer in the syllabus are flagged, never deleted.' : 'Upload a syllabus — AI pulls out deadlines, exam dates, contacts & topics for you to review.')
-      : 'Upload a document — a syllabus, a previous calendar, a schedule PDF, a screenshot, or any file — and AI pulls out tasks, deadlines & contacts for this space. Adjust anything anytime.');
+    : (isSchool && courseId !== 'new'
+      ? 'AI compares this to the existing course — new items are added, and items no longer in the document are flagged, never deleted.'
+      : 'Upload any document — a syllabus, calendar, schedule PDF, Word doc, screenshot, or image — and AI pulls out tasks, deadlines, events & contacts for this space. Adjust anything anytime.');
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-2xl max-h-[88vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[88vh] overflow-y-auto overflow-x-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><Sparkles className="w-5 h-5 text-indigo-600" /> {title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
@@ -241,55 +241,59 @@ export default function SyllabusImporter({ open, onClose, courses = [], area = '
             )}
 
             <div className="space-y-1.5">
-              <Label>{isCalendarMode ? 'Calendar file (PDF, image, screenshot, fax copy)' : (isSchool ? 'Syllabus file' : 'Document file')}</Label>
-              <label className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border hover:border-indigo-400 hover:bg-indigo-50/40 transition cursor-pointer py-8 px-4 text-center">
+              <Label>{isCalendarMode ? 'Calendar file (PDF, image, screenshot, fax copy)' : 'Document file'}</Label>
+              <label className="flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border hover:border-indigo-400 hover:bg-indigo-50/40 transition cursor-pointer py-6 px-4 text-center">
                 <UploadCloud className="w-7 h-7 text-indigo-500" />
-                <span className="text-sm font-medium">{file ? file.name : 'Click to upload — PDF, image, screenshot'}</span>
+                <span className="text-sm font-medium">{file ? file.name : 'Click to upload — PDF, Word, image, screenshot, calendar'}</span>
                 <span className="text-xs text-muted-foreground">{file ? `${(file.size / 1024).toFixed(0)} KB` : 'or drop it here'}</span>
-                <input type="file" className="hidden" accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.txt,.gif,.webp,.tiff,.bmp" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+                <input type="file" className="hidden" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.gif,.webp,.tiff,.bmp,.ics,.xls,.xlsx,.csv,.ppt,.pptx,.html" onChange={(e) => setFile(e.target.files?.[0] || null)} />
               </label>
             </div>
 
             {error && <p className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">{error}</p>}
 
             {data && (
-              <div className="space-y-3 rounded-xl border border-border bg-muted/30 p-4 animate-fade-in">
+              <div className="space-y-3 rounded-xl border border-border bg-muted/30 p-4 animate-fade-in min-w-0">
                 <p className="text-sm font-semibold flex items-center gap-2"><FileText className="w-4 h-4 text-indigo-600" /> Extracted preview</p>
                 {(data.semester || data.course_name) && (
-                  <p className="text-xs text-muted-foreground">{[data.course_name, data.semester].filter(Boolean).join(' · ')}</p>
+                  <p className="text-xs text-muted-foreground truncate">{[data.course_name, data.semester].filter(Boolean).join(' · ')}</p>
                 )}
-                <div className="grid grid-cols-4 gap-2 text-center">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
                   <Stat icon={ListChecks} label="Tasks" n={data.tasks?.length || 0} />
                   <Stat icon={CalendarClock} label="Events" n={data.events?.length || 0} />
                   <Stat icon={Users} label="Contacts" n={data.contacts?.length || 0} />
                   <Stat icon={FileText} label="Topics" n={data.topics?.length || 0} />
                 </div>
                 {(data.contacts?.length > 0) && (
-                  <div className="space-y-1.5 text-sm">
+                  <div className="space-y-1.5 text-sm min-w-0">
                     <p className="text-xs font-semibold text-muted-foreground">Contacts</p>
-                    {(data.contacts || []).slice(0, 8).map((c, i) => (
-                      <div key={'c' + i} className="flex items-center justify-between gap-2 bg-card rounded-lg px-3 py-1.5">
-                        <span className="truncate">{c.name}{c.role ? ` · ${c.role}` : ''}</span>
-                        <span className="text-xs text-muted-foreground shrink-0 truncate">{c.email || c.phone || c.office_location || ''}</span>
+                    {(data.contacts || []).slice(0, 4).map((c, i) => (
+                      <div key={'c' + i} className="flex items-center justify-between gap-2 bg-card rounded-lg px-3 py-1.5 min-w-0">
+                        <span className="truncate min-w-0">{c.name}{c.role ? ` · ${c.role}` : ''}</span>
+                        <span className="text-xs text-muted-foreground shrink-0 truncate max-w-[50%]">{c.email || c.phone || c.office_location || ''}</span>
                       </div>
                     ))}
+                    {data.contacts.length > 4 && <p className="text-xs text-muted-foreground pl-1">+{data.contacts.length - 4} more</p>}
                   </div>
                 )}
                 {(data.tasks?.length > 0 || data.events?.length > 0) && (
-                  <div className="max-h-52 overflow-y-auto space-y-1.5 text-sm">
+                  <div className="space-y-1.5 text-sm min-w-0">
                     <p className="text-xs font-semibold text-muted-foreground">Events &amp; tasks</p>
-                    {(data.events || []).slice(0, 20).map((e, i) => (
-                      <div key={'e' + i} className="flex items-center justify-between gap-2 bg-card rounded-lg px-3 py-1.5">
-                        <span className="truncate">{e.title}</span>
-                        <span className="text-xs text-muted-foreground shrink-0">{EVENT_TYPE[e.type]?.label || 'Event'}{e.start_date ? ` · ${new Date(e.start_date).toLocaleDateString()}` : ''}{e.repeat && e.repeat !== 'none' ? ` · ${e.repeat}` : ''}</span>
+                    {(data.events || []).slice(0, 6).map((e, i) => (
+                      <div key={'e' + i} className="flex items-center justify-between gap-2 bg-card rounded-lg px-3 py-1.5 min-w-0">
+                        <span className="truncate min-w-0">{e.title}</span>
+                        <span className="text-xs text-muted-foreground shrink-0 truncate max-w-[50%]">{EVENT_TYPE[e.type]?.label || 'Event'}{e.start_date ? ` · ${new Date(e.start_date).toLocaleDateString()}` : ''}{e.repeat && e.repeat !== 'none' ? ` · ${e.repeat}` : ''}</span>
                       </div>
                     ))}
-                    {(data.tasks || []).slice(0, 12).map((t, i) => (
-                      <div key={'t' + i} className="flex items-center justify-between gap-2 bg-card rounded-lg px-3 py-1.5">
-                        <span className="truncate">{t.title}</span>
-                        <span className="text-xs text-muted-foreground shrink-0">{TASK_TYPE[t.type]?.label || 'Misc'}{t.due_date ? ` · ${new Date(t.due_date).toLocaleDateString()}` : ''}</span>
+                    {(data.tasks || []).slice(0, 6).map((t, i) => (
+                      <div key={'t' + i} className="flex items-center justify-between gap-2 bg-card rounded-lg px-3 py-1.5 min-w-0">
+                        <span className="truncate min-w-0">{t.title}</span>
+                        <span className="text-xs text-muted-foreground shrink-0 truncate max-w-[50%]">{TASK_TYPE[t.type]?.label || 'Misc'}{t.due_date ? ` · ${new Date(t.due_date).toLocaleDateString()}` : ''}</span>
                       </div>
                     ))}
+                    {(((data.events?.length || 0) + (data.tasks?.length || 0)) > 12) && (
+                      <p className="text-xs text-muted-foreground pl-1">+{(data.events?.length || 0) + (data.tasks?.length || 0) - 12} more — all are added, edit after.</p>
+                    )}
                   </div>
                 )}
                 <p className="text-xs text-muted-foreground">Review the details — you can edit everything after it's added.</p>

@@ -16,6 +16,7 @@ import WhatNewModal from '@/components/WhatNewModal';
 import AiTaskBreakdown from '@/components/AiTaskBreakdown';
 import RefreshBanner from '@/components/RefreshBanner';
 import MoreSheet from '@/components/MoreSheet';
+import SyllabusImporter from '@/components/SyllabusImporter';
 import { useAppUpdate } from '@/hooks/useAppUpdate';
 import { CHANGELOG, getUnseenChangelog } from '@/lib/changelog';
 
@@ -32,6 +33,7 @@ export default function Layout() {
   const [whatNewEntries, setWhatNewEntries] = useState(CHANGELOG);
   const [aiOpen, setAiOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [docImport, setDocImport] = useState(false);
   const { needsRefresh } = useAppUpdate();
   useEffect(() => { const u = getUnseenChangelog(); if (u.length) { setWhatNewEntries(u); setWhatNew(true); } }, []);
 
@@ -115,14 +117,14 @@ export default function Layout() {
               <p className="text-[11px] text-muted-foreground">{t('layout.colorsCover')}</p>
             </div>
           </button>
-          {area === 'school' && (
-            <div className="rounded-2xl bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100 p-4">
-              <Sparkles className="w-5 h-5 text-indigo-600 mb-2" />
-              <p className="text-sm font-semibold text-indigo-900">{t('layout.uploadSyllabus')}</p>
-              <p className="text-xs text-indigo-700/80 mt-1">{t('layout.syllabusPromo')}</p>
-              <Link to="/courses" className="mt-3 inline-block text-xs font-semibold text-indigo-600 hover:text-indigo-800">{t('layout.goTo', { grouping: t('area.' + area + '.grouping') })}</Link>
-            </div>
-          )}
+          <div className="rounded-2xl bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-100 p-4">
+            <Sparkles className="w-5 h-5 text-indigo-600 mb-2" />
+            <p className="text-sm font-semibold text-indigo-900">{t('layout.uploadSyllabus')}</p>
+            <p className="text-xs text-indigo-700/80 mt-1">{t('layout.syllabusPromo')}</p>
+            <button onClick={() => setDocImport(true)} className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-800">
+              <Sparkles className="w-3.5 h-3.5" /> {t('layout.uploadNow')}
+            </button>
+          </div>
           <div className="rounded-2xl bg-gradient-to-br from-violet-50 to-fuchsia-50 border border-violet-100 p-4">
             <Wand2 className="w-5 h-5 text-violet-600 mb-2" />
             <p className="text-sm font-semibold text-violet-900">AI task breakdown</p>
@@ -191,6 +193,7 @@ export default function Layout() {
       <WhatNewModal open={whatNew} entries={whatNewEntries} onClose={() => setWhatNew(false)} />
       <AiTaskBreakdown open={aiOpen} onClose={() => setAiOpen(false)} area={area} onDone={checkUserAuth} />
       <MoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} area={area} onNavigate={(to) => nav(to)} onAreas={switchArea} onLogout={() => base44.auth.logout('/')} />
+      <SyllabusImporter open={docImport} onClose={() => setDocImport(false)} area={area} courses={[]} onDone={checkUserAuth} />
     </div>
   );
 }
