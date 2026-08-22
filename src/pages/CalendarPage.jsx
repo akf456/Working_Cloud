@@ -284,6 +284,7 @@ export default function CalendarPage() {
               onEditEvent={openEventModal}
               onEditTask={openTaskModal}
               onToggleEvent={toggleEventDay}
+              onToggleTask={toggleDay}
               onSelectDay={(d) => { setSelected(d); setCursor(d); setView('day'); }}
               compact={view === 'week'}
             />

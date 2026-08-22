@@ -5,8 +5,10 @@ import { base44 } from '@/api/base44Client';
 // holiday) which aren't "completed" — they just pass.
 export const COMPLETABLE_EVENT_TYPES = ['class', 'study', 'event'];
 
+// Every event type is completable — exams, deadlines, and holidays can be
+// checked off too, not just classes/study/events.
 export function isEventCompletable(event) {
-  return !!event && COMPLETABLE_EVENT_TYPES.includes(event.type);
+  return !!event;
 }
 
 export function isEventDoneOnDay(event, dateStr) {

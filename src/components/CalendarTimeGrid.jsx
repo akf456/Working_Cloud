@@ -41,7 +41,7 @@ function layoutTimed(timed) {
   return sorted;
 }
 
-function DayColumn({ day, cell, evColor, tkColor, today, onEditEvent, onEditTask, onToggleEvent, onSelectDay, compact }) {
+function DayColumn({ day, cell, evColor, tkColor, today, onEditEvent, onEditTask, onToggleEvent, onToggleTask, onSelectDay, compact }) {
   const { allDay, timed } = useMemo(() => {
     const all = [];
     const tm = [];
@@ -132,18 +132,20 @@ function DayColumn({ day, cell, evColor, tkColor, today, onEditEvent, onEditTask
               }}
             >
               <div className="flex items-start gap-1">
-                {it.kind === 'task' ? (
-                  <span className="shrink-0 text-[10px] leading-none mt-0.5" style={{ color: it.color }}>⚑</span>
-                ) : it.completable ? (
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); onToggleEvent(it.raw); }}
-                    className={`shrink-0 w-3.5 h-3.5 mt-0.5 rounded-full border-2 flex items-center justify-center ${it.done ? 'bg-emerald-500 border-emerald-500' : ''}`}
-                    style={!it.done ? { borderColor: it.color } : undefined}
-                  >
-                    {it.done && <span className="text-white text-[8px] leading-none">✓</span>}
-                  </button>
-                ) : null}
+                {(() => {
+                  const handler = it.kind === 'task' ? onToggleTask : (it.completable ? onToggleEvent : null);
+                  if (!handler) return null;
+                  return (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); handler(it.raw); }}
+                      className={`shrink-0 w-3.5 h-3.5 mt-0.5 rounded-full border-2 flex items-center justify-center ${it.done ? 'bg-emerald-500 border-emerald-500' : ''}`}
+                      style={!it.done ? { borderColor: it.color } : undefined}
+                    >
+                      {it.done && <span className="text-white text-[8px] leading-none">✓</span>}
+                    </button>
+                  );
+                })()}
                 <div className="min-w-0">
                   <p className={`text-[11px] font-semibold leading-tight truncate ${it.done ? 'line-through opacity-60' : ''}`} style={{ color: it.color }} title={it.title}>{it.title}</p>
                   <p className="text-[9px] text-muted-foreground leading-tight">{fmtTime(it.startMin)}{it.kind === 'task' ? '' : `–${fmtTime(it.endMin)}`}</p>
@@ -163,7 +165,7 @@ function DayColumn({ day, cell, evColor, tkColor, today, onEditEvent, onEditTask
   );
 }
 
-export default function CalendarTimeGrid({ days, itemsForDay, evColor, tkColor, today, onEditEvent, onEditTask, onToggleEvent, onSelectDay, compact }) {
+export default function CalendarTimeGrid({ days, itemsForDay, evColor, tkColor, today, onEditEvent, onEditTask, onToggleEvent, onToggleTask, onSelectDay, compact }) {
   const scrollRef = useRef(null);
   useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = 7 * HOUR_H; }, []);
   const hours = Array.from({ length: 24 });
@@ -196,6 +198,7 @@ export default function CalendarTimeGrid({ days, itemsForDay, evColor, tkColor, 
                 onEditEvent={onEditEvent}
                 onEditTask={onEditTask}
                 onToggleEvent={onToggleEvent}
+                onToggleTask={onToggleTask}
                 onSelectDay={onSelectDay}
                 compact={compact}
               />
