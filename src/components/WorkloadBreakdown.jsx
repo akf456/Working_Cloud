@@ -72,11 +72,21 @@ export default function WorkloadBreakdown({ tasks }) {
   const grandPct = grandTotal ? Math.round((grandDone / grandTotal) * 100) : 0;
   const allDone = grandTotal > 0 && grandDone === grandTotal;
 
+  // Size slices by REMAINING work so completed types don't dominate the pie.
+  // Fully-completed types shrink to a tiny sliver so they stay visible but
+  // don't crowd out the work you still have left.
+  const TINY = 2.5;
+  const totalRemaining = rows.reduce((s, r) => s + r.remaining, 0);
+  const tinyCount = rows.filter((r) => r.total > 0 && r.remaining === 0).length;
+  const activeAngle = Math.max(0, 360 - TINY * tinyCount);
+
   let angle = 0;
   const slices = rows.map((r) => {
-    const span = grandTotal ? (r.total / grandTotal) * 360 : 0;
-    const doneSpan = (r.done / r.total) * span;
-    const s = { ...r, start: angle, span, doneSpan, end: angle + span };
+    let span;
+    if (r.remaining > 0) span = totalRemaining ? (r.remaining / totalRemaining) * activeAngle : 0;
+    else if (r.total > 0) span = TINY;
+    else span = 0;
+    const s = { ...r, start: angle, span, end: angle + span };
     angle += span;
     return s;
   });
@@ -84,7 +94,7 @@ export default function WorkloadBreakdown({ tasks }) {
   return (
     <Card className="p-5">
       <h2 className="font-semibold text-lg mb-1">Workload breakdown</h2>
-      <p className="text-sm text-muted-foreground mb-4">Slices sized by task count (recurring tasks count once for today) — each fills as you complete tasks in that type.</p>
+      <p className="text-sm text-muted-foreground mb-4">Slices sized by what's left to do — completed types shrink to a sliver so your remaining work gets the space.</p>
       <div className="grid sm:grid-cols-2 gap-4 items-center">
         <div className="relative h-44">
           {grandTotal === 0 ? (
@@ -94,19 +104,13 @@ export default function WorkloadBreakdown({ tasks }) {
           ) : (
             <svg viewBox="0 0 200 200" className="w-full h-full">
               {slices.map((s) => {
-                const remainingStart = s.start + s.doneSpan;
-                const remainingEnd = s.end;
-                const hasRemaining = s.remaining > 0;
-                const fullRing = s.done === s.total;
+                if (s.span <= 0) return null;
+                const fullyDone = s.remaining === 0;
                 return (
-                  <g key={s.key}>
-                    {hasRemaining && (
-                      <path d={donutSlice(100, 100, 80, 54, remainingStart, remainingEnd)} fill={shade(s.color, 0.22)} stroke="hsl(var(--background))" strokeWidth="1.5" />
-                    )}
-                    {s.done > 0 && (
-                      <path d={donutSlice(100, 100, 80, 54, s.start, fullRing ? s.end : remainingStart)} fill={s.color} stroke="hsl(var(--background))" strokeWidth="1.5" />
-                    )}
-                  </g>
+                  <path key={s.key}
+                    d={donutSlice(100, 100, 80, 54, s.start, s.end)}
+                    fill={fullyDone ? s.color : shade(s.color, 0.22)}
+                    stroke="hsl(var(--background))" strokeWidth="1.5" />
                 );
               })}
             </svg>

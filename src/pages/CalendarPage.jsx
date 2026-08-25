@@ -259,12 +259,12 @@ export default function CalendarPage() {
 
         {view === 'day' || view === 'week' ? (
           <>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <h2 className="text-lg font-semibold">{view === 'day' ? format(selected, 'EEEE, MMM d, yyyy') : `${format(startOfWeek(cursor, { weekStartsOn: 0 }), 'MMM d')} – ${format(endOfWeek(cursor, { weekStartsOn: 0 }), 'MMM d, yyyy')}`}</h2>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 flex-wrap">
                 <Button variant="ghost" size="icon" onClick={() => view === 'day' ? stepDay(-1) : setCursor(subDays(cursor, 7))}><ChevronLeft className="w-4 h-4" /></Button>
                 <Button variant="ghost" size="sm" onClick={() => { setCursor(new Date()); setSelected(new Date()); }}>{t('cal.today')}</Button>
-                <div className="w-40 sm:w-56">
+                <div className="w-32 sm:w-56">
                   <SheetSelect
                     value={navValue}
                     onValueChange={(v) => { const d = new Date(v); setCursor(d); setSelected(d); }}
