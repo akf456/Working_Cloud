@@ -69,24 +69,19 @@ export default function WorkloadBreakdown({ tasks }) {
 
   const grandTotal = rows.reduce((s, r) => s + r.total, 0);
   const grandDone = rows.reduce((s, r) => s + r.done, 0);
-  const grandPct = grandTotal ? Math.round((grandDone / grandTotal) * 100) : 0;
   const allDone = grandTotal > 0 && grandDone === grandTotal;
 
-  // Size slices by REMAINING work so completed types don't dominate the pie.
-  // Fully-completed types shrink to a tiny sliver so they stay visible but
-  // don't crowd out the work you still have left.
-  const TINY = 2.5;
-  const totalRemaining = rows.reduce((s, r) => s + r.remaining, 0);
-  const tinyCount = rows.filter((r) => r.total > 0 && r.remaining === 0).length;
-  const activeAngle = Math.max(0, 360 - TINY * tinyCount);
+  // Each type keeps its wedge sized by total count (so completed types keep
+  // their space); the colored fill grows outward from the center as you
+  // complete tasks in that type (IXL/ALEKS-style radial progress).
+  const R_INNER = 34;
+  const R_OUTER = 86;
 
   let angle = 0;
   const slices = rows.map((r) => {
-    let span;
-    if (r.remaining > 0) span = totalRemaining ? (r.remaining / totalRemaining) * activeAngle : 0;
-    else if (r.total > 0) span = TINY;
-    else span = 0;
-    const s = { ...r, start: angle, span, end: angle + span };
+    const span = grandTotal ? (r.total / grandTotal) * 360 : 0;
+    const fillR = R_INNER + (R_OUTER - R_INNER) * (r.total ? r.done / r.total : 0);
+    const s = { ...r, start: angle, span, end: angle + span, fillR };
     angle += span;
     return s;
   });
@@ -94,7 +89,7 @@ export default function WorkloadBreakdown({ tasks }) {
   return (
     <Card className="p-5">
       <h2 className="font-semibold text-lg mb-1">Workload breakdown</h2>
-      <p className="text-sm text-muted-foreground mb-4">Slices sized by what's left to do — completed types shrink to a sliver so your remaining work gets the space.</p>
+      <p className="text-sm text-muted-foreground mb-4">Each slice keeps its size by task count — the colored fill grows from the center outward as you complete tasks in that type.</p>
       <div className="grid sm:grid-cols-2 gap-4 items-center">
         <div className="relative h-44">
           {grandTotal === 0 ? (
@@ -105,14 +100,16 @@ export default function WorkloadBreakdown({ tasks }) {
             <svg viewBox="0 0 200 200" className="w-full h-full">
               {slices.map((s) => {
                 if (s.span <= 0) return null;
-                const fullyDone = s.remaining === 0;
                 return (
-                  <path key={s.key}
-                    d={donutSlice(100, 100, 80, 54, s.start, s.end)}
-                    fill={fullyDone ? s.color : shade(s.color, 0.22)}
-                    stroke="hsl(var(--background))" strokeWidth="1.5" />
+                  <g key={s.key}>
+                    <path d={donutSlice(100, 100, R_OUTER, R_INNER, s.start, s.end)} fill={shade(s.color, 0.2)} stroke="hsl(var(--background))" strokeWidth="1" />
+                    {s.done > 0 && (
+                      <path d={donutSlice(100, 100, s.fillR, R_INNER, s.start, s.end)} fill={s.color} />
+                    )}
+                  </g>
                 );
               })}
+              <circle cx="100" cy="100" r={R_INNER - 1} fill="hsl(var(--card))" />
             </svg>
           )}
           {grandTotal > 0 && (
@@ -121,8 +118,8 @@ export default function WorkloadBreakdown({ tasks }) {
                 <span className="text-sm font-semibold text-emerald-600">All done 🎉</span>
               ) : (
                 <>
-                  <span className="text-2xl font-bold gradient-text">{grandPct}%</span>
-                  <span className="text-[11px] text-muted-foreground">{grandDone}/{grandTotal} done</span>
+                  <span className="text-2xl font-bold text-foreground leading-none">{grandTotal}</span>
+                  <span className="text-[10px] text-muted-foreground mt-0.5">tasks today</span>
                 </>
               )}
             </div>
