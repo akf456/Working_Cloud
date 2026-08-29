@@ -344,7 +344,8 @@ export default function CalendarPage() {
                     {evs.map((e, i) => {
                       const col = evColor(e);
                       const done = !!e._done;
-                      return <div key={e.id + (done ? '-d' : '') + i} className={`text-[10px] truncate rounded px-1 py-0.5 ${done ? 'line-through opacity-60' : ''}`} style={{ backgroundColor: col + '22', color: col }}>{done ? '✓ ' : ''}{e.title}</div>;
+                      const flagged = e.flag === 'manual';
+                      return <div key={e.id + (done ? '-d' : '') + i} className={`text-[10px] truncate rounded px-1 py-0.5 ${done ? 'line-through opacity-60' : ''}`} style={{ backgroundColor: col + '22', color: col }}>{done ? '✓ ' : flagged ? '⚑ ' : ''}{e.title}</div>;
                     })}
                     {tks.map((t, i) => {
                       const done = !!t._done;
@@ -382,7 +383,7 @@ export default function CalendarPage() {
                     )}
                     <div className="min-w-0 flex-1">
                       <p className={`font-medium text-sm ${done ? 'line-through opacity-70' : ''}`}>{e.title}</p>
-                      <p className="text-xs text-muted-foreground">{done && completable ? 'Completed' : E.label}{c ? ` · ${c.code || c.name}` : ''}</p>
+                      <p className="text-xs text-muted-foreground">{done && completable ? 'Completed' : E.label}{c ? ` · ${c.code || c.name}` : ''}{e.flag === 'manual' ? ' · Flagged' : e.flag ? ` · ${e.flag}` : ''}</p>
                       {!e.all_day && <p className="text-xs text-muted-foreground">{fmtTime(e.start_date)}{e.end_date ? ` – ${fmtTime(e.end_date)}` : ''}</p>}
                       {e.location && <p className="text-xs text-muted-foreground">📍 {e.location}</p>}
                     </div>

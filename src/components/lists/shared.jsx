@@ -120,7 +120,7 @@ export function EventRow({ event, course, onToggle, onEdit }) {
   const n = daysUntil(event.start_date);
   const overdue = n !== null && n < 0;
   return (
-    <div className={`group flex items-center gap-3 rounded-xl border px-3 py-3 hover:bg-accent/30 transition ${overdue ? 'border-rose-300 bg-rose-50' : 'border-border/60'} ${done ? 'opacity-60' : ''}`}>
+    <div className={`group flex items-center gap-3 rounded-xl border px-3 py-3 hover:bg-accent/30 transition ${event.flag ? 'border-rose-400 bg-rose-50' : overdue ? 'border-rose-300 bg-rose-50' : 'border-border/60'} ${done ? 'opacity-60' : ''}`}>
       <span className="w-1.5 self-stretch rounded-full shrink-0" style={{ backgroundColor: E.dot }} />
       {completable && <Checkbox checked={done} onCheckedChange={onToggle} className="shrink-0" />}
       <span className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${E.chip}`}><CalendarClock className="w-4 h-4" /></span>
@@ -131,6 +131,7 @@ export function EventRow({ event, course, onToggle, onEdit }) {
           {course && <><span>·</span><span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: course.color }} />{course.code || course.name}</span></>}
           {event.source === 'syllabus' && <span className="text-indigo-500">· from syllabus</span>}
           {event.location && <span>· {event.location}</span>}
+          {event.flag && <span className="text-rose-600 font-semibold">· {event.flag === 'manual' ? 'Flagged' : event.flag}</span>}
         </div>
       </div>
       <span className={`text-xs font-semibold shrink-0 ${overdue ? 'text-rose-600' : 'text-muted-foreground'}`}>{fmt(event.start_date, 'MMM d')}{!event.all_day ? ` · ${fmtTime(event.start_date)}` : ''}</span>

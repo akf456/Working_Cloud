@@ -26,6 +26,7 @@ export default function EventModal({ open, onClose, onSave, event, courses = [],
   const [repeatStart, setRepeatStart] = useState('');
   const [repeatEnd, setRepeatEnd] = useState('');
   const [color, setColor] = useState('');
+  const [flagged, setFlagged] = useState(event?.flag === 'manual');
 
   useEffect(() => {
     const base = event?.start_date || defaultStart;
@@ -42,6 +43,7 @@ export default function EventModal({ open, onClose, onSave, event, courses = [],
     setRepeatStart(event?.repeat_start_date || (base || ''));
     setRepeatEnd(event?.repeat_end_date || '');
     setColor(event?.color || '');
+    setFlagged(event?.flag === 'manual');
   }, [event, open, defaultStart]);
 
   function toggleDay(i) {
@@ -51,6 +53,7 @@ export default function EventModal({ open, onClose, onSave, event, courses = [],
   function submit() {
     if (!title.trim() || !start) return;
     const repeating = repeat !== 'none';
+    const flag = flagged ? 'manual' : (event?.flag === 'manual' ? null : (event?.flag || null));
     onSave({
       ...(event?.id ? { id: event.id } : {}),
       title: title.trim(),
@@ -65,7 +68,8 @@ export default function EventModal({ open, onClose, onSave, event, courses = [],
       repeat_days: repeating ? repeatDays : [],
       repeat_start_date: repeating ? (repeatStart || start) : null,
       repeat_end_date: repeating && repeatEnd ? repeatEnd : null,
-      color: color || null
+      color: color || null,
+      flag
     });
     onClose();
   }
@@ -160,6 +164,15 @@ export default function EventModal({ open, onClose, onSave, event, courses = [],
               </div>
             </div>
             <p className="text-[11px] text-muted-foreground">Optional — overrides the type/course color on the calendar.</p>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Flag</Label>
+            <button type="button" onClick={() => setFlagged((f) => !f)}
+              className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition w-full ${flagged ? 'border-rose-400 bg-rose-50 text-rose-700' : 'border-input hover:bg-accent'}`}>
+              <span className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 ${flagged ? 'bg-rose-500 border-rose-500' : 'border-input'}`}>{flagged && <span className="w-2 h-2 bg-white rounded-sm" />}</span>
+              Mark as important
+            </button>
+            <p className="text-[11px] text-muted-foreground">Flagged events stand out across your calendar and lists.</p>
           </div>
           <div className="space-y-1.5">
             <Label>Notes</Label>
