@@ -128,7 +128,7 @@ export default function Dashboard() {
                     const E = EVENT_TYPE[e.type] || EVENT_TYPE.event;
                     return (
                       <li key={e.id} className="flex items-center gap-3 rounded-xl border border-border/60 px-3 py-2.5">
-                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: E.dot }} />
+                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: e.color || E.dot }} />
                         <div className="min-w-0 flex-1"><p className="font-medium text-sm truncate">{e.title}</p>{e.location && <p className="text-xs text-muted-foreground">{e.location}</p>}</div>
                         <span className="text-xs text-muted-foreground shrink-0">{fmt(e.start_date, 'h:mm a')}</span>
                       </li>

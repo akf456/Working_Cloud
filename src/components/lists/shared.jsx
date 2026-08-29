@@ -113,6 +113,8 @@ export function TaskRow({ task, course, onToggle, onEdit, onDelete, onDuplicate,
 
 export function EventRow({ event, course, onToggle, onEdit }) {
   const E = EVENT_TYPE[event.type] || EVENT_TYPE.event;
+  const P = PRIORITY[event.priority] || PRIORITY.medium;
+  const col = event.color || course?.color || E.dot;
   const completable = isEventCompletable(event);
   const d = parseDate(event.start_date) || new Date();
   const dateStr = format(startOfDay(d), 'yyyy-MM-dd');
@@ -121,12 +123,13 @@ export function EventRow({ event, course, onToggle, onEdit }) {
   const overdue = n !== null && n < 0;
   return (
     <div className={`group flex items-center gap-3 rounded-xl border px-3 py-3 hover:bg-accent/30 transition ${event.flag ? 'border-rose-400 bg-rose-50' : overdue ? 'border-rose-300 bg-rose-50' : 'border-border/60'} ${done ? 'opacity-60' : ''}`}>
-      <span className="w-1.5 self-stretch rounded-full shrink-0" style={{ backgroundColor: E.dot }} />
+      <span className="w-1.5 self-stretch rounded-full shrink-0" style={{ backgroundColor: col }} />
       {completable && <Checkbox checked={done} onCheckedChange={onToggle} className="shrink-0" />}
       <span className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${E.chip}`}><CalendarClock className="w-4 h-4" /></span>
       <div className="min-w-0 flex-1">
         <p className={`font-medium text-sm truncate ${done ? 'line-through' : ''} ${overdue ? 'text-rose-700 font-bold' : ''}`}>{event.title}</p>
         <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground mt-0.5">
+          <span className="inline-flex items-center gap-1"><span className={`w-1.5 h-1.5 rounded-full ${P.dot}`} />{P.label}</span>
           <span>· {E.label}</span>
           {course && <><span>·</span><span className="inline-flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ backgroundColor: course.color }} />{course.code || course.name}</span></>}
           {event.source === 'syllabus' && <span className="text-indigo-500">· from syllabus</span>}

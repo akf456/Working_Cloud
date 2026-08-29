@@ -50,6 +50,16 @@
       "type": "string",
       "title": "Color"
     },
+    "priority": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "default": "medium",
+      "title": "Priority"
+    },
     "source": {
       "type": "string",
       "enum": [

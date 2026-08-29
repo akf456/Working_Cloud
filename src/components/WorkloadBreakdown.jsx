@@ -43,7 +43,10 @@ export default function WorkloadBreakdown({ tasks }) {
   // One unit per task for today: recurring tasks count once (today's
   // occurrence, done when completed today) instead of N per day, so a
   // daily-repeating task reads 1/1 and restarts each day.
-  const occurrences = useMemo(() => tasksToTodayUnits(tasks), [tasks]);
+  // Only tasks you haven't finished yet, so completed items don't clutter the
+  // chart. Completing the last task in a type drops its slice; unchecking a
+  // done task brings the slice back (the parent re-passes tasks on change).
+  const occurrences = useMemo(() => tasksToTodayUnits(tasks).filter((o) => !o.done), [tasks]);
 
   const byType = {};
   occurrences.forEach((o) => {
@@ -68,15 +71,11 @@ export default function WorkloadBreakdown({ tasks }) {
     .sort((a, b) => b.total - a.total);
 
   const grandTotal = rows.reduce((s, r) => s + r.total, 0);
-  const grandDone = rows.reduce((s, r) => s + r.done, 0);
-  const grandPct = grandTotal ? Math.round((grandDone / grandTotal) * 100) : 0;
-  const allDone = grandTotal > 0 && grandDone === grandTotal;
 
   let angle = 0;
   const slices = rows.map((r) => {
     const span = grandTotal ? (r.total / grandTotal) * 360 : 0;
-    const doneSpan = (r.done / r.total) * span;
-    const s = { ...r, start: angle, span, doneSpan, end: angle + span };
+    const s = { ...r, start: angle, span, end: angle + span };
     angle += span;
     return s;
   });
@@ -84,48 +83,32 @@ export default function WorkloadBreakdown({ tasks }) {
   return (
     <Card className="p-5">
       <h2 className="font-semibold text-lg mb-1">Workload breakdown</h2>
-      <p className="text-sm text-muted-foreground mb-4">Slices sized by task count (recurring tasks count once for today) — each fills as you complete tasks in that type.</p>
+      <p className="text-sm text-muted-foreground mb-4">Only tasks you haven't finished yet — finish the last one in a type and its slice disappears; uncheck it and the slice comes back.</p>
       <div className="grid sm:grid-cols-2 gap-4 items-center">
         <div className="relative h-44">
           {grandTotal === 0 ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground">
-              <p className="text-sm">No tasks yet.</p>
+              <p className="text-sm">No tasks left 🎉</p>
             </div>
           ) : (
             <svg viewBox="0 0 200 200" className="w-full h-full">
               {slices.map((s) => {
-                const remainingStart = s.start + s.doneSpan;
-                const remainingEnd = s.end;
-                const hasRemaining = s.remaining > 0;
-                const fullRing = s.done === s.total;
+                if (s.span <= 0) return null;
                 return (
-                  <g key={s.key}>
-                    {hasRemaining && (
-                      <path d={donutSlice(100, 100, 80, 54, remainingStart, remainingEnd)} fill={shade(s.color, 0.22)} stroke="hsl(var(--background))" strokeWidth="1.5" />
-                    )}
-                    {s.done > 0 && (
-                      <path d={donutSlice(100, 100, 80, 54, s.start, fullRing ? s.end : remainingStart)} fill={s.color} stroke="hsl(var(--background))" strokeWidth="1.5" />
-                    )}
-                  </g>
+                  <path key={s.key} d={donutSlice(100, 100, 80, 54, s.start, s.end)} fill={s.color} stroke="hsl(var(--background))" strokeWidth="1.5" />
                 );
               })}
             </svg>
           )}
           {grandTotal > 0 && (
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              {allDone ? (
-                <span className="text-sm font-semibold text-emerald-600">All done 🎉</span>
-              ) : (
-                <>
-                  <span className="text-2xl font-bold gradient-text">{grandPct}%</span>
-                  <span className="text-[11px] text-muted-foreground">{grandDone}/{grandTotal} done</span>
-                </>
-              )}
+              <span className="text-2xl font-bold gradient-text">{grandTotal}</span>
+              <span className="text-[11px] text-muted-foreground">tasks left</span>
             </div>
           )}
         </div>
         <div className="space-y-2.5">
-          {rows.length === 0 && <p className="text-sm text-muted-foreground">No tasks yet.</p>}
+          {rows.length === 0 && <p className="text-sm text-muted-foreground">No tasks left 🎉</p>}
           {rows.map((r) => (
             <div key={r.key}>
               <div className="flex items-center justify-between text-xs mb-1">
@@ -133,10 +116,10 @@ export default function WorkloadBreakdown({ tasks }) {
                   <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: r.color }} />
                   {r.name}
                 </span>
-                <span className="text-muted-foreground">{r.done}/{r.total} done · {r.pct}%</span>
+                <span className="text-muted-foreground">{r.total} left</span>
               </div>
               <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                <div className="h-full rounded-full transition-all duration-500" style={{ width: `${r.pct}%`, backgroundColor: r.color }} />
+                <div className="h-full rounded-full transition-all duration-500" style={{ width: `${grandTotal ? (r.total / grandTotal) * 100 : 0}%`, backgroundColor: r.color }} />
               </div>
             </div>
           ))}

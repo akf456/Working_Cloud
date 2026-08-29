@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import SheetSelect from '@/components/SheetSelect';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { EVENT_TYPE } from '@/lib/planner';
+import { EVENT_TYPE, PRIORITY } from '@/lib/planner';
 import ScrollDatePicker from '@/components/ScrollDatePicker';
 
 const WDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -26,6 +26,7 @@ export default function EventModal({ open, onClose, onSave, event, courses = [],
   const [repeatStart, setRepeatStart] = useState('');
   const [repeatEnd, setRepeatEnd] = useState('');
   const [color, setColor] = useState('');
+  const [priority, setPriority] = useState(event?.priority || 'medium');
   const [flagged, setFlagged] = useState(event?.flag === 'manual');
 
   useEffect(() => {
@@ -43,6 +44,7 @@ export default function EventModal({ open, onClose, onSave, event, courses = [],
     setRepeatStart(event?.repeat_start_date || (base || ''));
     setRepeatEnd(event?.repeat_end_date || '');
     setColor(event?.color || '');
+    setPriority(event?.priority || 'medium');
     setFlagged(event?.flag === 'manual');
   }, [event, open, defaultStart]);
 
@@ -69,6 +71,7 @@ export default function EventModal({ open, onClose, onSave, event, courses = [],
       repeat_start_date: repeating ? (repeatStart || start) : null,
       repeat_end_date: repeating && repeatEnd ? repeatEnd : null,
       color: color || null,
+      priority,
       flag
     });
     onClose();
@@ -91,8 +94,13 @@ export default function EventModal({ open, onClose, onSave, event, courses = [],
               <SheetSelect value={type} onValueChange={setType} placeholder="Type"
                 options={Object.entries(EVENT_TYPE).map(([k, v]) => ({ value: k, label: v.label }))} />
             </div>
+            <div className="space-y-1.5">
+              <Label>Priority</Label>
+              <SheetSelect value={priority} onValueChange={setPriority} placeholder="Priority"
+                options={Object.entries(PRIORITY).map(([k, v]) => ({ value: k, label: v.label }))} />
+            </div>
             {area === 'school' && (
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 sm:col-span-2">
                 <Label>Course</Label>
                 <SheetSelect value={courseId} onValueChange={setCourseId} placeholder="No course"
                   options={[{ value: 'none', label: 'No course' }, ...courses.map((c) => ({ value: c.id, label: c.code ? `${c.code} — ${c.name}` : c.name }))]} />

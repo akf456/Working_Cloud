@@ -7,7 +7,7 @@ import {
   startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval,
   addMonths, subMonths, addDays, subDays, isSameMonth, isSameDay, isToday, parseISO, isValid, format, startOfDay
 } from 'date-fns';
-import { EVENT_TYPE, parseDate, fmtTime, fmt, expandTaskOccurrences, expandEventOccurrences } from '@/lib/planner';
+import { EVENT_TYPE, PRIORITY, parseDate, fmtTime, fmt, expandTaskOccurrences, expandEventOccurrences } from '@/lib/planner';
 import EventModal from '@/components/EventModal';
 import TaskModal from '@/components/TaskModal';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -370,6 +370,7 @@ export default function CalendarPage() {
           <div className="space-y-2">
             {selectedItems.evs.map((e) => {
               const E = EVENT_TYPE[e.type] || EVENT_TYPE.event;
+              const P = PRIORITY[e.priority] || PRIORITY.medium;
               const c = courseMap[e.course_id];
               const done = !!e._done;
               const completable = isEventCompletable(e);
@@ -383,7 +384,7 @@ export default function CalendarPage() {
                     )}
                     <div className="min-w-0 flex-1">
                       <p className={`font-medium text-sm ${done ? 'line-through opacity-70' : ''}`}>{e.title}</p>
-                      <p className="text-xs text-muted-foreground">{done && completable ? 'Completed' : E.label}{c ? ` · ${c.code || c.name}` : ''}{e.flag === 'manual' ? ' · Flagged' : e.flag ? ` · ${e.flag}` : ''}</p>
+                      <p className="text-xs text-muted-foreground">{done && completable ? 'Completed' : E.label}{c ? ` · ${c.code || c.name}` : ''}{e.flag === 'manual' ? ' · Flagged' : e.flag ? ` · ${e.flag}` : ''} · {P.label} priority</p>
                       {!e.all_day && <p className="text-xs text-muted-foreground">{fmtTime(e.start_date)}{e.end_date ? ` – ${fmtTime(e.end_date)}` : ''}</p>}
                       {e.location && <p className="text-xs text-muted-foreground">📍 {e.location}</p>}
                     </div>
