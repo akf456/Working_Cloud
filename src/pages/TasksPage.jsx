@@ -118,11 +118,11 @@ export default function TasksPage() {
     }
     load();
   }
-  async function saveChecklist({ id, title, items }) {
+  async function saveChecklist({ id, title, items, color }) {
     try {
       if (id) {
-        setTasks((prev) => prev.map((tk) => (tk.id === id ? { ...tk, title } : tk)));
-        await base44.entities.Task.update(id, { title });
+        setTasks((prev) => prev.map((tk) => (tk.id === id ? { ...tk, title, color: color || null } : tk)));
+        await base44.entities.Task.update(id, { title, color: color || null });
         const existing = await base44.entities.Subtask.filter({ parent_task_id: id });
         const finalIds = new Set(items.filter((i) => i.id).map((i) => i.id));
         for (const s of existing) {
@@ -139,7 +139,7 @@ export default function TasksPage() {
           if (Object.keys(patch).length) { try { await base44.entities.Subtask.update(i.id, patch); } catch (e) {} }
         }
       } else {
-        const created = await base44.entities.Task.create({ title, list_type: 'todo', area, status: 'todo' });
+        const created = await base44.entities.Task.create({ title, list_type: 'todo', area, status: 'todo', color: color || null });
         if (items.length) await base44.entities.Subtask.bulkCreate(items.map((i) => ({ parent_task_id: created.id, title: i.title, status: i.status || 'todo' })));
       }
     } catch (e) { toast({ title: 'Could not save checklist', variant: 'destructive' }); }

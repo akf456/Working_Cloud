@@ -7,6 +7,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Trash2, ListChecks, Pencil } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
+const PALETTE = ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b', '#8b5cf6', '#ef4444', '#0ea5e9', '#84cc16'];
+
 // Checklist-style creator/editor for to-do lists. The user names the list and
 // adds items directly (like a checklist) instead of filling out a task form.
 // For an existing list, its current items (subtasks) are loaded so they can be
@@ -15,6 +17,7 @@ export default function ChecklistModal({ open, onClose, onSave, list }) {
   const [title, setTitle] = useState('');
   const [items, setItems] = useState([]);
   const [draft, setDraft] = useState('');
+  const [color, setColor] = useState('');
   const [editingIdx, setEditingIdx] = useState(null);
   const [editVal, setEditVal] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,6 +25,7 @@ export default function ChecklistModal({ open, onClose, onSave, list }) {
   useEffect(() => {
     if (!open) return;
     setTitle(list?.title || '');
+    setColor(list?.color || '');
     setDraft('');
     if (list?.id) {
       setLoading(true);
@@ -62,7 +66,7 @@ export default function ChecklistModal({ open, onClose, onSave, list }) {
 
   function submit() {
     if (!title.trim()) return;
-    onSave({ id: list?.id, title: title.trim(), items });
+    onSave({ id: list?.id, title: title.trim(), items, color });
     onClose();
   }
 
@@ -78,6 +82,18 @@ export default function ChecklistModal({ open, onClose, onSave, list }) {
           <div className="space-y-1.5">
             <Label htmlFor="c-title">List name</Label>
             <Input id="c-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Grocery run" autoFocus />
+          </div>
+          <div className="space-y-1.5">
+            <Label>List color</Label>
+            <div className="flex items-center gap-2">
+              <input type="color" value={color || '#6366f1'} onChange={(e) => setColor(e.target.value)} className="w-9 h-9 p-1 rounded-lg cursor-pointer border border-input bg-transparent" />
+              <div className="flex gap-1 flex-wrap items-center min-w-0">
+                {PALETTE.map((c) => (
+                  <button type="button" key={c} onClick={() => setColor(c)} className={`w-6 h-6 rounded-full border-2 transition ${color === c ? 'border-foreground' : 'border-transparent'}`} style={{ backgroundColor: c }} />
+                ))}
+                {color && <button type="button" onClick={() => setColor('')} className="text-xs text-muted-foreground hover:text-foreground ml-1">Clear</button>}
+              </div>
+            </div>
           </div>
           <div className="space-y-1.5">
             <Label>Items</Label>
