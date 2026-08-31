@@ -36,30 +36,12 @@ export default function AiTaskBreakdown({ open, onClose, area, onDone }) {
     if (!task) { setError('Pick a task to break down.'); return; }
     setLoading(true); setError(''); setResult(null);
     try {
-      const due = task.due_date ? fmt(task.due_date, 'yyyy-MM-dd') : null;
-      const count = Math.max(2, Math.min(10, Number(days)));
-      const prompt = `You are a warm, motivating productivity coach. Break the following task into ${count} small, concrete subtasks so the user never loses motivation.
-
-Task: ${task.title}
-${task.description ? `Details: ${task.description}\n` : ''}${due ? `Final due date: ${due}\n` : ''}Hardest part for the user: ${difficulty || 'not specified'}
-Spread the work across about ${days} days${due ? ' leading up to the due date' : ''}, starting from today (${new Date().toISOString().slice(0, 10)}).
-
-Each subtask should take ~20–60 minutes, be a single clear action, and build momentum by starting easy. Order them logically. Assign each a due_date (ISO 8601)${due ? ' on or before the final due date' : ''}.
-
-Return JSON: { "subtasks": [ { "title": string, "due_date": ISO string }, ... ] }.`;
-      const res = await base44.integrations.Core.InvokeLLM({
-        prompt,
-        response_json_schema: {
-          type: 'object',
-          properties: {
-            subtasks: {
-              type: 'array',
-              items: { type: 'object', properties: { title: { type: 'string' }, due_date: { type: 'string' } } }
-            }
-          }
-        }
+      const response = await base44.functions.invoke('aiTaskBreakdown', {
+        taskId: task.id,
+        difficulty,
+        days: Number(days)
       });
-      const subs = Array.isArray(res?.subtasks) ? res.subtasks.filter((s) => s.title) : [];
+      const subs = Array.isArray(response?.data?.subtasks) ? response.data.subtasks : [];
       if (!subs.length) setError('AI could not break this down — try adding a bit more detail.');
       else { setResult(subs); setSel(new Set(subs.map((_, i) => i))); }
     } catch (e) {
