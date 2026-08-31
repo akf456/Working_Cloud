@@ -234,6 +234,11 @@ export default function Dashboard() {
       const todoDone = todoSub.filter((s) => s.status === 'done').length;
       const todoTotal = todoSub.length;
       const todoPct = todoTotal ? Math.round((todoDone / todoTotal) * 100) : 0;
+      const perList = todoLists.map((tk) => {
+        const subs = todoSub.filter((s) => s.parent_task_id === tk.id);
+        const done = subs.filter((s) => s.status === 'done').length;
+        return { id: tk.id, title: tk.title, done, total: subs.length, pct: subs.length ? Math.round((done / subs.length) * 100) : 0 };
+      }).filter((l) => l.total > 0);
       return (
         <div key={key} className={span}>
           <Card className="p-5 flex flex-col h-full">
@@ -252,6 +257,17 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
+            {perList.length > 0 && (
+              <div className="mt-4 space-y-1.5">
+                {perList.map((l) => (
+                  <div key={l.id} className="flex items-center gap-2 text-xs">
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: '#22c55e' }} />
+                    <span className="truncate flex-1">{l.title}</span>
+                    <span className="text-muted-foreground shrink-0">{l.done}/{l.total}</span>
+                  </div>
+                ))}
+              </div>
+            )}
             {todoTotal === 0 && <p className="text-xs text-center text-muted-foreground mt-3">{t('dash.noTodoItems')}</p>}
           </Card>
         </div>
