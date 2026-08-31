@@ -227,6 +227,36 @@ export default function Dashboard() {
         </div>
       );
     }
+    if (key === 'todoProgress') {
+      const todoLists = tasks.filter((tk) => tk.list_type === 'todo');
+      const todoIds = new Set(todoLists.map((tk) => tk.id));
+      const todoSub = subtasks.filter((s) => todoIds.has(s.parent_task_id));
+      const todoDone = todoSub.filter((s) => s.status === 'done').length;
+      const todoTotal = todoSub.length;
+      const todoPct = todoTotal ? Math.round((todoDone / todoTotal) * 100) : 0;
+      return (
+        <div key={key} className={span}>
+          <Card className="p-5 flex flex-col h-full">
+            <h2 className="font-semibold text-lg mb-1">{t('dash.todoLists')}</h2>
+            <p className="text-sm text-muted-foreground mb-4">{todoDone}/{todoTotal} {t('dash.todoItems')} · {todoLists.length} {t('dash.lists')}</p>
+            <div className="flex-1 flex flex-col items-center justify-center">
+              <div className="relative w-32 h-32">
+                <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
+                  <circle cx="60" cy="60" r="52" fill="none" stroke="hsl(var(--muted))" strokeWidth="12" />
+                  <circle cx="60" cy="60" r="52" fill="none" stroke="#22c55e" strokeWidth="12" strokeLinecap="round"
+                    strokeDasharray={`${2 * Math.PI * 52}`} strokeDashoffset={`${2 * Math.PI * 52 * (1 - todoPct / 100)}`} className="transition-all duration-700" />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-2xl font-bold">{todoPct}%</span>
+                  <span className="text-[11px] text-muted-foreground">{t('dash.complete')}</span>
+                </div>
+              </div>
+            </div>
+            {todoTotal === 0 && <p className="text-xs text-center text-muted-foreground mt-3">{t('dash.noTodoItems')}</p>}
+          </Card>
+        </div>
+      );
+    }
     return null;
   }
 

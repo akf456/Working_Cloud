@@ -132,7 +132,11 @@ export default function TasksPage() {
         if (toCreate.length) await base44.entities.Subtask.bulkCreate(toCreate);
         for (const i of items.filter((x) => x.id)) {
           const ex = existing.find((s) => s.id === i.id);
-          if (ex && ex.status !== i.status) { try { await base44.entities.Subtask.update(i.id, { status: i.status }); } catch (e) {} }
+          if (!ex) continue;
+          const patch = {};
+          if (ex.status !== i.status) patch.status = i.status;
+          if (ex.title !== i.title) patch.title = i.title;
+          if (Object.keys(patch).length) { try { await base44.entities.Subtask.update(i.id, patch); } catch (e) {} }
         }
       } else {
         const created = await base44.entities.Task.create({ title, list_type: 'todo', area, status: 'todo' });

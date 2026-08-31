@@ -167,6 +167,10 @@ export const STRINGS = {
   'dash.dailyMonthly': { en: 'Daily & monthly', es: 'Diario y mensual', fr: 'Quotidien et mensuel', zh: '每日与每月' },
   'dash.today': { en: 'Today', es: 'Hoy', fr: 'Aujourd’hui', zh: '今天' },
   'dash.thisMonth': { en: 'This month', es: 'Este mes', fr: 'Ce mois-ci', zh: '本月' },
+  'dash.todoLists': { en: 'To-Do lists', es: 'Listas de tareas', fr: 'Listes à faire', zh: '待办清单' },
+  'dash.todoItems': { en: 'items done', es: 'ítems hechos', fr: 'éléments faits', zh: '项已完成' },
+  'dash.lists': { en: 'lists', es: 'listas', fr: 'listes', zh: '个清单' },
+  'dash.noTodoItems': { en: 'No to-do items yet.', es: 'Aún no hay ítems.', fr: 'Aucun élément à faire.', zh: '暂无待办项。' },
 
   'cal.title': { en: 'Calendar', es: 'Calendario', fr: 'Calendrier', zh: '日历' },
   'cal.subtitle': { en: 'Exams, deadlines, classes & events in one view.', es: 'Exámenes, fechas, clases y eventos en una vista.', fr: 'Examens, échéances, cours et événements en une vue.', zh: '考试、截止日期、课程和事件一目了然。' },

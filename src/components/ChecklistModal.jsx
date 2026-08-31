@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Trash2, ListChecks } from 'lucide-react';
+import { Plus, Trash2, ListChecks, Pencil } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 
 // Checklist-style creator/editor for to-do lists. The user names the list and
@@ -15,6 +15,8 @@ export default function ChecklistModal({ open, onClose, onSave, list }) {
   const [title, setTitle] = useState('');
   const [items, setItems] = useState([]);
   const [draft, setDraft] = useState('');
+  const [editingIdx, setEditingIdx] = useState(null);
+  const [editVal, setEditVal] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -43,6 +45,19 @@ export default function ChecklistModal({ open, onClose, onSave, list }) {
 
   function removeItem(idx) {
     setItems((prev) => prev.filter((_, k) => k !== idx));
+  }
+
+  function startEdit(idx) {
+    setEditingIdx(idx);
+    setEditVal(items[idx]?.title || '');
+  }
+
+  function commitEdit() {
+    if (editingIdx === null) return;
+    const v = editVal.trim();
+    setItems((prev) => prev.map((i, k) => (k === editingIdx ? { ...i, title: v || i.title } : i)));
+    setEditingIdx(null);
+    setEditVal('');
   }
 
   function submit() {
@@ -76,7 +91,24 @@ export default function ChecklistModal({ open, onClose, onSave, list }) {
                   return (
                     <div key={keyOf(it, idx)} className="group flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-background">
                       <Checkbox checked={done} onCheckedChange={() => toggleItem(idx)} className="shrink-0" />
-                      <span className={`text-sm flex-1 truncate ${done ? 'line-through text-muted-foreground' : ''}`}>{it.title}</span>
+                      {editingIdx === idx ? (
+                        <Input
+                          autoFocus
+                          value={editVal}
+                          onChange={(e) => setEditVal(e.target.value)}
+                          onBlur={commitEdit}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') { e.preventDefault(); commitEdit(); }
+                            else if (e.key === 'Escape') { setEditingIdx(null); setEditVal(''); }
+                          }}
+                          className="h-8 text-sm flex-1"
+                        />
+                      ) : (
+                        <span onDoubleClick={() => startEdit(idx)} className={`text-sm flex-1 truncate cursor-text ${done ? 'line-through text-muted-foreground' : ''}`} title="Double-click to rename">{it.title}</span>
+                      )}
+                      <button type="button" onClick={() => startEdit(idx)} className="opacity-100 md:opacity-0 md:group-hover:opacity-100 p-1 rounded-lg text-muted-foreground hover:text-indigo-600 transition shrink-0" title="Rename">
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
                       <button type="button" onClick={() => removeItem(idx)} className="opacity-100 md:opacity-0 md:group-hover:opacity-100 p-1 rounded-lg text-muted-foreground hover:text-rose-600 transition shrink-0" title="Remove">
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>

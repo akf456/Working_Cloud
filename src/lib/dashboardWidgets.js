@@ -3,6 +3,7 @@ export const DASHBOARD_WIDGETS = [
   { key: 'today', label: "Today's focus & events", span: 'lg:col-span-3' },
   { key: 'deadlines', label: 'Upcoming deadlines', span: 'lg:col-span-2' },
   { key: 'progress', label: 'Weekly progress', span: 'lg:col-span-1' },
+  { key: 'todoProgress', label: 'To-Do list progress', span: 'lg:col-span-1' },
   { key: 'workload', label: 'Workload breakdown', span: 'lg:col-span-2' },
   { key: 'daily', label: 'Daily & monthly progress', span: 'lg:col-span-1' }
 ];
