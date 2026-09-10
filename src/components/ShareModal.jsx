@@ -15,6 +15,7 @@ export default function ShareModal({ open, area, calendarId, calendarName, onClo
   const { toast } = useToast();
   const [mode, setMode] = useState('view');
   const [editors, setEditors] = useState('');
+  const [recipients, setRecipients] = useState('');
   const [linkId, setLinkId] = useState(null);
   const [token, setToken] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -26,7 +27,7 @@ export default function ShareModal({ open, area, calendarId, calendarName, onClo
 
   useEffect(() => {
     if (!open) return;
-    setMode('view'); setEditors(''); setLinkId(null); setToken(null);
+    setMode('view'); setEditors(''); setRecipients(''); setLinkId(null); setToken(null);
     const t = user?.share_tokens?.[shareKey];
     if (t) {
       setToken(t);
@@ -50,7 +51,17 @@ export default function ShareModal({ open, area, calendarId, calendarName, onClo
       await checkUserAuth();
       const link = `${window.location.origin}/s/${t}`;
       try { await navigator.clipboard.writeText(link); } catch { /* ignore */ }
-      toast({ title: 'Share link copied!', description: mode === 'edit' ? 'Editors who join the app can edit. Others view only.' : isCalendar ? `Anyone with the link can view the ${displayName} calendar — and nothing else.` : `Anyone with the link can view your ${a?.label || ''} area.` });
+      const sendList = (mode === 'edit' ? editors : recipients).split(/[,\n]/).map((s) => s.trim()).filter(Boolean);
+      let sentCount = 0; let failedCount = 0;
+      if (sendList.length) {
+        try {
+          const res = await base44.functions.invoke('sendShareLink', { token: t, recipients: sendList, label: isCalendar ? `${displayName} calendar` : `${a?.label || 'Working Cloud'} area`, origin: window.location.origin });
+          sentCount = (res.data?.sent || []).length;
+          failedCount = (res.data?.failed || []).length;
+        } catch { failedCount = sendList.length; }
+      }
+      toast({ title: 'Share link copied!', description: `${mode === 'edit' ? 'Editors who join the app can edit. Others view only.' : isCalendar ? `Anyone with the link can view the ${displayName} calendar — and nothing else.` : `Anyone with the link can view your ${a?.label || ''} area.`}${sentCount ? ` Emailed to ${sentCount} ${sentCount === 1 ? 'person' : 'people'}.` : ''}` });
+      if (failedCount) toast({ title: 'Could not email some recipients', description: 'Addresses that never joined Working Cloud need a paid plan with a custom domain connected. You can still send them the copied link yourself.', variant: 'destructive' });
       onClose();
     } catch (e) {
       toast({ title: 'Could not share', description: e.message, variant: 'destructive' });
@@ -75,7 +86,14 @@ export default function ShareModal({ open, area, calendarId, calendarName, onClo
             <div className="space-y-1.5">
               <Label>Editor emails</Label>
               <Textarea value={editors} onChange={(e) => setEditors(e.target.value)} rows={2} placeholder="teammate@email.com, family@email.com" />
-              <p className="text-xs text-muted-foreground">Only people who join Working Cloud with these emails can edit. Everyone else gets view-only.</p>
+              <p className="text-xs text-muted-foreground">Only people who join Working Cloud with these emails can edit. Everyone else gets view-only. The link is also emailed to these addresses.</p>
+            </div>
+          )}
+          {mode === 'view' && (
+            <div className="space-y-1.5">
+              <Label>Email the link to (optional)</Label>
+              <Textarea value={recipients} onChange={(e) => setRecipients(e.target.value)} rows={2} placeholder="person1@email.com, person2@email.com" />
+              <p className="text-xs text-muted-foreground">The link is emailed to these addresses. Addresses that haven't joined Working Cloud receive it only on a paid plan with a custom domain connected — you can always send them the link yourself.</p>
             </div>
           )}
           <div className="rounded-lg bg-amber-50 text-amber-700 text-xs px-3 py-2 flex items-start gap-2">
