@@ -140,7 +140,7 @@ export default function CalendarPage() {
   const monthOverdue = useMemo(() => days.some((d) => {
     if (!isSameMonth(d, cursor)) return false;
     const cell = dayMap.get(format(d, 'yyyy-MM-dd'));
-    return (cell?.tks || []).some((tk) => tk._overdue);
+    return (cell?.tks || []).some((tk) => tk._overdue && !tk._done);
   }), [days, dayMap, cursor]);
 
   const yearMap = useMemo(() => {
