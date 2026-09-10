@@ -117,6 +117,24 @@ export default function CalendarPage() {
 
   const dayMap = useMemo(() => buildDayMap(days[0], days[days.length - 1]), [buildDayMap, days]);
 
+  // Courses shown in the key: only those with at least one task or event
+  // occurrence inside the currently viewed month grid (completed items count
+  // too, so past months still show their courses).
+  const visibleCourseIds = useMemo(() => {
+    const start = days[0].getTime();
+    const end = days[days.length - 1].getTime();
+    const ids = new Set();
+    tasks.forEach((t) => {
+      if (!t.course_id || ids.has(t.course_id)) return;
+      if (expandTaskOccurrences(t, days[days.length - 1]).some((o) => o.getTime() >= start && o.getTime() <= end)) ids.add(t.course_id);
+    });
+    events.forEach((e) => {
+      if (!e.course_id || ids.has(e.course_id)) return;
+      if (expandEventOccurrences(e, days[days.length - 1]).some((o) => o.getTime() >= start && o.getTime() <= end)) ids.add(e.course_id);
+    });
+    return ids;
+  }, [tasks, events, days]);
+
   const yearMap = useMemo(() => {
     const y = cursor.getFullYear();
     const yStart = startOfWeek(new Date(y, 0, 1), { weekStartsOn: 0 });
@@ -146,6 +164,7 @@ export default function CalendarPage() {
   }
 
   const courseMap = Object.fromEntries(courses.map((c) => [c.id, c]));
+  const keyCourses = courses.filter((c) => visibleCourseIds.has(c.id));
   const evColor = (e) => e.color || courseMap[e.course_id]?.color || (EVENT_TYPE[e.type] || EVENT_TYPE.event).dot;
   const tkColor = (t) => t.color || courseMap[t.course_id]?.color || '#f59e0b';
   const selectedItems = itemsForDay(selected);
@@ -318,8 +337,8 @@ export default function CalendarPage() {
             </div>
           </div>
           <div className="flex flex-wrap gap-x-3 gap-y-1 mb-3">
-            {courses.length > 0 &&             <span className="text-[11px] font-semibold text-muted-foreground mr-1">{t('cal.key')}</span>}
-            {courses.map((c) => (
+            {keyCourses.length > 0 && <span className="text-[11px] font-semibold text-muted-foreground mr-1">{t('cal.key')}</span>}
+            {keyCourses.map((c) => (
               <span key={c.id} className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
                 <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: c.color || '#6366f1' }} />
                 {c.code || c.name}
