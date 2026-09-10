@@ -121,19 +121,27 @@ export default function CalendarPage() {
   // occurrence inside the currently viewed month grid (completed items count
   // too, so past months still show their courses).
   const visibleCourseIds = useMemo(() => {
-    const start = days[0].getTime();
-    const end = days[days.length - 1].getTime();
+    const mStart = startOfMonth(cursor).getTime();
+    const mEnd = endOfMonth(cursor).getTime();
     const ids = new Set();
     tasks.forEach((t) => {
       if (!t.course_id || ids.has(t.course_id)) return;
-      if (expandTaskOccurrences(t, days[days.length - 1]).some((o) => o.getTime() >= start && o.getTime() <= end)) ids.add(t.course_id);
+      if (expandTaskOccurrences(t, new Date(mEnd)).some((o) => o.getTime() >= mStart && o.getTime() <= mEnd)) ids.add(t.course_id);
     });
     events.forEach((e) => {
       if (!e.course_id || ids.has(e.course_id)) return;
-      if (expandEventOccurrences(e, days[days.length - 1]).some((o) => o.getTime() >= start && o.getTime() <= end)) ids.add(e.course_id);
+      if (expandEventOccurrences(e, new Date(mEnd)).some((o) => o.getTime() >= mStart && o.getTime() <= mEnd)) ids.add(e.course_id);
     });
     return ids;
-  }, [tasks, events, days]);
+  }, [tasks, events, cursor]);
+
+  // Overdue key shows only when an incomplete past-due task actually falls on
+  // one of this month's own days (not the overflow days of adjacent months).
+  const monthOverdue = useMemo(() => days.some((d) => {
+    if (!isSameMonth(d, cursor)) return false;
+    const cell = dayMap.get(format(d, 'yyyy-MM-dd'));
+    return (cell?.tks || []).some((tk) => tk._overdue);
+  }), [days, dayMap, cursor]);
 
   const yearMap = useMemo(() => {
     const y = cursor.getFullYear();
@@ -344,9 +352,11 @@ export default function CalendarPage() {
                 {c.code || c.name}
               </span>
             ))}
-            <span className="inline-flex items-center gap-1.5 text-[11px] text-rose-600">
-              <span className="w-2.5 h-2.5 rounded-full bg-rose-600" /> {t('cal.overdue')}
-            </span>
+            {monthOverdue && (
+              <span className="inline-flex items-center gap-1.5 text-[11px] text-rose-600">
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-600" /> {t('cal.overdue')}
+              </span>
+            )}
           </div>
           <div className="grid grid-cols-7 text-center text-xs font-medium text-muted-foreground mb-1">
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d) => <div key={d} className="py-1">{d}</div>)}
