@@ -6,6 +6,8 @@ import { Label } from '@/components/ui/label';
 import SheetSelect from '@/components/SheetSelect';
 import { UploadCloud, Loader2, CheckCircle2, FileText, CalendarClock, ListChecks, Sparkles, Users } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
+import { useArea } from '@/lib/AreaContext';
+import { calendarScope } from '@/lib/sharedCalendars';
 import { COURSE_COLORS, TASK_TYPE, EVENT_TYPE } from '@/lib/planner';
 
 const ROLE_MAP = [
@@ -25,6 +27,7 @@ function norm(s) { return (s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').tr
 
 // mode: 'syllabus' (default) | 'calendar'
 export default function SyllabusImporter({ open, onClose, courses = [], area = 'school', onDone, mode = 'syllabus' }) {
+  const { sharedCalendarId } = useArea();
   const isSchool = area === 'school';
   const isCalendarMode = mode === 'calendar';
   const [file, setFile] = useState(null);
@@ -78,7 +81,7 @@ export default function SyllabusImporter({ open, onClose, courses = [], area = '
         repeat_days: Array.isArray(t.repeat_days) ? t.repeat_days.map(Number) : [],
         repeat_start_date: t.repeat_start_date || null,
         repeat_end_date: t.repeat_end_date || null,
-        course_id: cid || null, source: 'syllabus', area
+        course_id: cid || null, source: 'syllabus', area, ...calendarScope(area, sharedCalendarId)
       });
       const eventFields = (e, cid) => ({
         title: e.title, description: e.description || '', start_date: e.start_date,
@@ -88,7 +91,7 @@ export default function SyllabusImporter({ open, onClose, courses = [], area = '
         repeat_days: Array.isArray(e.repeat_days) ? e.repeat_days.map(Number) : [],
         repeat_start_date: e.repeat_start_date || null,
         repeat_end_date: e.repeat_end_date || null,
-        course_id: cid || null, source: 'syllabus', area
+        course_id: cid || null, source: 'syllabus', area, ...calendarScope(area, sharedCalendarId)
       });
       const contactFields = (c, cid) => ({
         name: c.name, role: mapRole(c.role, area), email: c.email || '', phone: c.phone || '',

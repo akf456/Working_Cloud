@@ -1,50 +1,18 @@
 {
-  "name": "ShareLink",
+  "name": "SharedCalendar",
   "type": "object",
   "properties": {
-    "token": {
+    "name": {
       "type": "string",
-      "title": "Token"
+      "title": "Name"
     },
-    "owner_id": {
+    "color": {
       "type": "string",
-      "title": "Owner ID"
-    },
-    "area": {
-      "type": "string",
-      "enum": [
-        "school",
-        "work",
-        "personal",
-        "shareable"
-      ],
-      "default": "shareable",
-      "title": "Area"
-    },
-    "calendar_id": {
-      "type": "string",
-      "title": "Calendar ID"
-    },
-    "mode": {
-      "type": "string",
-      "enum": [
-        "view",
-        "edit"
-      ],
-      "default": "view",
-      "title": "Mode"
-    },
-    "editors": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "title": "Editors"
+      "title": "Color"
     }
   },
   "required": [
-    "token",
-    "owner_id"
+    "name"
   ],
   "rls": {
     "create": {
@@ -65,9 +33,6 @@
           "created_by_id": "{{user.id}}"
         },
         {
-          "data.owner_id": "{{user.id}}"
-        },
-        {
           "user_condition": {
             "role": "admin"
           }
@@ -80,9 +45,6 @@
           "created_by_id": "{{user.id}}"
         },
         {
-          "data.owner_id": "{{user.id}}"
-        },
-        {
           "user_condition": {
             "role": "admin"
           }
@@ -93,9 +55,6 @@
       "$or": [
         {
           "created_by_id": "{{user.id}}"
-        },
-        {
-          "data.owner_id": "{{user.id}}"
         },
         {
           "user_condition": {

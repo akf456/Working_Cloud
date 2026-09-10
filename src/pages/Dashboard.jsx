@@ -14,6 +14,7 @@ import DashboardCustomizeModal from '@/components/DashboardCustomizeModal';
 import PullToRefresh from '@/components/PullToRefresh';
 import { DASHBOARD_WIDGETS, DEFAULT_DASHBOARD_ORDER } from '@/lib/dashboardWidgets';
 import { useArea } from '@/lib/AreaContext';
+import { filterByCalendar, calendarScope } from '@/lib/sharedCalendars';
 import { useAuth } from '@/lib/AuthContext';
 import { AREAS } from '@/lib/areas';
 import { useI18n } from '@/lib/I18nContext';
@@ -26,7 +27,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [taskModal, setTaskModal] = useState(false);
   const [customize, setCustomize] = useState(false);
-  const { area } = useArea();
+  const { area, sharedCalendarId } = useArea();
   const { user, checkUserAuth } = useAuth();
   const { t } = useI18n();
   const hour = new Date().getHours();
@@ -39,10 +40,10 @@ export default function Dashboard() {
       base44.entities.Course.filter({ area }),
       base44.entities.Subtask.list(500)
     ]);
-    setTasks(t); setEvents(e); setCourses(c); setSubtasks(st);
+    setTasks(filterByCalendar(t, area, sharedCalendarId)); setEvents(filterByCalendar(e, area, sharedCalendarId)); setCourses(c); setSubtasks(st);
     setLoading(false);
   }
-  useEffect(() => { load(); }, [area]);
+  useEffect(() => { load(); }, [area, sharedCalendarId]);
 
   const open = tasks.filter((t) => t.status !== 'done');
   const areaTaskIds = new Set(tasks.map((t) => t.id));
@@ -73,7 +74,7 @@ export default function Dashboard() {
 
   async function saveTask(data) {
     if (data.id) await base44.entities.Task.update(data.id, data);
-    else await base44.entities.Task.create({ ...data, area });
+    else await base44.entities.Task.create({ ...data, area, ...calendarScope(area, sharedCalendarId) });
     load();
   }
 

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import MobileTabOutlet from '@/components/MobileTabOutlet';
-import { LayoutDashboard, CalendarDays, ListTodo, GraduationCap, Sparkles, Wand2, Users, Trash2, LayoutGrid, Palette, Share2, Check, Settings as SettingsIcon, Bell, MessageCircle, ChevronLeft, Menu, Timer } from 'lucide-react';
+import { LayoutDashboard, CalendarDays, CalendarPlus, ListTodo, GraduationCap, Sparkles, Wand2, Users, Trash2, LayoutGrid, Palette, Share2, Check, Settings as SettingsIcon, Bell, MessageCircle, ChevronLeft, Menu, Timer } from 'lucide-react';
 import { useArea } from '@/lib/AreaContext';
+import { shareTokenKey } from '@/lib/sharedCalendars';
 import { useI18n } from '@/lib/I18nContext';
 import { AREAS } from '@/lib/areas';
 import { areaThemeVars, areaImage } from '@/lib/areaTheme';
@@ -23,7 +24,7 @@ import { CHANGELOG, getUnseenChangelog } from '@/lib/changelog';
 export default function Layout() {
   const { pathname } = useLocation();
   const nav = useNavigate();
-  const { area, exit } = useArea();
+  const { area, exit, sharedCalendarId } = useArea();
   const { user, checkUserAuth } = useAuth();
   const { t } = useI18n();
   const { toast } = useToast();
@@ -35,6 +36,12 @@ export default function Layout() {
   const [moreOpen, setMoreOpen] = useState(false);
   const [docImport, setDocImport] = useState(false);
   const { needsRefresh } = useAppUpdate();
+  const [sharedCals, setSharedCals] = useState([]);
+  useEffect(() => {
+    if (area !== 'shareable') { setSharedCals([]); return; }
+    base44.entities.SharedCalendar.list('-created_date', 100).then(setSharedCals).catch(() => {});
+  }, [area]);
+  const activeSharedCal = sharedCals.find((c) => c.id === sharedCalendarId) || null;
   useEffect(() => { const u = getUnseenChangelog(); if (u.length) { setWhatNewEntries(u); setWhatNew(true); } }, []);
 
   function openWhatNew() { setWhatNewEntries(CHANGELOG); setWhatNew(true); }
@@ -55,6 +62,7 @@ export default function Layout() {
     { kind: 'button', label: t('nav.share'), Icon: Share2, onClick: openShare },
     { to: '/settings', label: t('nav.settings'), Icon: SettingsIcon }
   ];
+  if (area === 'shareable') NAV.splice(2, 0, { to: '/shared-calendars', label: t('nav.calendars'), Icon: CalendarPlus });
   if (area === 'shareable') NAV.splice(5, 0, { to: '/encourage', label: t('nav.encourage'), Icon: MessageCircle });
   const bottomNav = [
     { to: '/dashboard', label: t('nav.dashboard'), Icon: LayoutDashboard },
@@ -94,6 +102,12 @@ export default function Layout() {
             </div>
           </div>
           <p className="text-[11px] text-muted-foreground mt-1">{t('area.' + area + '.label')}</p>
+          {area === 'shareable' && (
+            <Link to="/shared-calendars" className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-accent/60 border border-border/70 px-2.5 py-1 text-[11px] font-semibold text-accent-foreground hover:bg-accent transition">
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: activeSharedCal?.color || '#f97316' }} />
+              {activeSharedCal?.name || 'Main'}
+            </Link>
+          )}
         </div>
         <button onClick={switchArea} className="nav-link mb-3 text-muted-foreground hover:text-primary">
           <LayoutGrid className="w-[18px] h-[18px]" /> {t('nav.allAreas')}
@@ -139,7 +153,7 @@ export default function Layout() {
               <p className="text-sm font-semibold text-orange-900">{t('layout.shareOrganizer')}</p>
               <p className="text-xs text-orange-700/80 mt-1">{t('layout.sharePromo')}</p>
               <button onClick={openShare} className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-orange-600 hover:text-orange-800">
-                <Share2 className="w-3.5 h-3.5" /> {user?.share_tokens?.[area] ? t('layout.manageSharing') : t('layout.createLink')}
+                <Share2 className="w-3.5 h-3.5" /> {user?.share_tokens?.[shareTokenKey(area, sharedCalendarId)] ? t('layout.manageSharing') : t('layout.createLink')}
               </button>
             </div>
           )}
@@ -189,7 +203,7 @@ export default function Layout() {
       )}
 
       {personalize && <PersonalizeModal open area={area} onClose={() => setPersonalize(false)} />}
-      <ShareModal open={shareOpen} area={area} onClose={() => setShareOpen(false)} />
+      <ShareModal open={shareOpen} area={area} calendarId={area === 'shareable' ? sharedCalendarId : undefined} calendarName={area === 'shareable' ? (activeSharedCal?.name || 'Main') : undefined} onClose={() => setShareOpen(false)} />
       <WhatNewModal open={whatNew} entries={whatNewEntries} onClose={() => setWhatNew(false)} />
       <AiTaskBreakdown open={aiOpen} onClose={() => setAiOpen(false)} area={area} onDone={checkUserAuth} />
       <MoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} area={area} onNavigate={(to) => nav(to)} onAreas={switchArea} onLogout={() => base44.auth.logout('/')} />

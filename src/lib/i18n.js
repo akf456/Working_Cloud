@@ -23,6 +23,7 @@ export const STRINGS = {
   'nav.contacts': { en: 'Contacts', es: 'Contactos', fr: 'Contacts', zh: '联系人' },
   'nav.trash': { en: 'Trash', es: 'Papelera', fr: 'Corbeille', zh: '回收站' },
   'nav.encourage': { en: 'Encouragement', es: 'Ánimos', fr: 'Encouragements', zh: '鼓励' },
+  'nav.calendars': { en: 'Calendars', es: 'Calendarios', fr: 'Calendriers', zh: '日历' },
   'nav.settings': { en: 'Settings', es: 'Ajustes', fr: 'Paramètres', zh: '设置' },
   'nav.share': { en: 'Share', es: 'Compartir', fr: 'Partager', zh: '分享' },
   'nav.allAreas': { en: 'All areas', es: 'Todas las áreas', fr: 'Tous les espaces', zh: '全部区域' },

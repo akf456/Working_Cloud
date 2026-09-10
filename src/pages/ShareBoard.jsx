@@ -53,9 +53,9 @@ export default function ShareBoard() {
       <div className="max-w-3xl mx-auto p-4 md:p-8">
         <div className="flex items-center gap-2 mb-1">
           <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-orange-400 to-amber-300 flex items-center justify-center"><CalendarDays className="w-4 h-4 text-white" /></span>
-          <h1 className="text-xl font-bold">Shared {areaLabel}</h1>
+          <h1 className="text-xl font-bold">{data.calendar_name || `Shared ${areaLabel}`}</h1>
         </div>
-        <p className="text-sm text-muted-foreground mb-2">A shared view of the tasks & events in this organizer.</p>
+        <p className="text-sm text-muted-foreground mb-2">A shared view of the tasks & events in this {data.calendar_name ? 'calendar' : 'organizer'}.</p>
         <div className={`text-xs rounded-lg px-3 py-2 mb-6 inline-flex items-center gap-2 ${canEdit ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
           <Info className="w-3.5 h-3.5" />
           {canEdit ? 'You can edit — add, check off & delete. Only signed-in collaborators can edit; everyone else views.' : 'View-only. The owner can enable editor access for collaborators using the app.'}

@@ -18,6 +18,7 @@ import { celebrate } from '@/lib/celebrate';
 import { toggleEventDayCompletion, isEventDoneOnDay, isEventCompletable } from '@/lib/events';
 import { useToast } from '@/components/ui/use-toast';
 import { useArea } from '@/lib/AreaContext';
+import { filterByCalendar, calendarScope } from '@/lib/sharedCalendars';
 import { useSearchParams } from 'react-router-dom';
 import SyllabusImporter from '@/components/SyllabusImporter';
 import CalendarYearView from '@/components/CalendarYearView';
@@ -35,7 +36,7 @@ export default function CalendarPage() {
   const [calImport, setCalImport] = useState(false);
   const [view, setView] = useState('month');
   const [searchParams, setSearchParams] = useSearchParams();
-  const { area } = useArea();
+  const { area, sharedCalendarId } = useArea();
   const { toast } = useToast();
   const { t } = useI18n();
   const modalEvent = searchParams.get('modal') === 'event';
@@ -64,10 +65,12 @@ export default function CalendarPage() {
       base44.entities.Task.filter({ area }, '-due_date', 300),
       base44.entities.Course.filter({ area })
     ]);
-    setEvents(e); setTasks(t); setCourses(c);
+    setEvents(filterByCalendar(e, area, sharedCalendarId));
+    setTasks(filterByCalendar(t, area, sharedCalendarId));
+    setCourses(c);
     setLoading(false);
   }
-  useEffect(() => { load(); }, [area]);
+  useEffect(() => { load(); }, [area, sharedCalendarId]);
 
   const days = useMemo(() => {
     const start = startOfWeek(startOfMonth(cursor), { weekStartsOn: 0 });
@@ -149,7 +152,7 @@ export default function CalendarPage() {
 
   async function saveEvent(data) {
     if (data.id) await base44.entities.Event.update(data.id, data);
-    else await base44.entities.Event.create({ ...data, area });
+    else await base44.entities.Event.create({ ...data, area, ...calendarScope(area, sharedCalendarId) });
     load();
   }
 
@@ -173,7 +176,8 @@ export default function CalendarPage() {
       repeat_end_date: e.repeat_end_date || null,
       color: e.color || null,
       source: 'manual',
-      area
+      area,
+      ...calendarScope(area, sharedCalendarId)
     };
     await base44.entities.Event.create(copy);
     load();
@@ -181,7 +185,7 @@ export default function CalendarPage() {
 
   async function saveTask(data) {
     if (data.id) await base44.entities.Task.update(data.id, data);
-    else await base44.entities.Task.create({ ...data, area });
+    else await base44.entities.Task.create({ ...data, area, ...calendarScope(area, sharedCalendarId) });
     load();
   }
   async function deleteTask(t) {

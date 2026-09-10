@@ -1,5 +1,5 @@
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
-import { Users, Trash2, MessageCircle, Settings as SettingsIcon, LayoutGrid, LogOut, Timer } from 'lucide-react';
+import { Users, Trash2, MessageCircle, Settings as SettingsIcon, LayoutGrid, LogOut, Timer, CalendarPlus } from 'lucide-react';
 import { useI18n } from '@/lib/I18nContext';
 
 export default function MoreSheet({ open, onClose, area, onNavigate, onAreas, onLogout }) {
@@ -10,6 +10,7 @@ export default function MoreSheet({ open, onClose, area, onNavigate, onAreas, on
     { label: t('nav.trash'), Icon: Trash2, onClick: () => { onClose(); onNavigate('/trash'); } },
   ];
   if (area === 'shareable') {
+    items.push({ label: t('nav.calendars'), Icon: CalendarPlus, onClick: () => { onClose(); onNavigate('/shared-calendars'); } });
     items.push({ label: t('nav.encourage'), Icon: MessageCircle, onClick: () => { onClose(); onNavigate('/encourage'); } });
   }
   items.push({ label: t('nav.settings'), Icon: SettingsIcon, onClick: () => { onClose(); onNavigate('/settings'); } });

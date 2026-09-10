@@ -108,6 +108,10 @@
       "type": "string",
       "title": "Flag"
     },
+    "calendar_id": {
+      "type": "string",
+      "title": "Calendar ID"
+    },
     "area": {
       "type": "string",
       "enum": [

@@ -25,6 +25,7 @@ export default async function(req) {
     }
     const owner = link.created_by_id;
     const area = link.area || 'shareable';
+    const calendarId = link.calendar_id || null;
     const sr = base44.asServiceRole;
 
     if (action === 'addTask') {
@@ -34,20 +35,20 @@ export default async function(req) {
         title: String(title).slice(0, 200),
         due_date: due_date || null,
         status: 'todo', priority: 'medium', type: 'misc',
-        area, source: 'manual', created_by_id: owner
+        area, calendar_id: calendarId, source: 'manual', created_by_id: owner
       });
       return Response.json({ ok: true, id: t.id });
     }
     if (action === 'toggleTask') {
       const task = await sr.entities.Task.get(payload.id);
-      if (!task || task.area !== area || task.created_by_id !== owner) return Response.json({ error: 'Not found' }, { status: 404 });
+      if (!task || task.area !== area || task.created_by_id !== owner || (task.calendar_id || null) !== calendarId) return Response.json({ error: 'Not found' }, { status: 404 });
       const next = task.status === 'done' ? 'todo' : 'done';
       await sr.entities.Task.update(payload.id, { status: next });
       return Response.json({ ok: true, status: next });
     }
     if (action === 'deleteTask') {
       const task = await sr.entities.Task.get(payload.id);
-      if (!task || task.area !== area || task.created_by_id !== owner) return Response.json({ error: 'Not found' }, { status: 404 });
+      if (!task || task.area !== area || task.created_by_id !== owner || (task.calendar_id || null) !== calendarId) return Response.json({ error: 'Not found' }, { status: 404 });
       await sr.entities.Task.delete(payload.id);
       return Response.json({ ok: true });
     }
@@ -57,13 +58,13 @@ export default async function(req) {
       const e = await sr.entities.Event.create({
         title: String(title).slice(0, 200),
         start_date, end_date: end_date || start_date,
-        all_day: true, type: 'event', area, source: 'manual', created_by_id: owner
+        all_day: true, type: 'event', area, calendar_id: calendarId, source: 'manual', created_by_id: owner
       });
       return Response.json({ ok: true, id: e.id });
     }
     if (action === 'deleteEvent') {
       const e = await sr.entities.Event.get(payload.id);
-      if (!e || e.area !== area || e.created_by_id !== owner) return Response.json({ error: 'Not found' }, { status: 404 });
+      if (!e || e.area !== area || e.created_by_id !== owner || (e.calendar_id || null) !== calendarId) return Response.json({ error: 'Not found' }, { status: 404 });
       await sr.entities.Event.delete(payload.id);
       return Response.json({ ok: true });
     }

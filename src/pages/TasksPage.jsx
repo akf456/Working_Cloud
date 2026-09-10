@@ -20,6 +20,7 @@ import { celebrate } from '@/lib/celebrate';
 import { useToast } from '@/components/ui/use-toast';
 import { trashItem } from '@/lib/trash';
 import { useArea } from '@/lib/AreaContext';
+import { filterByCalendar, calendarScope } from '@/lib/sharedCalendars';
 import { useI18n } from '@/lib/I18nContext';
 import { parseDate } from '@/lib/planner';
 
@@ -35,7 +36,7 @@ export default function TasksPage() {
   const [noteModal, setNoteModal] = useState({ open: false, note: null });
   const [checklistModal, setChecklistModal] = useState({ open: false, list: null });
   const [searchParams, setSearchParams] = useSearchParams();
-  const { area } = useArea();
+  const { area, sharedCalendarId } = useArea();
   const { t } = useI18n();
   const { toast } = useToast();
 
@@ -64,10 +65,10 @@ export default function TasksPage() {
       base44.entities.Course.filter({ area }),
       base44.entities.Note.filter({ area }, '-updated_date', 300)
     ]);
-    setTasks(tk); setEvents(ev); setCourses(c); setNotes(nt);
+    setTasks(filterByCalendar(tk, area, sharedCalendarId)); setEvents(filterByCalendar(ev, area, sharedCalendarId)); setCourses(c); setNotes(nt);
     setLoading(false);
   }
-  useEffect(() => { load(); }, [area]);
+  useEffect(() => { load(); }, [area, sharedCalendarId]);
 
   const regularTasks = tasks.filter((tk) => tk.list_type !== 'todo');
   const todoLists = tasks.filter((tk) => tk.list_type === 'todo');
@@ -114,7 +115,7 @@ export default function TasksPage() {
     } else {
       const temp = { ...data, area, id: `temp-${Date.now()}`, created_date: new Date().toISOString(), status: data.status || 'todo' };
       setTasks((prev) => [temp, ...prev]);
-      try { await base44.entities.Task.create({ ...data, area }); } catch (e) { toast({ title: 'Could not create', variant: 'destructive' }); }
+      try { await base44.entities.Task.create({ ...data, area, ...calendarScope(area, sharedCalendarId) }); } catch (e) { toast({ title: 'Could not create', variant: 'destructive' }); }
     }
     load();
   }
@@ -139,7 +140,7 @@ export default function TasksPage() {
           if (Object.keys(patch).length) { try { await base44.entities.Subtask.update(i.id, patch); } catch (e) {} }
         }
       } else {
-        const created = await base44.entities.Task.create({ title, list_type: 'todo', area, status: 'todo', color: color || null });
+        const created = await base44.entities.Task.create({ title, list_type: 'todo', area, status: 'todo', color: color || null, ...calendarScope(area, sharedCalendarId) });
         if (items.length) await base44.entities.Subtask.bulkCreate(items.map((i) => ({ parent_task_id: created.id, title: i.title, status: i.status || 'todo' })));
       }
     } catch (e) { toast({ title: 'Could not save checklist', variant: 'destructive' }); }
@@ -171,7 +172,7 @@ export default function TasksPage() {
     } else {
       const temp = { ...data, area, id: `temp-${Date.now()}`, created_date: new Date().toISOString() };
       setEvents((prev) => [temp, ...prev]);
-      try { await base44.entities.Event.create({ ...data, area }); } catch (err) { toast({ title: 'Could not create', variant: 'destructive' }); }
+      try { await base44.entities.Event.create({ ...data, area, ...calendarScope(area, sharedCalendarId) }); } catch (err) { toast({ title: 'Could not create', variant: 'destructive' }); }
     }
     load();
   }

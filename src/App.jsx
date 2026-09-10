@@ -27,6 +27,7 @@ import TrashPage from '@/pages/TrashPage';
 import ShareBoard from '@/pages/ShareBoard';
 import Settings from '@/pages/Settings';
 import EncouragePage from '@/pages/EncouragePage';
+import SharedCalendarsPage from '@/pages/SharedCalendarsPage';
 import { AnimatePresence } from 'framer-motion';
 import SplashOverlay from '@/components/SplashOverlay';
 import { applyTheme, getThemeMode } from '@/lib/theme';
@@ -75,6 +76,7 @@ const AuthenticatedApp = () => {
           <Route path="/trash" element={<TrashPage />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/encourage" element={<EncouragePage />} />
+          <Route path="/shared-calendars" element={<SharedCalendarsPage />} />
         </Route>
       </Route>
       <Route path="*" element={<PageNotFound />} />

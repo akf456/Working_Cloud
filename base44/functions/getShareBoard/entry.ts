@@ -18,6 +18,7 @@ export default async function(req) {
     const owner = link.created_by_id;
     const area = link.area || 'shareable';
     const mode = link.mode || 'view';
+    const calendarId = link.calendar_id || null;
 
     let user = null;
     try { user = await base44.auth.me(); } catch { user = null; }
@@ -30,6 +31,20 @@ export default async function(req) {
       base44.asServiceRole.entities.Course.filter({ area, created_by_id: owner })
     ]);
 
+    // Scope strictly to the shared calendar so separate shared calendars never
+    // mix. Links without a calendar show the main (built-in) set only.
+    const matchCalendar = (i) => (calendarId ? i.calendar_id === calendarId : !i.calendar_id);
+    const calTasks = tasks.filter(matchCalendar);
+    const calEvents = events.filter(matchCalendar);
+
+    let calendarName = null;
+    if (calendarId) {
+      try {
+        const cal = await base44.asServiceRole.entities.SharedCalendar.get(calendarId);
+        calendarName = cal?.name || null;
+      } catch { calendarName = null; }
+    }
+
     const slim = (items, fields) => items.map((i) => {
       const out = {};
       fields.forEach((f) => { if (i[f] !== undefined) out[f] = i[f]; });
@@ -40,8 +55,9 @@ export default async function(req) {
       area,
       mode,
       can_edit: canEdit,
-      tasks: slim(tasks, ['title', 'description', 'due_date', 'priority', 'status', 'type', 'course_id', 'flag']),
-      events: slim(events, ['title', 'description', 'start_date', 'end_date', 'all_day', 'type', 'location', 'flag']),
+      calendar_name: calendarName,
+      tasks: slim(calTasks, ['title', 'description', 'due_date', 'priority', 'status', 'type', 'course_id', 'flag']),
+      events: slim(calEvents, ['title', 'description', 'start_date', 'end_date', 'all_day', 'type', 'location', 'flag']),
       courses: slim(courses, ['name', 'code', 'color'])
     });
   } catch (error) {

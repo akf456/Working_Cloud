@@ -10,7 +10,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { AREAS } from '@/lib/areas';
 import { Share2, Eye, Pencil, Info } from 'lucide-react';
 
-export default function ShareModal({ open, area, onClose }) {
+export default function ShareModal({ open, area, calendarId, calendarName, onClose }) {
   const { user, checkUserAuth } = useAuth();
   const { toast } = useToast();
   const [mode, setMode] = useState('view');
@@ -20,10 +20,14 @@ export default function ShareModal({ open, area, onClose }) {
   const [saving, setSaving] = useState(false);
   const a = AREAS[area];
 
+  const isCalendar = area === 'shareable';
+  const shareKey = isCalendar ? `shareable:${calendarId || 'main'}` : area;
+  const displayName = isCalendar ? (calendarName || 'Main') : a?.label;
+
   useEffect(() => {
     if (!open) return;
     setMode('view'); setEditors(''); setLinkId(null); setToken(null);
-    const t = user?.share_tokens?.[area];
+    const t = user?.share_tokens?.[shareKey];
     if (t) {
       setToken(t);
       (async () => {
@@ -33,7 +37,7 @@ export default function ShareModal({ open, area, onClose }) {
         } catch { /* ignore */ }
       })();
     }
-  }, [open, area, user]);
+  }, [open, area, user, shareKey]);
 
   async function save() {
     setSaving(true);
@@ -41,12 +45,12 @@ export default function ShareModal({ open, area, onClose }) {
       const editorList = editors.split(/[,\n]/).map((s) => s.trim()).filter(Boolean);
       let t = token || (crypto.randomUUID?.() || Math.random().toString(36).slice(2));
       if (linkId) await base44.entities.ShareLink.update(linkId, { mode, editors: editorList });
-      else { const c = await base44.entities.ShareLink.create({ token: t, owner_id: user.id, area, mode, editors: editorList }); setLinkId(c.id); setToken(t); }
-      await base44.auth.updateMe({ share_tokens: { ...(user.share_tokens || {}), [area]: t } });
+      else { const c = await base44.entities.ShareLink.create({ token: t, owner_id: user.id, area, mode, editors: editorList, calendar_id: isCalendar ? (calendarId || null) : undefined }); setLinkId(c.id); setToken(t); }
+      await base44.auth.updateMe({ share_tokens: { ...(user.share_tokens || {}), [shareKey]: t } });
       await checkUserAuth();
       const link = `${window.location.origin}/s/${t}`;
       try { await navigator.clipboard.writeText(link); } catch { /* ignore */ }
-      toast({ title: 'Share link copied!', description: mode === 'edit' ? 'Editors who join the app can edit. Others view only.' : `Anyone with the link can view your ${a?.label || ''} area.` });
+      toast({ title: 'Share link copied!', description: mode === 'edit' ? 'Editors who join the app can edit. Others view only.' : isCalendar ? `Anyone with the link can view the ${displayName} calendar — and nothing else.` : `Anyone with the link can view your ${a?.label || ''} area.` });
       onClose();
     } catch (e) {
       toast({ title: 'Could not share', description: e.message, variant: 'destructive' });
@@ -59,8 +63,8 @@ export default function ShareModal({ open, area, onClose }) {
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2"><Share2 className="w-4 h-4" /> Share {a?.label || 'area'}</DialogTitle>
-          <DialogDescription>Create a link to this area. Recipients only see this organizer — nothing else.</DialogDescription>
+          <DialogTitle className="flex items-center gap-2"><Share2 className="w-4 h-4" /> Share {isCalendar ? `${displayName} calendar` : `${a?.label || 'area'}`}</DialogTitle>
+          <DialogDescription>{isCalendar ? 'Create a link to this calendar. Recipients only see this calendar — nothing else.' : 'Create a link to this area. Recipients only see this organizer — nothing else.'}</DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="grid grid-cols-2 gap-2">
