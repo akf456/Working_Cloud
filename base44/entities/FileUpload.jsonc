@@ -1,0 +1,53 @@
+{
+  "name": "FileUpload",
+  "type": "object",
+  "properties": {
+    "file_uri": {
+      "type": "string",
+      "title": "File URI"
+    },
+    "name": {
+      "type": "string",
+      "title": "File Name"
+    },
+    "size": {
+      "type": "number",
+      "title": "Size"
+    }
+  },
+  "required": [
+    "file_uri"
+  ],
+  "rls": {
+    "create": {
+      "created_by_id": "{{user.id}}"
+    },
+    "read": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "created_by_id": "{{user.id}}"
+    },
+    "delete": {
+      "$or": [
+        {
+          "created_by_id": "{{user.id}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    }
+  }
+}

@@ -72,11 +72,22 @@ export default async function(req) {
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await req.json();
-    const { file_url } = body;
-    if (!file_url) return Response.json({ error: 'file_url is required' }, { status: 400 });
+    const { file_uri } = body;
+    if (!file_uri || typeof file_uri !== 'string' || !file_uri.startsWith('mp/private/')) {
+      return Response.json({ error: 'A valid uploaded file is required' }, { status: 400 });
+    }
 
+    // Verify the file belongs to the requesting user: it must be registered
+    // as one of their own uploads before the privileged extraction runs.
+    const uploads = await base44.asServiceRole.entities.FileUpload.filter({ file_uri });
+    if (!uploads.some((u) => u.created_by_id === user.id)) {
+      return Response.json({ error: 'Forbidden: file does not belong to you' }, { status: 403 });
+    }
+
+    // Sign the private file server-side so no caller-supplied URL is ever used.
+    const signed = await base44.asServiceRole.integrations.Core.CreateFileSignedUrl({ file_uri });
     const result = await base44.asServiceRole.integrations.Core.ExtractDataFromUploadedFile({
-      file_url,
+      file_url: signed.signed_url,
       json_schema: EXTRACTION_SCHEMA
     });
 

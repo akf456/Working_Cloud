@@ -53,8 +53,9 @@ export default function SyllabusImporter({ open, onClose, courses = [], area = '
     if (!file) return;
     setLoading(true); setError(''); setData(null);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      const res = await base44.functions.invoke('extractSyllabus', { file_url });
+      const { file_uri } = await base44.integrations.Core.UploadPrivateFile({ file });
+      await base44.entities.FileUpload.create({ file_uri, name: file.name, size: file.size });
+      const res = await base44.functions.invoke('extractSyllabus', { file_uri });
       const d = res.data;
       setData(d);
       if (isSchool && !isCalendarMode) {
