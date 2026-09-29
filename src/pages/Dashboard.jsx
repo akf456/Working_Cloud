@@ -15,6 +15,7 @@ import PullToRefresh from '@/components/PullToRefresh';
 import { DASHBOARD_WIDGETS, DEFAULT_DASHBOARD_ORDER } from '@/lib/dashboardWidgets';
 import { useArea } from '@/lib/AreaContext';
 import { filterByCalendar, calendarScope } from '@/lib/sharedCalendars';
+import { withoutHidden, hiddenCourseIds } from '@/lib/visibility';
 import { useAuth } from '@/lib/AuthContext';
 import { AREAS } from '@/lib/areas';
 import { useI18n } from '@/lib/I18nContext';
@@ -40,7 +41,8 @@ export default function Dashboard() {
       base44.entities.Course.filter({ area }),
       base44.entities.Subtask.list(500)
     ]);
-    setTasks(filterByCalendar(t, area, sharedCalendarId)); setEvents(filterByCalendar(e, area, sharedCalendarId)); setCourses(c); setSubtasks(st);
+    const hid = hiddenCourseIds(c);
+    setTasks(filterByCalendar(withoutHidden(t, hid), area, sharedCalendarId)); setEvents(filterByCalendar(withoutHidden(e, hid), area, sharedCalendarId)); setCourses(c.filter((x) => !x.hidden)); setSubtasks(st);
     setLoading(false);
   }
   useEffect(() => { load(); }, [area, sharedCalendarId]);

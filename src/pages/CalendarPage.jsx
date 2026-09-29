@@ -25,6 +25,7 @@ import CalendarYearView from '@/components/CalendarYearView';
 import CalendarTimeGrid from '@/components/CalendarTimeGrid';
 import { useI18n } from '@/lib/I18nContext';
 import SheetSelect from '@/components/SheetSelect';
+import { withoutHidden, hiddenCourseIds } from '@/lib/visibility';
 
 export default function CalendarPage() {
   const [cursor, setCursor] = useState(new Date());
@@ -65,9 +66,10 @@ export default function CalendarPage() {
       base44.entities.Task.filter({ area }, '-due_date', 300),
       base44.entities.Course.filter({ area })
     ]);
-    setEvents(filterByCalendar(e, area, sharedCalendarId));
-    setTasks(filterByCalendar(t, area, sharedCalendarId));
-    setCourses(c);
+    const hid = hiddenCourseIds(c);
+    setEvents(filterByCalendar(withoutHidden(e, hid), area, sharedCalendarId));
+    setTasks(filterByCalendar(withoutHidden(t, hid), area, sharedCalendarId));
+    setCourses(c.filter((x) => !x.hidden));
     setLoading(false);
   }
   useEffect(() => { load(); }, [area, sharedCalendarId]);

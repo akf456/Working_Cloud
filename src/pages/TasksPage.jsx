@@ -21,6 +21,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { trashItem } from '@/lib/trash';
 import { useArea } from '@/lib/AreaContext';
 import { filterByCalendar, calendarScope } from '@/lib/sharedCalendars';
+import { withoutHidden, hiddenCourseIds } from '@/lib/visibility';
 import { useI18n } from '@/lib/I18nContext';
 import { parseDate } from '@/lib/planner';
 
@@ -65,7 +66,8 @@ export default function TasksPage() {
       base44.entities.Course.filter({ area }),
       base44.entities.Note.filter({ area }, '-updated_date', 300)
     ]);
-    setTasks(filterByCalendar(tk, area, sharedCalendarId)); setEvents(filterByCalendar(ev, area, sharedCalendarId)); setCourses(c); setNotes(nt);
+    const hid = hiddenCourseIds(c);
+    setTasks(filterByCalendar(withoutHidden(tk, hid), area, sharedCalendarId)); setEvents(filterByCalendar(withoutHidden(ev, hid), area, sharedCalendarId)); setCourses(c.filter((x) => !x.hidden)); setNotes(withoutHidden(nt, hid));
     setLoading(false);
   }
   useEffect(() => { load(); }, [area, sharedCalendarId]);

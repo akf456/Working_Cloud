@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Plus, Sparkles, Pencil, Trash2, BookOpen, ListTodo, CalendarClock, GraduationCap } from 'lucide-react';
+import { Plus, Sparkles, Pencil, Trash2, BookOpen, ListTodo, CalendarClock, GraduationCap, Eye, EyeOff } from 'lucide-react';
 import { fmt, dueLabel, daysUntil, parseDate } from '@/lib/planner';
 import SyllabusImporter from '@/components/SyllabusImporter';
 import PullToRefresh from '@/components/PullToRefresh';
@@ -26,6 +26,8 @@ export default function CoursesPage() {
   const { area } = useArea();
   const a = AREAS[area];
   const { t } = useI18n();
+  const visibleCourses = courses.filter((c) => !c.hidden);
+  const hiddenCourses = courses.filter((c) => c.hidden);
 
   async function load() {
     setLoading(true);
@@ -47,6 +49,10 @@ export default function CoursesPage() {
   async function remove(c) {
     await trashItem('Course', c, area); load();
   }
+  async function toggleHidden(c) {
+    await base44.entities.Course.update(c.id, { hidden: !c.hidden });
+    load();
+  }
 
   return (
     <PullToRefresh onRefresh={load} className="p-4 md:p-8 max-w-6xl mx-auto animate-fade-in">
@@ -63,7 +69,7 @@ export default function CoursesPage() {
 
       {loading ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{[...Array(3)].map((_, i) => <div key={i} className="h-44 rounded-2xl bg-muted/60 animate-pulse" />)}</div>
-      ) : courses.length === 0 ? (
+      ) : visibleCourses.length === 0 && hiddenCourses.length === 0 ? (
         <Card className="p-10 text-center">
           <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-4"><GraduationCap className="w-7 h-7 text-indigo-600" /></div>
           <p className="font-semibold text-lg">No {a.groupingLabel.toLowerCase()} yet</p>
@@ -75,7 +81,7 @@ export default function CoursesPage() {
         </Card>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {courses.map((c) => {
+          {visibleCourses.map((c) => {
             const ctasks = tasks.filter((t) => t.course_id === c.id);
             const open = ctasks.filter((t) => t.status !== 'done');
             const next = open.filter((t) => parseDate(t.due_date)).sort((a, b) => new Date(a.due_date) - new Date(b.due_date))[0];
@@ -93,6 +99,7 @@ export default function CoursesPage() {
                     </div>
                   </div>
                   <div className="flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition">
+                    <button onClick={() => toggleHidden(c)} className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-amber-600" title="Hide — removes it and its items from this entire area"><EyeOff className="w-3.5 h-3.5" /></button>
                     <button onClick={() => { setEdit(c); setModal(true); }} className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-indigo-600"><Pencil className="w-3.5 h-3.5" /></button>
                     <button onClick={() => remove(c)} className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-rose-600"><Trash2 className="w-3.5 h-3.5" /></button>
                   </div>
@@ -113,6 +120,30 @@ export default function CoursesPage() {
               </Card>
             );
           })}
+        </div>
+      )}
+
+      {hiddenCourses.length > 0 && (
+        <div className="mt-8">
+          <p className="text-sm font-semibold text-muted-foreground mb-3 flex items-center gap-1.5"><EyeOff className="w-4 h-4" /> Hidden ({hiddenCourses.length}) — hidden everywhere in this area</p>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {hiddenCourses.map((c) => (
+              <Card key={c.id} className="p-5 relative overflow-hidden opacity-70">
+                <div className="absolute top-0 left-0 right-0 h-1.5" style={{ backgroundColor: c.color }} />
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold shrink-0" style={{ backgroundColor: c.color }}>{(c.code || c.name || '?').slice(0, 2).toUpperCase()}</div>
+                    <div className="min-w-0">
+                      <p className="font-semibold truncate">{c.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{c.code || ''}</p>
+                    </div>
+                  </div>
+                  <button onClick={() => toggleHidden(c)} className="p-1.5 rounded-lg hover:bg-accent text-muted-foreground hover:text-emerald-600 shrink-0" title="Unhide — brings it and its items back everywhere"><Eye className="w-3.5 h-3.5" /></button>
+                </div>
+                <p className="text-xs text-muted-foreground">Its tasks, events &amp; contacts are hidden from this area until you unhide it.</p>
+              </Card>
+            ))}
+          </div>
         </div>
       )}
 

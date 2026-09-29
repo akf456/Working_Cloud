@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import SheetSelect from '@/components/SheetSelect';
-import { UploadCloud, Loader2, CheckCircle2, FileText, CalendarClock, ListChecks, Sparkles, Users } from 'lucide-react';
+import { UploadCloud, Loader2, CheckCircle2, Sparkles } from 'lucide-react';
+import ExtractedPreview from '@/components/ExtractedPreview';
 import { base44 } from '@/api/base44Client';
 import { useArea } from '@/lib/AreaContext';
 import { calendarScope } from '@/lib/sharedCalendars';
@@ -70,13 +71,45 @@ export default function SyllabusImporter({ open, onClose, courses = [], area = '
   async function handleConfirm() {
     setSaving(true); setError('');
     try {
-      const incomingTasks = (data?.tasks || []).filter((t) => t.title);
-      const incomingEvents = (data?.events || []).filter((e) => e.title && e.start_date);
+      // Route every reviewed item by its classification. Tasks default to
+      // 'task'; each row's `as` field (set in the editable preview) can move it
+      // to a to-do list or promote it to a calendar event (and vice versa).
+      const incomingTasks = [];
+      const incomingEvents = [];
+      (data?.tasks || []).forEach((x) => {
+        if (!x.title) return;
+        const as = x.as || 'task';
+        if (as === 'event' && x.due_date) {
+          incomingEvents.push({
+            title: x.title, description: x.description || '', start_date: x.due_date, end_date: x.due_date,
+            all_day: false, type: ['exam', 'study'].includes(x.type) ? x.type : 'deadline',
+            repeat: x.repeat || 'none', repeat_days: Array.isArray(x.repeat_days) ? x.repeat_days : [],
+            repeat_start_date: x.repeat_start_date || null, repeat_end_date: x.repeat_end_date || null
+          });
+        } else {
+          incomingTasks.push({ ...x, list_type: as === 'todo' ? 'todo' : 'task' });
+        }
+      });
+      (data?.events || []).forEach((x) => {
+        if (!x.title || !x.start_date) return;
+        const as = x.as || 'event';
+        if (as !== 'event') {
+          incomingTasks.push({
+            title: x.title, description: x.description || '', due_date: x.start_date, end_date: x.end_date || x.start_date,
+            type: ['exam', 'study'].includes(x.type) ? x.type : 'assignment',
+            list_type: as === 'todo' ? 'todo' : 'task',
+            repeat: x.repeat || 'none', repeat_days: Array.isArray(x.repeat_days) ? x.repeat_days : [],
+            repeat_start_date: x.repeat_start_date || null, repeat_end_date: x.repeat_end_date || null
+          });
+        } else {
+          incomingEvents.push(x);
+        }
+      });
       const incomingContacts = (data?.contacts || []).filter((c) => c.name);
 
       const taskFields = (t, cid) => ({
         title: t.title, description: t.description || '', due_date: t.due_date || null,
-        type: t.type || 'misc', status: 'todo', priority: 'medium',
+        type: t.type || 'misc', status: 'todo', priority: 'medium', list_type: t.list_type || 'task',
         repeat: t.repeat || 'none',
         repeat_days: Array.isArray(t.repeat_days) ? t.repeat_days.map(Number) : [],
         repeat_start_date: t.repeat_start_date || null,
@@ -256,53 +289,7 @@ export default function SyllabusImporter({ open, onClose, courses = [], area = '
 
             {error && <p className="text-sm text-destructive bg-destructive/10 rounded-lg px-3 py-2">{error}</p>}
 
-            {data && (
-              <div className="space-y-3 rounded-xl border border-border bg-muted/30 p-4 animate-fade-in min-w-0">
-                <p className="text-sm font-semibold flex items-center gap-2"><FileText className="w-4 h-4 text-indigo-600" /> Extracted preview</p>
-                {(data.semester || data.course_name) && (
-                  <p className="text-xs text-muted-foreground truncate">{[data.course_name, data.semester].filter(Boolean).join(' · ')}</p>
-                )}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
-                  <Stat icon={ListChecks} label="Tasks" n={data.tasks?.length || 0} />
-                  <Stat icon={CalendarClock} label="Events" n={data.events?.length || 0} />
-                  <Stat icon={Users} label="Contacts" n={data.contacts?.length || 0} />
-                  <Stat icon={FileText} label="Topics" n={data.topics?.length || 0} />
-                </div>
-                {(data.contacts?.length > 0) && (
-                  <div className="space-y-1.5 text-sm min-w-0">
-                    <p className="text-xs font-semibold text-muted-foreground">Contacts</p>
-                    {(data.contacts || []).slice(0, 4).map((c, i) => (
-                      <div key={'c' + i} className="flex items-center justify-between gap-2 bg-card rounded-lg px-3 py-1.5 min-w-0">
-                        <span className="truncate min-w-0">{c.name}{c.role ? ` · ${c.role}` : ''}</span>
-                        <span className="text-xs text-muted-foreground shrink-0 truncate max-w-[50%]">{c.email || c.phone || c.office_location || ''}</span>
-                      </div>
-                    ))}
-                    {data.contacts.length > 4 && <p className="text-xs text-muted-foreground pl-1">+{data.contacts.length - 4} more</p>}
-                  </div>
-                )}
-                {(data.tasks?.length > 0 || data.events?.length > 0) && (
-                  <div className="space-y-1.5 text-sm min-w-0">
-                    <p className="text-xs font-semibold text-muted-foreground">Events &amp; tasks</p>
-                    {(data.events || []).slice(0, 6).map((e, i) => (
-                      <div key={'e' + i} className="flex items-center justify-between gap-2 bg-card rounded-lg px-3 py-1.5 min-w-0">
-                        <span className="truncate min-w-0">{e.title}</span>
-                        <span className="text-xs text-muted-foreground shrink-0 truncate max-w-[50%]">{EVENT_TYPE[e.type]?.label || 'Event'}{e.start_date ? ` · ${new Date(e.start_date).toLocaleDateString()}` : ''}{e.repeat && e.repeat !== 'none' ? ` · ${e.repeat}` : ''}</span>
-                      </div>
-                    ))}
-                    {(data.tasks || []).slice(0, 6).map((t, i) => (
-                      <div key={'t' + i} className="flex items-center justify-between gap-2 bg-card rounded-lg px-3 py-1.5 min-w-0">
-                        <span className="truncate min-w-0">{t.title}</span>
-                        <span className="text-xs text-muted-foreground shrink-0 truncate max-w-[50%]">{TASK_TYPE[t.type]?.label || 'Misc'}{t.due_date ? ` · ${new Date(t.due_date).toLocaleDateString()}` : ''}</span>
-                      </div>
-                    ))}
-                    {(((data.events?.length || 0) + (data.tasks?.length || 0)) > 12) && (
-                      <p className="text-xs text-muted-foreground pl-1">+{(data.events?.length || 0) + (data.tasks?.length || 0) - 12} more — all are added, edit after.</p>
-                    )}
-                  </div>
-                )}
-                <p className="text-xs text-muted-foreground">Review the details — you can edit everything after it's added.</p>
-              </div>
-            )}
+            {data && <ExtractedPreview data={data} onChange={setData} />}
 
           </div>
         )}
@@ -323,15 +310,5 @@ export default function SyllabusImporter({ open, onClose, courses = [], area = '
         )}
       </DialogContent>
     </Dialog>
-  );
-}
-
-function Stat({ icon: Icon, label, n }) {
-  return (
-    <div className="bg-card rounded-lg py-2 px-1 border border-border/60">
-      <Icon className="w-4 h-4 mx-auto text-indigo-500" />
-      <p className="text-lg font-bold leading-tight mt-0.5">{n}</p>
-      <p className="text-[11px] text-muted-foreground">{label}</p>
-    </div>
   );
 }

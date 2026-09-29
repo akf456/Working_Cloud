@@ -72,6 +72,7 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
   const [color, setColor] = useState(task?.color || '');
   const [flagged, setFlagged] = useState(task?.flag === 'manual');
   const [recolorIds, setRecolorIds] = useState(new Set());
+  const [kind, setKind] = useState(task?.list_type || listType);
 
   React.useEffect(() => {
     setTitle(task?.title || '');
@@ -93,7 +94,8 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
     setColor(task?.color || '');
     setFlagged(task?.flag === 'manual');
     setRecolorIds(new Set());
-  }, [task, open]);
+    setKind(task?.list_type || listType);
+  }, [task, open, listType]);
 
   function toggleDay(i) {
     setRepeatDays((p) => (p.includes(i) ? p.filter((d) => d !== i) : [...p, i]));
@@ -130,7 +132,7 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
   function submit() {
     if (!title.trim()) return;
     const repeating = repeat !== 'none';
-    if (!repeating && listType !== 'todo' && !dueDate) return;
+    if (!repeating && kind !== 'todo' && !dueDate) return;
     if (repeating && !repeatStart) return;
     const flag = flagged ? 'manual' : (task?.flag === 'manual' ? null : (task?.flag || null));
     let due_date_val = null;
@@ -155,7 +157,7 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
       description: description.trim(),
       due_date: due_date_val,
       end_date: end_date_val,
-      list_type: listType,
+      list_type: kind,
       priority, status, type, repeat,
       repeat_days: repeating ? repeatDays : [],
       repeat_start_date: repeating ? repeatStart : null,
@@ -168,13 +170,13 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
     onClose();
   }
 
-  const canSave = !!title.trim() && (listType === 'todo' || (repeat !== 'none' ? !!repeatStart : !!dueDate));
+  const canSave = !!title.trim() && (kind === 'todo' || (repeat !== 'none' ? !!repeatStart : !!dueDate));
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="sm:max-w-lg max-h-[88vh] flex flex-col overflow-hidden p-0 gap-0">
         <DialogHeader className="p-6 pb-2 shrink-0">
-          <DialogTitle>{task ? (listType === 'todo' ? 'Edit list' : 'Edit task') : (listType === 'todo' ? 'New list' : 'New task')}</DialogTitle>
+          <DialogTitle>{task ? (kind === 'todo' ? 'Edit list' : 'Edit task') : (kind === 'todo' ? 'New list' : 'New task')}</DialogTitle>
         </DialogHeader>
         <div className="flex-1 overflow-y-auto overflow-x-hidden px-6 py-2 min-w-0 space-y-4">
           <div className="space-y-1.5">
@@ -203,10 +205,16 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
                 options={Object.entries(PRIORITY).map(([k, v]) => ({ value: k, label: v.label }))} />
             </div>
           </div>
+          <div className="space-y-1.5">
+            <Label>Show in</Label>
+            <SheetSelect value={kind} onValueChange={setKind} placeholder="Show in"
+              options={[{ value: 'task', label: 'Tasks' }, { value: 'todo', label: 'To-Do lists' }]} />
+            <p className="text-[11px] text-muted-foreground">Choose whether this item lives with your tasks or with your to-do lists.</p>
+          </div>
           {repeat === 'none' && (
             <div className="space-y-1.5">
-              <Label>Deadline {listType !== 'todo' && <span className="text-rose-500">*</span>}</Label>
-              <ScrollDatePicker value={dueDate} onChange={setDueDate} withTime={false} placeholder={listType === 'todo' ? 'Optional date' : 'Pick a deadline'} />
+              <Label>Deadline {kind !== 'todo' && <span className="text-rose-500">*</span>}</Label>
+              <ScrollDatePicker value={dueDate} onChange={setDueDate} withTime={false} placeholder={kind === 'todo' ? 'Optional date' : 'Pick a deadline'} />
               {timeRangeFields()}
               <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
                 <Checkbox checked={useEndDate} onCheckedChange={(v) => { setUseEndDate(!!v); if (!v) setEndDate(''); }} />
@@ -219,7 +227,7 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
                   <p className="text-[11px] text-muted-foreground">For a task that spans multiple days, like a multi-day exam window.</p>
                 </div>
               )}
-              <p className="text-[11px] text-muted-foreground">{listType === 'todo' ? 'Optional — add a date to show this list on the calendar.' : 'A deadline is required.'}</p>
+              <p className="text-[11px] text-muted-foreground">{kind === 'todo' ? 'Optional — add a date to show this list on the calendar.' : 'A deadline is required.'}</p>
             </div>
           )}
           <div className="space-y-1.5">
@@ -318,7 +326,7 @@ export default function TaskModal({ open, onClose, onSave, task, courses = [], a
         </div>
         <DialogFooter className="p-6 pt-3 shrink-0 border-t border-border/60 bg-background">
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button onClick={submit} disabled={!canSave}>{task ? 'Save changes' : (listType === 'todo' ? 'Add list' : 'Add task')}</Button>
+          <Button onClick={submit} disabled={!canSave}>{task ? 'Save changes' : (kind === 'todo' ? 'Add list' : 'Add task')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

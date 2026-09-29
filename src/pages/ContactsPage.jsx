@@ -8,6 +8,7 @@ import { trashItem } from '@/lib/trash';
 import { downloadCSV } from '@/lib/exportCsv';
 import { useArea } from '@/lib/AreaContext';
 import { useI18n } from '@/lib/I18nContext';
+import { withoutHidden, hiddenCourseIds } from '@/lib/visibility';
 
 export default function ContactsPage() {
   const [contacts, setContacts] = useState([]);
@@ -24,7 +25,8 @@ export default function ContactsPage() {
       base44.entities.Contact.filter({ area }, '-created_date', 200),
       base44.entities.Course.filter({ area })
     ]);
-    setContacts(c); setCourses(cr);
+    const hid = hiddenCourseIds(cr);
+    setContacts(withoutHidden(c, hid)); setCourses(cr.filter((x) => !x.hidden));
     setLoading(false);
   }
   useEffect(() => { load(); }, [area]);
