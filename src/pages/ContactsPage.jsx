@@ -71,9 +71,11 @@ export default function ContactsPage() {
             const course = courseMap[c.course_id];
             const role = CONTACT_ROLE[c.role] || CONTACT_ROLE.other;
             return (
-              <Card key={c.id} className="group p-4 hover:shadow-md transition relative">
+              <Card key={c.id} className="group p-4 hover:shadow-md transition relative overflow-hidden">
+                {course?.color && <div className="absolute top-0 left-0 right-0 h-1.5" style={{ backgroundColor: course.color }} />}
                 <div className="flex items-start gap-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 text-white flex items-center justify-center font-semibold shrink-0">
+                  <div className={`w-10 h-10 rounded-full text-white flex items-center justify-center font-semibold shrink-0 ${course?.color ? '' : 'bg-gradient-to-br from-indigo-500 to-violet-500'}`}
+                    style={course?.color ? { backgroundColor: course.color } : undefined}>
                     {(c.name || '?').trim().charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0 flex-1">
